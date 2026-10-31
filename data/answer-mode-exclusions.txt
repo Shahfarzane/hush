@@ -1,0 +1,53 @@
+! ----- Answer mode exclusions -----
+! In answer mode the content blocker leaves these consent platforms alone so
+! the Safari web extension can see their banner and answer it. A block or
+! hide rule is left out when it contains one of these markers (matched
+! without regard to case). Exception rules (@@ and #@#) are always kept.
+!
+! Only list platforms the corpus (make test_corpus) shows Hush answering at
+! the chosen level. Platforms not listed here keep being hidden, as in
+! classic Hush. Not listed yet: TrustArc (not answered on ibm.com, only
+! hidden on oracle.com) and Borlabs (no corpus site).
+
+! Cookiebot
+CybotCookiebot
+cookiebot.com
+
+! OneTrust (otBannerSdk.js, ot-sdk-* and otsdk_* elements are its own)
+onetrust
+optanon
+cookielaw.org
+otbannersdk
+ot-sdk
+otsdk
+
+! Didomi (privacy-center.org is its CDN)
+didomi
+privacy-center.
+
+! Sourcepoint
+sp_message
+sourcepoint
+privacy-mgmt.com
+
+! Quantcast / InMobi Choice
+qc-cmp
+quantcast
+inmobi.com
+
+! Usercentrics
+usercentrics
+
+! CookieYes
+.cky-
+#cky-
+cookieyes
+
+! Complianz
+cmplz
+complianz
+
+! Cookie Information
+cookieinformation.com
+coi-banner
+coiOverlay

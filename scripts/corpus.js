@@ -4,6 +4,7 @@
 // not part of `make test_unit`; run it with `make test_corpus [SITES=...]`.
 import { webkit } from "npm:playwright";
 import { mismatches, readers } from "./src/consent-readers.js";
+import { createBlocker } from "./src/content-blocker.js";
 
 const resolveRelative = (path) => new URL(path, import.meta.url).pathname;
 
@@ -14,6 +15,43 @@ const CONTENT_SCRIPT = await Deno.readTextFile(
   resolveRelative("../build/WebExtension/content.js"),
 );
 const RESULTS = resolveRelative("../build/corpus-results.json");
+
+// --blocker=answer (default) or --blocker=full applies the content blocker
+// list Hush serves in that mode; --blocker=none runs without one.
+const flags = Deno.args.filter((arg) => arg.startsWith("--"));
+const only = Deno.args.filter((arg) => !arg.startsWith("--"));
+const BLOCKER_MODE =
+  flags.find((flag) => flag.startsWith("--blocker="))?.split("=")[1] ??
+    "answer";
+const BLOCKER_LISTS = {
+  answer: "../build/blockerList-answer.json",
+  full: "../build/blockerList.json",
+};
+const blocker = BLOCKER_LISTS[BLOCKER_MODE]
+  ? createBlocker(
+    JSON.parse(
+      await Deno.readTextFile(resolveRelative(BLOCKER_LISTS[BLOCKER_MODE])),
+    ),
+  )
+  : null;
+
+// Content blockers hide from the first paint, so add the stylesheet as soon
+// as the document exists, in every frame.
+const hideScript = (selectors) =>
+  `(() => {
+  const css = ${
+    JSON.stringify(
+      selectors.map((s) => `${s}{display:none!important}`).join("\n"),
+    )
+  };
+  const add = () => {
+    const style = document.createElement("style");
+    style.textContent = css;
+    (document.head || document.documentElement).appendChild(style);
+  };
+  if (document.documentElement) add();
+  else document.addEventListener("readystatechange", add, { once: true });
+})();`;
 
 const SETTINGS = {
   version: 1,
@@ -131,6 +169,17 @@ const visit = async (browser, site) => {
   let answered;
   const answeredPromise = new Promise((resolve) => (answered = resolve));
   try {
+    if (blocker) {
+      await context.addInitScript(
+        hideScript(blocker.hiddenSelectors(site.url)),
+      );
+      await context.route("**/*", (route) => {
+        const request = route.request();
+        return blocker.blocks(request.url(), site.url, request.resourceType())
+          ? route.abort("blockedbyclient")
+          : route.continue();
+      });
+    }
     await context.addInitScript(injected);
     const page = await context.newPage();
     page.on("console", (message) => {
@@ -161,6 +210,7 @@ const visit = async (browser, site) => {
     const wrong = differences.filter((difference) =>
       difference.endsWith("=true")
     );
+    const answeredStatus = ["pass", "stricter"];
     const status = wrong.length
       ? "wrong"
       : differences.length
@@ -173,12 +223,15 @@ const visit = async (browser, site) => {
     const consentCookies = data.cookies
       .filter(({ name }) => CONSENT_COOKIE.test(name))
       .map(({ name, value }) => ({ name, value: value.slice(0, 2000) }));
+    // Sites marked "answered" were answered before; anything else now means
+    // a rule broke or the content blocker hid the banner first.
+    const regressed = site.answered && !answeredStatus.includes(status);
     return {
       ...site,
-      status,
+      status: regressed ? "regressed" : status,
       cmp: handled?.cmp,
       stored,
-      wrong,
+      differences,
       consentCookies,
     };
   } catch (error) {
@@ -188,7 +241,6 @@ const visit = async (browser, site) => {
   }
 };
 
-const only = Deno.args;
 const sites = only.length
   ? SITES.filter((site) => only.includes(site.name))
   : SITES;
@@ -213,13 +265,16 @@ await Deno.mkdir(resolveRelative("../build"), { recursive: true });
 await Deno.writeTextFile(RESULTS, JSON.stringify(results, null, 2));
 
 const count = (status) => results.filter((r) => r.status === status).length;
+console.log(`blocker: ${BLOCKER_MODE}`);
 console.log(
   `\n${count("pass")} pass, ${count("wrong")} wrong, ${
-    count("stricter")
-  } stricter, ${count("no-readback")} answered without readback, ${
-    count("unanswered")
-  } unanswered, ${count("error")} errors`,
+    count("regressed")
+  } regressed, ${count("stricter")} stricter, ${
+    count("no-readback")
+  } answered without readback, ${count("unanswered")} unanswered, ${
+    count("error")
+  } errors`,
 );
 // A stored consent that differs from the level is the one outcome that hurts
 // the user; coverage gaps fall back to hiding.
-if (count("wrong")) Deno.exit(1);
+if (count("wrong") || count("regressed")) Deno.exit(1);

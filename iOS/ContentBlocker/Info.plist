@@ -20,6 +20,8 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>HushAppGroup</key>
+	<string>group.ceo.nerd.hush</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSExtension</key>

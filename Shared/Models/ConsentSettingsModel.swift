@@ -1,4 +1,7 @@
 import Foundation
+import SafariServices
+
+let contentBlockerIdentifier = "\(Bundle.main.bundleIdentifier ?? "ceo.nerd.hush").ContentBlocker"
 
 // Holds the settings the views edit and saves every change to the App Group
 // and iCloud, where the Safari extension reads them.
@@ -10,6 +13,15 @@ class ConsentSettingsModel: ObservableObject {
             guard unstamped != oldValue else { return }
             settings.modifiedAt = Date()
             ConsentSettingsStore.save(settings)
+            if settings.mode != oldValue.mode {
+                // The content blocker serves a different list in each mode.
+                SFContentBlockerManager.reloadContentBlocker(withIdentifier: contentBlockerIdentifier) { error in
+                    if let error = error {
+                        print("Failed to reload content blocker")
+                        print(error)
+                    }
+                }
+            }
         }
     }
 

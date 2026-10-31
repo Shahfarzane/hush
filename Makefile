@@ -9,10 +9,12 @@ test:
 	make test_ui
 
 test_unit:
-	deno test
+	deno test --allow-read=./data
 
 test_corpus: extension
-	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js $(SITES)
+	MINIFY=1 make blocklist --silent > build/blockerList.json
+	MINIFY=1 make blocklist --silent BLOCKLIST_FLAGS=--answer-mode > build/blockerList-answer.json
+	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js $(CORPUS_FLAGS) $(SITES)
 
 test_ui:
 	xcodebuild test -project Hush.xcodeproj -scheme 'Hush iOS' -destination 'platform=iOS Simulator,name=iPhone 17'
@@ -32,7 +34,7 @@ extension:
 	cp WebExtension/manifest.json WebExtension/content.css "$(EXTENSION_OUT)/"
 
 blocklist:
-	deno run --allow-read=./data --allow-env=MINIFY scripts/build-blocklist.js
+	deno run --allow-read=./data --allow-env=MINIFY scripts/build-blocklist.js $(BLOCKLIST_FLAGS)
 
 xcode:
 ifeq ("$(CONFIGURATION_BUILD_DIR)","")
@@ -43,6 +45,7 @@ ifeq ("$(UNLOCALIZED_RESOURCES_FOLDER_PATH)","")
 endif
 	mkdir -p "$(CONFIGURATION_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)"
 	MINIFY=1 make blocklist --silent > "$(CONFIGURATION_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/blockerList.json"
+	MINIFY=1 make blocklist --silent BLOCKLIST_FLAGS=--answer-mode > "$(CONFIGURATION_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/blockerList-answer.json"
 
 xcode_extension:
 ifeq ("$(CONFIGURATION_BUILD_DIR)","")
