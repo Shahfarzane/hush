@@ -29,6 +29,9 @@
 //   level matches Bing's all-off defaults the rule clicked a dead button and
 //   left the panel open. It now waits for the panel's switches, and if Save
 //   is still disabled it clicks Bing's own Reject instead.
+// - iubuenda (iubenda's classic banner): OPEN_OPTIONS clicked Customize and
+//   the rule went on before iubenda drew its preferences panel (~180 ms), so
+//   no switch was set and Save was never pressed. It now waits for Save.
 // - yahoo_consent, yahoo_popup: disabled. Both target older versions of
 //   consent.yahoo.com: on the current page yahoo_consent claims the banner
 //   with zero clicks (its switches and Save button are on a settings view it
@@ -78,9 +81,11 @@ export const applyOverrides = (rules, overrides) =>
 
 // Vendored rules with Hush's fixes applied, plus rules Hush maintains itself
 // in data/consent-rules.json for platforms Consent-O-Matic does not cover
-// (CookieYes) or no longer matches (Usercentrics' shadow DOM banner, and X,
+// (CookieYes) or no longer matches (Usercentrics' shadow DOM banner; X,
 // whose banner left #layers and div[role=button] for a "Cookie consent"
-// region with two buttons: Accept first, Refuse second).
+// region with two buttons: Accept first, Refuse second; and iubenda 1.109's
+// tb-banner web components, three shadow roots deep, whose buttons keep the
+// classes reject-button and accept-button in every language).
 export const buildRules = (vendored, overrides, own) => ({
   ...applyOverrides(vendored, overrides),
   ...own,

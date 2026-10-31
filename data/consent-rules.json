@@ -356,5 +356,115 @@
         "name": "SAVE_CONSENT"
       }
     ]
+  },
+  "iubenda-tb": {
+    "detectors": [
+      {
+        "presentMatcher": [
+          {
+            "type": "css",
+            "parent": {
+              "selector": "tb-banner-wrapper"
+            },
+            "target": {
+              "selector": "tb-banner-footer"
+            }
+          }
+        ],
+        "showingMatcher": [
+          {
+            "type": "css",
+            "parent": {
+              "selector": "tb-banner-wrapper"
+            },
+            "target": {
+              "selector": "tb-banner-footer",
+              "displayFilter": true
+            }
+          }
+        ]
+      }
+    ],
+    "methods": [
+      {
+        "name": "HIDE_CMP",
+        "action": {
+          "type": "hide",
+          "target": {
+            "selector": "tb-banner-wrapper"
+          }
+        }
+      },
+      {
+        "name": "OPEN_OPTIONS"
+      },
+      {
+        "name": "DO_CONSENT",
+        "action": {
+          "type": "ifallowall",
+          "trueAction": {
+            "type": "runrooted",
+            "target": {
+              "selector": "tb-banner-wrapper"
+            },
+            "action": {
+              "type": "runrooted",
+              "target": {
+                "selector": "tb-banner-footer"
+              },
+              "action": {
+                "type": "runrooted",
+                "target": {
+                  "selector": "tb-action-button",
+                  "childFilter": {
+                    "target": {
+                      "selector": "button.accept-button"
+                    }
+                  }
+                },
+                "action": {
+                  "type": "click",
+                  "target": {
+                    "selector": "button.accept-button"
+                  }
+                }
+              }
+            }
+          },
+          "falseAction": {
+            "type": "runrooted",
+            "target": {
+              "selector": "tb-banner-wrapper"
+            },
+            "action": {
+              "type": "runrooted",
+              "target": {
+                "selector": "tb-banner-footer"
+              },
+              "action": {
+                "type": "runrooted",
+                "target": {
+                  "selector": "tb-action-button",
+                  "childFilter": {
+                    "target": {
+                      "selector": "button.reject-button"
+                    }
+                  }
+                },
+                "action": {
+                  "type": "click",
+                  "target": {
+                    "selector": "button.reject-button"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "SAVE_CONSENT"
+      }
+    ]
   }
 }
