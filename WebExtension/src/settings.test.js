@@ -3,8 +3,11 @@ import {
   autoActionFor,
   consentTypesFor,
   DEFAULT_SETTINGS,
+  levelTitle,
   normalizeSettings,
   shouldAnswer,
+  siteFor,
+  siteKey,
 } from "./settings.js";
 
 Deno.test("Functional only consents to type A alone", () => {
@@ -72,4 +75,31 @@ Deno.test("The autoconsent fallback refuses unless everything is allowed", () =>
     })),
     "optIn",
   );
+});
+
+Deno.test("Level titles match the app's presets", () => {
+  assertEquals(levelTitle(DEFAULT_SETTINGS), "Functional only");
+  assertEquals(
+    levelTitle(normalizeSettings({ categories: { functional: false } })),
+    "Maximum privacy",
+  );
+  assertEquals(
+    levelTitle(normalizeSettings({ categories: { performance: true } })),
+    "Balanced",
+  );
+  assertEquals(
+    levelTitle(normalizeSettings({ categories: { advertising: true } })),
+    "Custom",
+  );
+});
+
+Deno.test("Pausing a page pauses its site without www", () => {
+  assertEquals(siteFor("www.Example.com"), "example.com");
+  assertEquals(siteFor("news.example.co.uk"), "news.example.co.uk");
+});
+
+Deno.test("Hosts on the same site share a key", () => {
+  assertEquals(siteKey("open.spotify.com"), siteKey("www.spotify.com"));
+  assertEquals(siteKey("news.bbc.co.uk"), "bbc.co.uk");
+  assertEquals(siteKey("example.com"), "example.com");
 });

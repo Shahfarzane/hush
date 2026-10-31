@@ -41,3 +41,34 @@ export const shouldAnswer = (settings, host) =>
 // every category is allowed.
 export const autoActionFor = ({ categories }) =>
   Object.values(categories).every(Boolean) ? "optIn" : "optOut";
+
+// Same presets and titles as PrivacyLevel in Shared/Models/ConsentSettings.swift.
+const LEVELS = [
+  ["Maximum privacy", [false, false, false, false]],
+  ["Functional only", [true, false, false, false]],
+  ["Balanced", [true, true, false, false]],
+];
+
+export const levelTitle = ({ categories }) => {
+  const values = [
+    categories.functional,
+    categories.performance,
+    categories.advertising,
+    categories.other,
+  ];
+  return LEVELS.find(([, preset]) =>
+    preset.every((value, index) => value === values[index])
+  )?.[0] ?? "Custom";
+};
+
+// The site Pause on this site adds: the host without a leading "www.".
+export const siteFor = (host) => host.toLowerCase().replace(/^www\./, "");
+
+// Rough registrable domain, so an answer on www.spotify.com still shows on
+// open.spotify.com after a redirect: the last two labels, or three when the
+// second-last is a short registry label such as "co" in example.co.uk.
+export const siteKey = (host) => {
+  const labels = host.toLowerCase().split(".");
+  const count = labels.length > 2 && labels.at(-2).length <= 3 ? 3 : 2;
+  return labels.slice(-count).join(".");
+};
