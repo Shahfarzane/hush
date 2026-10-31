@@ -9,6 +9,32 @@
   <br>
 </div>
 
+## This fork: Hush Extra
+
+Hush hides cookie banners. This fork can also answer them with a level you pick, so sites store your choice instead of asking again.
+
+- Levels: Maximum privacy, Functional only, Balanced, or Custom (functional, performance, advertising and other, each on or off). Necessary cookies are always allowed.
+- Answers come from two open-source rule sets: [Consent-O-Matic](https://github.com/cavi-au/Consent-O-Matic) (MIT) for per-category answers, and DuckDuckGo's [autoconsent](https://github.com/duckduckgo/autoconsent) (MPL-2.0) as a fallback that refuses unless every category is allowed. Hush's own fixes live in `data/consent-o-matic-overrides.json` and `data/consent-rules.json`.
+- A banner with no way to refuse is hidden, never accepted. Platforms neither rule set answers stay hidden by the content blocker, as in the original Hush.
+- Pause Hush on a site from the app or the Safari toolbar popup. The popup also shows what Hush did on the page.
+- Settings sync between iPhone, iPad and Mac through iCloud. The latest change wins.
+- "Only hide it" mode keeps the original behavior.
+
+Privacy: answering a banner means reading and clicking it, so the Safari web extension needs access to all websites. Everything runs on the device. Only your settings (level, mode, paused sites) leave it, through iCloud key-value storage, and each device can turn that off.
+
+Build and test:
+
+```sh
+make test_unit      # Deno unit tests
+make test_swift     # settings sync tests (macOS)
+make test_corpus    # loads real consent pages in WebKit and reads back what each site stored
+make testflight ASC_KEY_PATH=AuthKey.p8 ASC_KEY_ID=<key id> ASC_ISSUER_ID=<issuer id>
+```
+
+`make test_corpus` also takes site names and `CORPUS_FLAGS="--mobile --level=balanced"`. Design notes and results per phase are in [docs/plan.md](docs/plan.md).
+
+The download links below are for the original Hush by Joel Arvidsson.
+
 >I’d recommend Hush to anyone who uses Safari
 
 – John Gruber, [Daring Fireball](https://daringfireball.net/linked/2021/01/23/hush) 23 January 2021
