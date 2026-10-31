@@ -1,11 +1,12 @@
 import { assertEquals } from "jsr:@std/assert@1";
-import { applyOverrides } from "./rules.js";
+import { applyOverrides, buildRules } from "./rules.js";
 import rules from "../../data/vendor/consent-o-matic-rules.json" with {
   type: "json",
 };
 import overrides from "../../data/consent-o-matic-overrides.json" with {
   type: "json",
 };
+import hushRules from "../../data/consent-rules.json" with { type: "json" };
 
 const methodNames = (rule) => rule.methods.map((method) => method.name);
 
@@ -71,7 +72,7 @@ Deno.test("Amazon's advertising control is not treated as functional", () => {
 // Reviewed exceptions: flysas calls its functionality tab "Performance".
 Deno.test("No functional consent controls advertising or analytics", () => {
   const reviewed = ["flysas"];
-  const mislabelled = Object.entries(applyOverrides(rules, overrides))
+  const mislabelled = Object.entries(buildRules(rules, overrides, hushRules))
     .filter(([name]) => !reviewed.includes(name))
     .flatMap(([name, rule]) =>
       consentsOf(rule.methods)
@@ -121,6 +122,15 @@ Deno.test("Quantcast only saves from the options view, never Accept", () => {
   assertEquals(save.target.selector, "#save-and-exit");
   assertEquals(save.falseAction, undefined);
   assertEquals(JSON.stringify(save).includes("accept"), false);
+});
+
+Deno.test("Hush rules keep vendored names free and define every step", () => {
+  const steps = ["HIDE_CMP", "OPEN_OPTIONS", "DO_CONSENT", "SAVE_CONSENT"];
+  for (const [name, rule] of Object.entries(hushRules)) {
+    assertEquals(name in rules, false, `${name} shadows a vendored rule`);
+    assertEquals(methodNames(rule), steps, name);
+    assertEquals(rule.detectors.length > 0, true, name);
+  }
 });
 
 Deno.test("Didomi treats Functionality as functional, not device storage", () => {

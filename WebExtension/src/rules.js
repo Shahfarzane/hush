@@ -63,3 +63,11 @@ export const applyOverrides = (rules, overrides) =>
       }];
     }),
   );
+
+// Vendored rules with Hush's fixes applied, plus rules Hush maintains itself
+// in data/consent-rules.json for platforms Consent-O-Matic does not cover
+// (CookieYes) or no longer matches (Usercentrics' shadow DOM banner).
+export const buildRules = (vendored, overrides, own) => ({
+  ...applyOverrides(vendored, overrides),
+  ...own,
+});
