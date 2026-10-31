@@ -5,10 +5,11 @@ import vendoredRules from "../data/vendor/consent-o-matic-rules.json" with {
 import overrides from "../data/consent-o-matic-overrides.json" with {
   type: "json",
 };
-import { applyOverrides } from "./src/rules.js";
+import hushRules from "../data/consent-rules.json" with { type: "json" };
+import { buildRules } from "./src/rules.js";
 import { consentTypesFor, shouldAnswer } from "./src/settings.js";
 
-const rules = applyOverrides(vendoredRules, overrides);
+const rules = buildRules(vendoredRules, overrides, hushRules);
 
 const insideIframe = window !== window.parent;
 
