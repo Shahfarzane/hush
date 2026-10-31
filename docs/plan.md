@@ -1,6 +1,6 @@
 # Consent levels for Hush: plan
 
-Status: Phase 0 done 2026-10-31 (see "Phase 0 results"). Next is Phase 1.
+Status: Phases 0 and 1 done 2026-10-31 (see their results sections). Next is Phase 2.
 
 ## Goal
 
@@ -47,6 +47,8 @@ All three share an App Group (`group.ceo.nerd.hush`). The app writes settings to
 | Functional | A (Preferences and Functionality) | preferences | C0003 |
 | Performance | B (Performance and Analytics) | statistics | C0002 |
 | Advertising | E (Content selection, delivery, reporting), F (Ad selection, delivery, reporting) | marketing | C0004, C0005 |
+
+Social media and social sharing cookies count as advertising, matching OneTrust's C0005.
 | Other | D (Information Storage and Access), X (Other Purposes) | n/a | rest |
 
 Putting D under "Other" is a judgment call: D is TCF Purpose 1 (store or access information on a device). With "functional only" it stays off, which is the privacy-safe reading and matches Super Agent's "other: off".
@@ -122,6 +124,17 @@ Each phase ends in a commit that builds and passes its verification.
 - `scripts/build-extension.js` (Deno) bundles the vendored engine (`vendor/consent-o-matic/`, with its MIT license) and rules into `content.js`. Xcode build phase calls it like `make xcode` does for the blocklist.
 - Settings model: `Shared/Models/ConsentSettings.swift` (categories, mode, hide-while-answering, paused sites) stored in the App Group, with a JSON shape shared with the extension.
 - Verify: Deno unit tests for category mapping and decision order (`scripts/src/*.test.js`); manual Cookiebot and OneTrust pages on both platforms with consent state read back from the CMP API.
+
+**Phase 1 results (2026-10-31)**
+- `make test_corpus` loads the built `content.js` into headless WebKit on 17 live sites covering Cookiebot, OneTrust (three variants), Didomi, Sourcepoint, Quantcast, Usercentrics, Complianz, CookieYes, Cookie Information and TrustArc, then reads each platform's stored consent back (`scripts/src/consent-readers.js`). A run fails only on over-consent (a category stored as allowed that the level refuses); refusing an allowed category is reported as "stricter". Latest run: 14 pass, 0 wrong, 1 stricter, 2 not answered.
+- Over-consent bugs found and fixed through overrides:
+  - Quantcast opened "More options" by matching text in five languages and then clicked the primary button, which is Accept on the summary screen. Every other language, Swedish included (feber.se), accepted everything. Options now open by `#more-options-btn` and saving only happens from the options view.
+  - Amazon's advertising control and one Cookie Information markup variant's statistics switch were labelled functional, so "functional only" turned them on. Retyped.
+  - Social media or ad measurement mislabelled as analytics or functional in OneTrust, Lenovo, lamarquezone, Cookie Control (Civic), Springer and Chandago. Retyped.
+- A unit test now fails whenever a vendored or Hush rule labels an advertising or analytics control as functional, or an advertising control as analytics, so re-vendoring cannot silently bring these back.
+- Hush-owned rules (`data/consent-rules.json`) for CookieYes, which Consent-O-Matic does not cover, and Usercentrics' current banner, which lives in an open shadow root that the vendored rule no longer matches.
+- Real Safari: OneTrust (onetrust.com) stored `groups=1:1,2:0,3:1,4:0` (necessary and functional on, performance and targeting off) in both iOS 27.2 simulator Safari and macOS Safari.
+- Known gaps: didomi.io stays stricter (the rule disagrees to every vendor, and Didomi then reports the functional purpose off; the purpose-level mapping is fixed). TrustArc is not answered on ibm.com and only hidden on oracle.com. No Borlabs site with a visible box was found for the corpus. These fall back to hiding today and are candidates for the Phase 4 fallback.
 
 **Phase 2: settings panel**
 - `Shared/Views/SettingsView.swift`, `Shared/Views/PausedSitesView.swift`, wiring in `ContentView.swift` and `HushApp.swift` (macOS `Settings` scene).
