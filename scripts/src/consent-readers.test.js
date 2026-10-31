@@ -207,3 +207,14 @@ Deno.test("Fallback platforms read their own consent records", () => {
     { other: false },
   );
 });
+
+Deno.test("Yahoo's EuConsent string reads as a full refusal", () => {
+  // Stored by consent.yahoo.com after "Reject all": no purpose consented.
+  const refused = "CQs89sAQs89sAAOACKSVC1FgAAAAAAAAACiQAAAAAAAA.IMytB9G7";
+  assertEquals(readers.yahoo({ cookies: jar({ EuConsent: refused }) }), {
+    advertising: false,
+    performance: false,
+    other: false,
+  });
+  assertEquals(readers.yahoo({ cookies: [] }), null);
+});

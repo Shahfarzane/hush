@@ -1,7 +1,8 @@
 // Fixes for vendored Consent-O-Matic rules, kept in
 // data/consent-o-matic-overrides.json so they survive re-vendoring. An
-// override can replace whole methods by name (`methods`) or change the
-// category of consents whose selectors contain a given string (`retype`).
+// override can replace whole methods by name (`methods`), change the
+// category of consents whose selectors contain a given string (`retype`), or
+// leave a rule out (`disable`) so the autoconsent fallback answers instead.
 //
 // Current overrides:
 // - cookiebot SAVE_CONSENT: upstream clicks "Allow selection" and then
@@ -24,6 +25,11 @@
 //   counts as advertising (F).
 // - springer, chandago: ad measurement and ad selection are labelled
 //   analytics (B); chandago also has measurement labelled ads (F). Swapped.
+// - yahoo_consent, yahoo_popup: disabled. Both target older versions of
+//   consent.yahoo.com: on the current page yahoo_consent claims the banner
+//   with zero clicks (its switches and Save button are on a settings view it
+//   never opens) and yahoo_popup opens settings without saving. autoconsent's
+//   Yahoo rule clicks "Reject all" there.
 const retypeConsents = (node, retype) => {
   if (Array.isArray(node)) {
     return node.map((child) => retypeConsents(child, retype));
@@ -46,7 +52,9 @@ const retypeConsents = (node, retype) => {
 
 export const applyOverrides = (rules, overrides) =>
   Object.fromEntries(
-    Object.entries(rules).map(([name, rule]) => {
+    Object.entries(rules).filter(([name]) => !overrides[name]?.disable).map((
+      [name, rule],
+    ) => {
       const override = overrides[name];
       if (!override) return [name, rule];
       const replaced = new Map(

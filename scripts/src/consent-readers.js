@@ -96,6 +96,23 @@ const tcf = ({ tcData }) => {
   };
 };
 
+// A TCF v2 core string keeps the 24 purpose consents from bit 152 on.
+const tcStringPurposes = (value) => {
+  const core = value.split(".")[0].replace(/-/g, "+").replace(/_/g, "/");
+  const bytes = atob(core + "=".repeat((4 - (core.length % 4)) % 4));
+  const bit = (index) =>
+    (bytes.charCodeAt(index >> 3) >> (7 - (index & 7))) & 1;
+  return Object.fromEntries(
+    Array.from({ length: 24 }, (_, i) => [i + 1, bit(152 + i) === 1]),
+  );
+};
+
+// consent.yahoo.com stores its TCF string in the EuConsent cookie.
+const yahoo = ({ cookies }) => {
+  const value = cookieValue(cookies, "EuConsent");
+  return value ? tcf({ tcData: { purposes: tcStringPurposes(value) } }) : null;
+};
+
 // Usercentrics categories carry a display name ("Functional", "Marketing",
 // or site-specific ones such as "Analytics").
 const usercentrics = ({ usercentrics }) =>
@@ -268,6 +285,7 @@ export const readers = {
   ketch,
   consentmanager,
   axeptio,
+  yahoo,
 };
 
 // Categories the reader reported that differ from the chosen level.

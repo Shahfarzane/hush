@@ -210,6 +210,11 @@ Each phase ends in a commit that builds and passes its verification.
   - With the Hush app closed, a change from the other device reached the extension on the next Safari page load, on both the Mac and the simulator.
 - Not covered: real iPhone hardware, and delay on a slow or offline network (iCloud decides when key-value changes travel).
 
+**Fixes from the first iPhone test (2026-10-31)**
+- consent.yahoo.com (where se.yahoo.com and news.yahoo.com send EU visitors) stayed on screen. Consent-O-Matic's `yahoo_consent` claimed it with zero clicks and `yahoo_popup` opened settings without saving; both target older versions of the page. They are now disabled through a new `disable` override, and autoconsent's Yahoo rule answers instead. On the iPhone it clicked "Avvisa alla", and the corpus reads Yahoo's `EuConsent` TCF string back as no purpose consented.
+- cookiebot.com was answered once the extension was allowed to run on the phone; the first screenshots were taken before it ran there.
+- After installing a new build over an old one, iOS Safari keeps using the removed copy of the extension until Safari is force-quit.
+
 **Later, only on request**: scheduled rule refresh.
 
 ## Test corpus and verification
