@@ -213,6 +213,9 @@ Each phase ends in a commit that builds and passes its verification.
 **Fixes from the first iPhone test (2026-10-31)**
 - consent.yahoo.com (where se.yahoo.com and news.yahoo.com send EU visitors) stayed on screen. Consent-O-Matic's `yahoo_consent` claimed it with zero clicks and `yahoo_popup` opened settings without saving; both target older versions of the page. They are now disabled through a new `disable` override, and autoconsent's Yahoo rule answers instead. On the iPhone it clicked "Avvisa alla", and the corpus reads Yahoo's `EuConsent` TCF string back as no purpose consented.
 - cookiebot.com was answered once the extension was allowed to run on the phone; the first screenshots were taken before it ran there.
+- bing.com left its preferences panel open. Its "Save Settings" stays disabled until a switch changes, and at levels matching Bing's all-off defaults nothing changes. The `bing` override now waits for the panel and clicks Bing's own Reject when Save is still disabled. On the iPhone, Bing stored `BCP=AD=0&AL=0&SM=0`.
+- x.com's banner was never detected: X moved it out of `#layers` and replaced `div[role=button]` with buttons in a "Cookie consent" region. A Hush rule (`x.com` in `data/consent-rules.json`) finds that region without relying on English text and clicks Refuse non-essential cookies unless every category is allowed.
+- The corpus gained `--mobile` (iPhone layout) and `--level=balanced`, and readers for Bing's `BCP` and X's `d_prefs`. Bing passes at both levels on both layouts.
 - After installing a new build over an old one, iOS Safari keeps using the removed copy of the extension until Safari is force-quit.
 
 **Later, only on request**: scheduled rule refresh.
