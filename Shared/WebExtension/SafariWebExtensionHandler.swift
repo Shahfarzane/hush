@@ -11,6 +11,7 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
         switch message?["type"] as? String {
         case "getSettings":
+            ConsentSettingsStore.markExtensionSeen()
             let local = ConsentSettingsStore.load()
             let cloud = ConsentSettingsStore.loadFromCloud()
             let settings = local ?? cloud ?? ConsentSettings()
