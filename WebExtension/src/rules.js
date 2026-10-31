@@ -25,6 +25,10 @@
 //   counts as advertising (F).
 // - springer, chandago: ad measurement and ad selection are labelled
 //   analytics (B); chandago also has measurement labelled ads (F). Swapped.
+// - bing: "Save Settings" stays disabled until a switch changes, so when the
+//   level matches Bing's all-off defaults the rule clicked a dead button and
+//   left the panel open. It now waits for the panel's switches, and if Save
+//   is still disabled it clicks Bing's own Reject instead.
 // - yahoo_consent, yahoo_popup: disabled. Both target older versions of
 //   consent.yahoo.com: on the current page yahoo_consent claims the banner
 //   with zero clicks (its switches and Save button are on a settings view it
