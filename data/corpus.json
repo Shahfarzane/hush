@@ -14,6 +14,14 @@
   {"name": "complianz.io", "url": "https://complianz.io/", "reader": "complianz", "answered": true},
   {"name": "cookieyes.com", "url": "https://www.cookieyes.com/", "reader": "cookieyes", "answered": true},
   {"name": "cookieinformation.com", "url": "https://cookieinformation.com/", "reader": "cookieinformation", "answered": true},
-  {"name": "ibm.com", "url": "https://www.ibm.com/se-en", "reader": "trustarc"},
-  {"name": "oracle.com", "url": "https://www.oracle.com/se/", "reader": "trustarc"}
+  {"name": "ibm.com", "url": "https://www.ibm.com/se-en", "reader": "trustarc", "answered": true},
+  {"name": "oracle.com", "url": "https://www.oracle.com/se/", "reader": "trustarc", "answered": true},
+  {"name": "consentmanager.net", "url": "https://www.consentmanager.net/", "reader": "consentmanager", "answered": true},
+  {"name": "osano.com", "url": "https://www.osano.com/", "reader": "osano", "answered": true},
+  {"name": "iubenda.com", "url": "https://www.iubenda.com/en/", "reader": "tcf"},
+  {"name": "cookiefirst.com", "url": "https://cookiefirst.com/", "reader": "cookiefirst", "answered": true},
+  {"name": "axeptio.eu", "url": "https://www.axeptio.eu/en/", "reader": "axeptio", "answered": true},
+  {"name": "termly.io", "url": "https://termly.io/", "reader": "termly", "answered": true},
+  {"name": "sirdata.com", "url": "https://www.sirdata.com/en/", "reader": "tcf", "answered": true},
+  {"name": "ketch.com", "url": "https://www.ketch.com/", "reader": "ketch", "answered": true}
 ]

@@ -181,6 +181,76 @@ const cookieinformation = ({ cookies }) => {
   );
 };
 
+const cookiefirst = ({ cookies }) => {
+  const value = cookieValue(cookies, "cookiefirst-consent");
+  if (!value) return null;
+  const consent = JSON.parse(decode(value));
+  return {
+    functional: consent.functional === true,
+    performance: consent.performance === true,
+    advertising: consent.advertising === true,
+  };
+};
+
+// Osano.cm.getConsent(): { ANALYTICS: "ACCEPT" | "DENY", MARKETING, ... }.
+const OSANO_CATEGORIES = {
+  ANALYTICS: "performance",
+  MARKETING: "advertising",
+  PERSONALIZATION: "functional",
+};
+const osano = ({ osano }) =>
+  osano
+    ? merge(
+      Object.entries(OSANO_CATEGORIES).map(([key, category]) => [
+        category,
+        osano[key] === "ACCEPT",
+      ]),
+    )
+    : null;
+
+// Termly.getConsentState(): { analytics: true, advertising: false, ... }.
+const termly = ({ termly }) =>
+  termly
+    ? merge([
+      ["performance", termly.analytics === true || termly.performance === true],
+      [
+        "advertising",
+        termly.advertising === true || termly.social_networking === true,
+      ],
+      ["other", termly.unclassified === true],
+    ])
+    : null;
+
+// ketch("getConsent"): purposes keyed by id, such as "analytics" or
+// "targeted_advertising".
+const ketch = ({ ketch }) =>
+  ketch
+    ? merge(
+      Object.entries(ketch).map(([id, consented]) => [
+        classify(id),
+        consented === true,
+      ]),
+    )
+    : null;
+
+// consentmanager.net __cmp("getCMPData"): purpose names with consent flags.
+const consentmanager = ({ consentmanager }) =>
+  consentmanager?.length
+    ? merge(
+      consentmanager.map(({ name, consented }) => [classify(name), consented]),
+    )
+    : null;
+
+// Axeptio stores one flag per vendor; any consented vendor is consent the
+// level did not grant, counted under "other".
+const axeptio = ({ cookies }) => {
+  const value = cookieValue(cookies, "axeptio_cookies");
+  if (!value) return null;
+  const vendors = Object.entries(JSON.parse(decode(value)))
+    .filter(([key]) => !key.startsWith("$$"));
+  return { other: vendors.some(([, consented]) => consented === true) };
+};
+
 export const readers = {
   cookiebot,
   onetrust,
@@ -192,6 +262,12 @@ export const readers = {
   trustarc,
   didomi,
   cookieinformation,
+  cookiefirst,
+  osano,
+  termly,
+  ketch,
+  consentmanager,
+  axeptio,
 };
 
 // Categories the reader reported that differ from the chosen level.

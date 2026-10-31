@@ -146,7 +146,16 @@ Deno.test("CookieYes, Complianz and TrustArc use their own field names", () => {
 Deno.test("Nothing stored reads as null", () => {
   for (const read of Object.values(readers)) {
     assertEquals(
-      read({ cookies: [], tcData: null, usercentrics: null, didomi: null }),
+      read({
+        cookies: [],
+        tcData: null,
+        usercentrics: null,
+        didomi: null,
+        osano: null,
+        termly: null,
+        ketch: null,
+        consentmanager: null,
+      }),
       null,
     );
   }
@@ -158,4 +167,43 @@ Deno.test("Mismatches list only categories that differ from the level", () => {
     ["advertising=true"],
   );
   assertEquals(mismatches({ other: false }, FUNCTIONAL_ONLY), []);
+});
+
+Deno.test("Fallback platforms read their own consent records", () => {
+  assertEquals(
+    readers.cookiefirst({
+      cookies: jar({
+        "cookiefirst-consent": encodeURIComponent(
+          '{"necessary":true,"performance":false,"functional":false,"advertising":false}',
+        ),
+      }),
+    }),
+    { functional: false, performance: false, advertising: false },
+  );
+  assertEquals(
+    readers.osano({
+      osano: {
+        ANALYTICS: "DENY",
+        MARKETING: "DENY",
+        PERSONALIZATION: "ACCEPT",
+      },
+    }),
+    { performance: false, advertising: false, functional: true },
+  );
+  assertEquals(
+    readers.ketch({
+      ketch: { analytics: false, targeted_advertising: false, essential: true },
+    }),
+    { performance: false, advertising: false },
+  );
+  assertEquals(
+    readers.axeptio({
+      cookies: jar({
+        axeptio_cookies: encodeURIComponent(
+          '{"$$completed":true,"google_analytics":false,"facebook_pixel":false}',
+        ),
+      }),
+    }),
+    { other: false },
+  );
 });
