@@ -11,6 +11,9 @@ test:
 test_unit:
 	deno test
 
+test_corpus: extension
+	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js $(SITES)
+
 test_ui:
 	xcodebuild test -project Hush.xcodeproj -scheme 'Hush iOS' -destination 'platform=iOS Simulator,name=iPhone 17'
 
