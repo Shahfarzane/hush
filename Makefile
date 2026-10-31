@@ -25,6 +25,9 @@ fetch_external:
 fetch_consent_o_matic:
 	deno run --allow-write=./data/vendor,./WebExtension/vendor --allow-net=raw.githubusercontent.com scripts/fetch-consent-o-matic.js
 
+fetch_autoconsent:
+	deno run --allow-write=./data/vendor,./WebExtension/vendor --allow-net=cdn.jsdelivr.net scripts/fetch-autoconsent.js
+
 EXTENSION_OUT ?= build/WebExtension
 
 extension:
