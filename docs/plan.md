@@ -1,6 +1,6 @@
 # Consent levels for Hush: plan
 
-Status: Phases 0 to 3 done 2026-10-31 (see their results sections). Next is Phase 4.
+Status: Phases 0 to 4 done 2026-10-31 (see their results sections). Next is Phase 5.
 
 ## Goal
 
@@ -164,6 +164,14 @@ Each phase ends in a commit that builds and passes its verification.
 **Phase 4: autoconsent fallback**
 - Add `npm:@duckduckgo/autoconsent` to the bundle, `autoAction` left unset so our orchestrator decides after Consent-O-Matic reports. Eval rules need `scripting.executeScript` in the page's main world; the spike checks Safari support, and rules that need it are disabled if not.
 - Verify: corpus sites covered only by autoconsent end in opt-out.
+
+**Phase 4 results (2026-10-31)**
+- DuckDuckGo autoconsent 17.2.0 (MPL-2.0) is vendored unmodified by `make fetch_autoconsent`. It is not part of `content.js`: when Consent-O-Matic stops without finding a banner in a frame (the top frame, or an iframe of at least 300×150), the content script asks the background, which injects `autoconsent.js` into that frame with `scripting.executeScript`. Pages Consent-O-Matic answers never load its 1 MB of rules, and a tab where any frame has answered gets no fallback, so autoconsent cannot overrule a per-category answer (Sourcepoint answers inside an iframe).
+- autoconsent runs with `autoAction` opt-out unless all four categories are allowed (then opt-in), and with prehiding, heuristic detection and generated rules off. Its eval rules call named snippets that the background runs with `world: "MAIN"`.
+- Real Safari: on iOS 27.2 simulator Safari and macOS Safari the fallback answered cookiefirst.com (performance, functional and advertising refused) and ibm.com's TrustArc (`notice_preferences=0:`, required only). consentmanager.net's detection snippets returned true in iOS Safari, so `world: "MAIN"` works there.
+- Platforms now answered and therefore left visible in answer mode: Osano (by Consent-O-Matic, per category) and, by the fallback with a refusal, TrustArc, CookieFirst, Termly, Ketch, consentmanager.net and Axeptio. New corpus readers read each one back.
+- Corpus: 25 sites, 20 pass, 4 stricter (didomi.io, TrustArc ×2 and CookieFirst refuse functional too, as chosen for fallback platforms), 0 wrong, 0 regressed, 1 unanswered (iubenda.com).
+- Not covered: iubenda; Borlabs still has no corpus site.
 
 **Phase 5: popup and polish**
 - Popup with page status and pause toggle; onboarding copy for enabling both extensions, "All Websites" permission, and Private Browsing.
