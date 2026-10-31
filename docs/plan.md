@@ -1,6 +1,6 @@
 # Consent levels for Hush: plan
 
-Status: Phases 0 to 2 done 2026-10-31 (see their results sections). Next is Phase 3.
+Status: Phases 0 to 3 done 2026-10-31 (see their results sections). Next is Phase 4.
 
 ## Goal
 
@@ -151,6 +151,15 @@ Each phase ends in a commit that builds and passes its verification.
 **Phase 3: answer-mode content blocker list**
 - `scripts/build-blocklist.js` emits both lists; `data/answer-mode-exclusions.txt`; `ContentBlockerRequestHandler.swift` picks by mode; app reloads the blocker on mode change.
 - Verify: unit test that the answer list contains no rule matching the exclusion markers and still contains the rest; corpus run shows banners answered, not hidden, for engine-covered CMPs.
+
+**Phase 3 results (2026-10-31)**
+- `make blocklist BLOCKLIST_FLAGS=--answer-mode` builds `blockerList-answer.json`: the classic list minus block and hide rules that mention a marker in `data/answer-mode-exclusions.txt` (111 of 25,033 rules). Markers are curated per platform rather than generated from rule detectors, because generic detector selectors (`#cookiebottombar`, `sticky-bar`) would have dropped unrelated rules. Hide rules are matched on their selector only; exception rules always stay, since dropping an unblock can let a generic rule block a platform's script.
+- Only platforms the corpus shows answered are listed. TrustArc and Borlabs keep being hidden and blocked in answer mode (checked on ibm.com: its script is blocked and `#truste-consent-track` hidden).
+- Rules that block or hide a platform without naming it needed their own markers: `/otBannerSdk.js` and `ot-sdk-*` (OneTrust), `privacy-center.org` (Didomi's CDN) and `||inmobi.com^` (Quantcast).
+- The content blocker targets now share the App Group and read the mode: answer mode serves `blockerList-answer.json`, hide mode `blockerList.json`. The app reloads the blocker when the mode changes. Both lists are declared outputs of the "Build block list" phase, which fixes the stale-signature pattern noted in Phase 0.
+- The corpus emulates the content blocker (`scripts/src/content-blocker.js`): hide rules as an early stylesheet in every frame, block rules as aborted requests, honouring domains, third-party, resource type and ignore-previous-rules. `--blocker=answer` is the default. Sites marked `"answered"` fail the run if they stop being answered. With the answer list: 14 pass, 0 wrong, 0 regressed, the same as without a blocker. With the full list, OneTrust and Quantcast go unanswered, as expected.
+- Real Safari (macOS, Hush content blocker on): answer mode served `blockerList-answer` and onetrust.com stored `groups=1:1,2:0,3:1,4:0`; switching to "Only hide it" reloaded the blocker with `blockerList`, and onetrust.com showed no banner and was not answered. Safari can keep a list compiled before the blocker was enabled; the app reloads it at launch.
+- Not verified: content blocker switching in iOS Safari (the iOS 27.2 simulator has no ContentBlockerLoader; needs a device).
 
 **Phase 4: autoconsent fallback**
 - Add `npm:@duckduckgo/autoconsent` to the bundle, `autoAction` left unset so our orchestrator decides after Consent-O-Matic reports. Eval rules need `scripting.executeScript` in the page's main world; the spike checks Safari support, and rules that need it are disabled if not.
