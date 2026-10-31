@@ -7,6 +7,9 @@ import overrides from "../../data/consent-o-matic-overrides.json" with {
   type: "json",
 };
 import hushRules from "../../data/consent-rules.json" with { type: "json" };
+import autoconsentRules from "../../data/vendor/autoconsent-rules.json" with {
+  type: "json",
+};
 
 const methodNames = (rule) => rule.methods.map((method) => method.name);
 
@@ -92,6 +95,7 @@ Deno.test("No functional consent controls advertising or analytics", () => {
 
 Deno.test("Every override targets an existing vendored method", () => {
   for (const [name, { methods = [] }] of Object.entries(overrides)) {
+    assertEquals(name in rules, true, name);
     for (const { name: method } of methods) {
       assertEquals(
         methodNames(rules[name]).includes(method),
@@ -142,4 +146,25 @@ Deno.test("Didomi treats Functionality as functional, not device storage", () =>
       ?.trueAction.consents[0].type;
   assertEquals(typeFor("Functionality"), "A");
   assertEquals(typeFor("Store and/or access information on a device"), "D");
+});
+
+Deno.test("A disabled rule is left out", () => {
+  const result = applyOverrides(
+    { kept: { methods: [] }, dropped: { methods: [] } },
+    { dropped: { disable: true } },
+  );
+  assertEquals(Object.keys(result), ["kept"]);
+});
+
+Deno.test("Yahoo's consent page is left to the autoconsent fallback", () => {
+  const built = buildRules(rules, overrides, hushRules);
+  assertEquals("yahoo_consent" in built, false);
+  assertEquals("yahoo_popup" in built, false);
+  const yahoo = autoconsentRules.autoconsent.find((rule) =>
+    rule.name === "Yahoo"
+  );
+  assertEquals(
+    yahoo.optOut,
+    [{ waitForThenClick: "#consent-page button[value=reject]" }],
+  );
 });

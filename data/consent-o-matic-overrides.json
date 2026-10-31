@@ -730,5 +730,11 @@
         "name": "DO_CONSENT"
       }
     ]
+  },
+  "yahoo_consent": {
+    "disable": true
+  },
+  "yahoo_popup": {
+    "disable": true
   }
 }
