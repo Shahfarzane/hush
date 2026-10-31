@@ -6,6 +6,7 @@ check_format:
 
 test:
 	make test_unit
+	make test_swift
 	make test_ui
 
 test_unit:
@@ -15,6 +16,9 @@ test_corpus: extension
 	MINIFY=1 make blocklist --silent > build/blockerList.json
 	MINIFY=1 make blocklist --silent BLOCKLIST_FLAGS=--answer-mode > build/blockerList-answer.json
 	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js $(CORPUS_FLAGS) $(SITES)
+
+test_swift:
+	xcodebuild test -project Hush.xcodeproj -scheme 'Hush macOS' -destination 'platform=macOS' -only-testing:HushTests -allowProvisioningUpdates
 
 test_ui:
 	xcodebuild test -project Hush.xcodeproj -scheme 'Hush iOS' -destination 'platform=iOS Simulator,name=iPhone 17'

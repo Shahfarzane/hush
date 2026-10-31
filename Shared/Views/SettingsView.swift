@@ -181,6 +181,15 @@ struct SettingsView: View {
             }
 
             PausedSitesSection()
+
+            Section {
+                Toggle("Sync with iCloud", isOn: $model.syncsWithICloud)
+                    .toggleStyle(.switch)
+                    .tint(.invertedBackgroundColor)
+                    .accessibilityIdentifier("sync with icloud")
+            } footer: {
+                Text("Uses the same level, banner choice and paused sites on your iPhone, iPad and Mac. The latest change wins.")
+            }
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
