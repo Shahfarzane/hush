@@ -138,17 +138,22 @@ class HushUITests: XCTestCase {
         app.launch()
         openCookieSettings()
         app.buttons["level maximumPrivacy"].tap()
-        XCTAssertEqual(app.switches["Functional cookies"].value as? String, "0")
+        XCTAssertFalse(app.switches["Functional cookies"].exists, "Category switches should only show for Custom")
 
         app.terminate()
         app.launch()
         openCookieSettings()
         XCTAssertTrue(app.buttons["level maximumPrivacy"].isSelected, "Maximum privacy was not kept")
 
+        // Custom starts from the current level and shows its switches.
+        app.buttons["level custom"].tap()
+        XCTAssertTrue(app.buttons["level custom"].isSelected)
+        XCTAssertTrue(app.switches["Functional cookies"].waitForExistence(timeout: 5), "Custom did not show the switches")
+        XCTAssertEqual(app.switches["Functional cookies"].value as? String, "0")
+
         app.buttons["level functionalOnly"].tap()
         XCTAssertTrue(app.buttons["level functionalOnly"].isSelected)
-        XCTAssertEqual(app.switches["Functional cookies"].value as? String, "1")
-        XCTAssertEqual(app.switches["Advertising cookies"].value as? String, "0")
+        XCTAssertFalse(app.switches["Functional cookies"].waitForExistence(timeout: 2), "Switches stayed after leaving Custom")
     }
 
     func testPausedSiteIsNormalizedAndRemovable() throws {

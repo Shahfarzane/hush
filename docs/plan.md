@@ -82,7 +82,7 @@ SwiftUI, in the Hush app on both platforms (iOS `Form`, macOS `Settings` scene p
 
 **Cookie preferences**
 - Privacy level picker: "Maximum privacy" (all off), "Functional only" (Shahin's level), "Balanced" (functional and performance), "Custom".
-- Four toggles with one-line summaries: Functional, Performance, Advertising, Other. Editing a toggle switches the picker to "Custom".
+- Four toggles with one-line summaries: Functional, Performance, Advertising, Other. They show only when "Custom" is picked, starting from the current level, so the presets and the toggles are not on screen twice (changed 2026-10-31 after Shahin found them duplicated).
 - Read-only row: "Necessary cookies: always allowed".
 
 **Behavior**

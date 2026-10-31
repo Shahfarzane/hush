@@ -126,15 +126,51 @@ struct PausedSitesSection: View {
     }
 }
 
+struct CookieCategoriesSection: View {
+    @EnvironmentObject var model: ConsentSettingsModel
+
+    var body: some View {
+        Section {
+            CategoryToggle(
+                title: "Functional cookies",
+                summary: "Remember your logins, language and other preferences.",
+                isOn: $model.settings.categories.functional)
+            CategoryToggle(
+                title: "Performance cookies",
+                summary: "Help sites count visits and see how their pages perform.",
+                isOn: $model.settings.categories.performance)
+            CategoryToggle(
+                title: "Advertising cookies",
+                summary: "Track you across sites for targeted ads. Social media cookies count here.",
+                isOn: $model.settings.categories.advertising)
+            CategoryToggle(
+                title: "Other cookies",
+                summary: "Anything a site does not put in the categories above.",
+                isOn: $model.settings.categories.other)
+        } header: {
+            Text("Cookie categories")
+        }
+    }
+}
+
 struct SettingsView: View {
     @EnvironmentObject var model: ConsentSettingsModel
+    // Custom stays picked while its switches still match a preset.
+    @State private var isCustomizing = false
+
+    private var selectedLevel: PrivacyLevel {
+        isCustomizing ? .custom : model.level
+    }
 
     var body: some View {
         Form {
             Section {
                 ForEach(PrivacyLevel.allCases) { level in
-                    LevelRow(level: level, isSelected: model.level == level) {
-                        model.level = level
+                    LevelRow(level: level, isSelected: selectedLevel == level) {
+                        withAnimation {
+                            isCustomizing = level == .custom
+                            model.level = level
+                        }
                     }
                 }
             } header: {
@@ -143,25 +179,8 @@ struct SettingsView: View {
                 Text("Necessary cookies are always allowed.")
             }
 
-            Section {
-                CategoryToggle(
-                    title: "Functional cookies",
-                    summary: "Remember your logins, language and other preferences.",
-                    isOn: $model.settings.categories.functional)
-                CategoryToggle(
-                    title: "Performance cookies",
-                    summary: "Help sites count visits and see how their pages perform.",
-                    isOn: $model.settings.categories.performance)
-                CategoryToggle(
-                    title: "Advertising cookies",
-                    summary: "Track you across sites for targeted ads. Social media cookies count here.",
-                    isOn: $model.settings.categories.advertising)
-                CategoryToggle(
-                    title: "Other cookies",
-                    summary: "Anything a site does not put in the categories above.",
-                    isOn: $model.settings.categories.other)
-            } header: {
-                Text("Cookie categories")
+            if selectedLevel == .custom {
+                CookieCategoriesSection()
             }
 
             Section {
