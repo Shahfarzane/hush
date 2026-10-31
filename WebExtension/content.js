@@ -7,7 +7,7 @@ import overrides from "../data/consent-o-matic-overrides.json" with {
 };
 import hushRules from "../data/consent-rules.json" with { type: "json" };
 import { buildRules } from "./src/rules.js";
-import { report, reportAnswered } from "./src/report.js";
+import { isAnswered, report, reportAnswered } from "./src/report.js";
 import { consentTypesFor, shouldAnswer } from "./src/settings.js";
 
 const rules = buildRules(vendoredRules, overrides, hushRules);
@@ -72,10 +72,11 @@ const run = async () => {
     rules,
     consentTypesFor(settings),
     (event) => {
-      if (!event.handled) {
+      if (!isAnswered(event)) {
         if (event.error) report({ outcome: "error" });
-        // Consent-O-Matic knows no banner here; the background injects the
-        // autoconsent fallback into this frame.
+        if (event.handled) report({ outcome: "no-clicks", cmp: event.cmpName });
+        // Consent-O-Matic left any banner here unanswered; the background
+        // injects the autoconsent fallback into this frame.
         if (mayHoldBanner()) sendMessage({ type: "fallback" }).catch(() => {});
         return;
       }
