@@ -7,7 +7,7 @@
 ! Only list platforms the corpus (make test_corpus) shows Hush answering
 ! without over-consent, through Consent-O-Matic or the autoconsent fallback.
 ! Platforms not listed here keep being hidden, as in classic Hush. Not
-! listed yet: Borlabs (no corpus site) and iubenda (not answered).
+! listed yet: Borlabs (no corpus site).
 
 ! Cookiebot
 CybotCookiebot
@@ -54,6 +54,11 @@ coiOverlay
 
 ! Osano (answered by Consent-O-Matic)
 osano
+
+! iubenda (classic banner by Consent-O-Matic, tb-banner by a Hush rule)
+iubenda
+_iub_cs
+tb-banner
 
 ! Answered by the autoconsent fallback, which refuses everything unless every
 ! category is allowed.

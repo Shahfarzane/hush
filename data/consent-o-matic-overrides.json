@@ -783,5 +783,31 @@
         }
       }
     ]
+  },
+  "iubuenda": {
+    "methods": [
+      {
+        "name": "OPEN_OPTIONS",
+        "action": {
+          "type": "list",
+          "actions": [
+            {
+              "type": "click",
+              "target": {
+                "selector": "#iubenda-cs-banner .iubenda-cs-customize-btn"
+              }
+            },
+            {
+              "type": "waitcss",
+              "target": {
+                "selector": "#iubFooterBtn"
+              },
+              "retries": 20,
+              "waitTime": 250
+            }
+          ]
+        }
+      }
+    ]
   }
 }

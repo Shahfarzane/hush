@@ -186,3 +186,24 @@ Deno.test("X refuses unless every category is allowed", () => {
     true,
   );
 });
+
+Deno.test("iubenda's classic rule waits for the preferences panel", () => {
+  const open = applyOverrides(rules, overrides).iubuenda.methods
+    .find((method) => method.name === "OPEN_OPTIONS").action;
+  assertEquals(open.actions[1], {
+    type: "waitcss",
+    target: { selector: "#iubFooterBtn" },
+    retries: 20,
+    waitTime: 250,
+  });
+});
+
+Deno.test("iubenda's tb-banner rejects unless every category is allowed", () => {
+  const consent = hushRules["iubenda-tb"].methods
+    .find((method) => method.name === "DO_CONSENT").action;
+  assertEquals(consent.type, "ifallowall");
+  assertEquals(
+    JSON.stringify(consent.falseAction).includes("button.reject-button"),
+    true,
+  );
+});
