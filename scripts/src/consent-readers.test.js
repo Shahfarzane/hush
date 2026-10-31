@@ -230,3 +230,16 @@ Deno.test("Bing's BCP cookie maps analytics and social media", () => {
   );
   assertEquals(readers.bing({ cookies: [] }), null);
 });
+
+Deno.test("X's d_prefs tells Accept all from Refuse non-essential", () => {
+  const refused = "MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw";
+  const accepted = "MToxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw";
+  assertEquals(readers.x({ cookies: jar({ d_prefs: refused }) }), {
+    performance: false,
+    advertising: false,
+  });
+  assertEquals(readers.x({ cookies: jar({ d_prefs: accepted }) }), {
+    performance: true,
+    advertising: true,
+  });
+});
