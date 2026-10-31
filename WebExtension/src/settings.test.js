@@ -1,5 +1,6 @@
 import { assertEquals } from "jsr:@std/assert@1";
 import {
+  autoActionFor,
   consentTypesFor,
   DEFAULT_SETTINGS,
   normalizeSettings,
@@ -49,5 +50,26 @@ Deno.test("Hide mode never answers", () => {
   assertEquals(
     shouldAnswer(normalizeSettings({ mode: "hide" }), "example.com"),
     false,
+  );
+});
+
+Deno.test("The autoconsent fallback refuses unless everything is allowed", () => {
+  assertEquals(autoActionFor(DEFAULT_SETTINGS), "optOut");
+  assertEquals(
+    autoActionFor(normalizeSettings({
+      categories: { functional: true, performance: true, advertising: true },
+    })),
+    "optOut",
+  );
+  assertEquals(
+    autoActionFor(normalizeSettings({
+      categories: {
+        functional: true,
+        performance: true,
+        advertising: true,
+        other: true,
+      },
+    })),
+    "optIn",
   );
 });

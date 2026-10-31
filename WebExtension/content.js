@@ -7,34 +7,18 @@ import overrides from "../data/consent-o-matic-overrides.json" with {
 };
 import hushRules from "../data/consent-rules.json" with { type: "json" };
 import { buildRules } from "./src/rules.js";
+import { report, reportAnswered } from "./src/report.js";
 import { consentTypesFor, shouldAnswer } from "./src/settings.js";
 
 const rules = buildRules(vendoredRules, overrides, hushRules);
 
 const insideIframe = window !== window.parent;
 
-// Read back after answering to confirm what the site stored.
-const CONSENT_COOKIES = ["CookieConsent", "OptanonConsent", "euconsent-v2"];
-
 const sendMessage = (message) => browser.runtime.sendMessage(message);
 
-const report = (fields) =>
-  sendMessage({
-    type: "report",
-    host: location.host,
-    frame: insideIframe ? "iframe" : "top",
-    ...fields,
-  }).catch(() => {});
-
-const readConsentCookies = () =>
-  Object.fromEntries(
-    document.cookie.split("; ")
-      .map((cookie) => {
-        const separator = cookie.indexOf("=");
-        return [cookie.slice(0, separator), cookie.slice(separator + 1)];
-      })
-      .filter(([name]) => CONSENT_COOKIES.includes(name)),
-  );
+// Ad slots are small; consent banners in frames are not.
+const mayHoldBanner = () =>
+  !insideIframe || (window.innerWidth >= 300 && window.innerHeight >= 150);
 
 // From Consent-O-Matic's contentScript.js: remember the page's own scroll
 // styles so the engine can restore them when a banner locked scrolling.
@@ -90,13 +74,12 @@ const run = async () => {
     (event) => {
       if (!event.handled) {
         if (event.error) report({ outcome: "error" });
+        // Consent-O-Matic knows no banner here; the background injects the
+        // autoconsent fallback into this frame.
+        if (mayHoldBanner()) sendMessage({ type: "fallback" }).catch(() => {});
         return;
       }
-      report({ outcome: "handled", cmp: event.cmpName, clicks: event.clicks });
-      setTimeout(
-        () => report({ outcome: "cookies", cookies: readConsentCookies() }),
-        2000,
-      );
+      reportAnswered(event.cmpName, event.clicks);
     },
   );
 };

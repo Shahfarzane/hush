@@ -34,6 +34,7 @@ extension:
 	mkdir -p "$(EXTENSION_OUT)"
 	deno bundle --quiet --platform browser --minify -o "$(EXTENSION_OUT)/content.js" WebExtension/content.js
 	deno bundle --quiet --platform browser --minify -o "$(EXTENSION_OUT)/background.js" WebExtension/background.js
+	deno bundle --quiet --platform browser --minify -o "$(EXTENSION_OUT)/autoconsent.js" WebExtension/autoconsent.js
 	cp WebExtension/manifest.json WebExtension/content.css "$(EXTENSION_OUT)/"
 
 blocklist:
