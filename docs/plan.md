@@ -212,6 +212,12 @@ Each phase ends in a commit that builds and passes its verification.
 - The corpus gained `--mobile` (iPhone layout) and `--level=balanced`, and readers for Bing's `BCP` and X's `d_prefs`. Bing passes at both levels on both layouts.
 - After installing a new build over an old one, iOS Safari keeps using the removed copy of the extension until Safari is force-quit.
 
+**iubenda (2026-10-31)**
+- iubenda.com, the last unanswered corpus site, no longer shows the classic iubenda banner. iubenda 1.109 now uses `tb-banner` web components, three shadow roots deep. A Hush rule (`iubenda-tb`) steps in with nested `runrooted` actions and clicks `button.reject-button` (or `accept-button` if every category is allowed); those class names are the same in every language.
+- The classic banner (`#iubenda-cs-banner`, Consent-O-Matic's misspelled `iubuenda` rule) clicked Customize and went on before iubenda drew its preferences panel, about 180 ms later. It ended with one click and nothing saved. The override now waits for `#iubFooterBtn`.
+- iubenda is now excluded from the answer-mode content blocker, and a corpus reader decodes its `_iub_cs-` cookie (per purpose, or a single consent flag).
+- Corpus: tomshw.it passes at "functional only". skuola.net is stricter because it only offers a single yes/no, and iubenda.com is stricter by design. Full run: 24 pass, 0 wrong, 0 regressed, 6 stricter, 0 unanswered.
+
 **Distribution through TestFlight (2026-10-31)**
 - App Store Connect record "Hush Extra" (iOS and macOS, bundle ID `ceo.nerd.hush`); the apps still show "Hush" on the device. An internal TestFlight group gets every build, so installs and updates need no cable.
 - `make testflight` archives both apps, exports them with App Store signing and uploads them, using an App Store Connect API key from `ASC_KEY_PATH`, `ASC_KEY_ID` and `ASC_ISSUER_ID`. Build numbers come from the clock (`20261031.1502`). Internal TestFlight builds expire after 90 days.
