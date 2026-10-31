@@ -88,8 +88,27 @@ class HushUITests: XCTestCase {
         XCTFail("App did not show \"\(identifier)\" within \(timeout)s")
     }
 
+    // The content blocker status only shows when Hush hides banners instead of
+    // answering them.
+    private func setBannerMode(_ mode: String) {
+        openCookieSettings()
+        let picker = app.buttons["banner mode"]
+        while !picker.isHittable {
+            app.swipeUp()
+        }
+        picker.tap()
+        app.buttons[mode].firstMatch.tap()
+        app.navigationBars.buttons.firstMatch.tap()
+    }
+
     func testSettingsIntegration() throws {
         app.launch()
+        setBannerMode("Only hide it")
+        // Teardown blocks still run after a failed assertion; defer does not.
+        addTeardownBlock {
+            self.app.activate()
+            self.setBannerMode("Answer with my choices")
+        }
         try toggleContentBlockerEnabled(isOn: false)
         assertAppShows("extension disabled")
         try toggleContentBlockerEnabled(isOn: true)
@@ -106,5 +125,48 @@ class HushUITests: XCTestCase {
         settingsApp.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(settingsApp.staticTexts["Allow"].waitForExistence(timeout: 30), "All Websites is not set to Allow")
         settingsApp.terminate()
+    }
+
+    private func openCookieSettings() {
+        let link = app.buttons["change cookie level"]
+        XCTAssertTrue(link.waitForExistence(timeout: 10), "Cookie level link not found")
+        link.tap()
+        XCTAssertTrue(app.navigationBars["Cookie level"].waitForExistence(timeout: 10), "Cookie level page did not open")
+    }
+
+    func testCookieLevelIsSavedAcrossLaunches() throws {
+        app.launch()
+        openCookieSettings()
+        app.buttons["level maximumPrivacy"].tap()
+        XCTAssertEqual(app.switches["Functional cookies"].value as? String, "0")
+
+        app.terminate()
+        app.launch()
+        openCookieSettings()
+        XCTAssertTrue(app.buttons["level maximumPrivacy"].isSelected, "Maximum privacy was not kept")
+
+        app.buttons["level functionalOnly"].tap()
+        XCTAssertTrue(app.buttons["level functionalOnly"].isSelected)
+        XCTAssertEqual(app.switches["Functional cookies"].value as? String, "1")
+        XCTAssertEqual(app.switches["Advertising cookies"].value as? String, "0")
+    }
+
+    func testPausedSiteIsNormalizedAndRemovable() throws {
+        app.launch()
+        openCookieSettings()
+        let pause = app.buttons["pause a site"]
+        while !pause.isHittable {
+            app.swipeUp()
+        }
+        pause.tap()
+        let field = app.alerts.textFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5), "Pause prompt did not open")
+        field.typeText("https://www.Example.com/some/page")
+        app.alerts.buttons["Pause"].tap()
+
+        let resume = app.buttons["Resume example.com"]
+        XCTAssertTrue(resume.waitForExistence(timeout: 5), "example.com was not added")
+        resume.tap()
+        XCTAssertFalse(resume.waitForExistence(timeout: 2), "example.com was not removed")
     }
 }
