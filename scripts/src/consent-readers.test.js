@@ -218,3 +218,15 @@ Deno.test("Yahoo's EuConsent string reads as a full refusal", () => {
   });
   assertEquals(readers.yahoo({ cookies: [] }), null);
 });
+
+Deno.test("Bing's BCP cookie maps analytics and social media", () => {
+  assertEquals(
+    readers.bing({ cookies: jar({ BCP: "AD=0&AL=1&SM=0" }) }),
+    { performance: true, advertising: false },
+  );
+  assertEquals(
+    readers.bing({ cookies: jar({ BCP: "AD=0&AL=0&SM=1" }) }),
+    { performance: false, advertising: true },
+  );
+  assertEquals(readers.bing({ cookies: [] }), null);
+});

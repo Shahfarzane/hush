@@ -1,6 +1,7 @@
 [
   {"name": "cookiebot.com", "url": "https://www.cookiebot.com/en/", "reader": "cookiebot", "answered": true},
   {"name": "se.yahoo.com", "url": "https://se.yahoo.com/", "reader": "yahoo", "answered": true},
+  {"name": "bing.com", "url": "https://www.bing.com/", "reader": "bing", "answered": true},
   {"name": "onetrust.com", "url": "https://www.onetrust.com/", "reader": "onetrust", "answered": true},
   {"name": "spotify.com", "url": "https://www.spotify.com/se/", "reader": "onetrust", "answered": true},
   {"name": "booking.com", "url": "https://www.booking.com/", "reader": "onetrust", "answered": true},
