@@ -9,6 +9,7 @@ struct HushApp: App {
 
     let contentBlockerIdentifier = "\(Bundle.main.bundleIdentifier ?? "ceo.nerd.hush").ContentBlocker"
     let appState = AppState(initialContentBlockerEnabledState: .undetermined)
+    let settingsModel = ConsentSettingsModel(settings: ConsentSettingsStore.load() ?? ConsentSettings())
 
     init() {
         if ConsentSettingsStore.load() == nil {
@@ -39,6 +40,15 @@ struct HushApp: App {
                 }
             }
         })
+        #if os(macOS)
+        SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: webExtensionIdentifier) { (state, error) in
+            DispatchQueue.main.async {
+                appState.webExtensionEnabledState = state.map { $0.isEnabled ? .enabled : .disabled } ?? .undetermined
+            }
+        }
+        #else
+        appState.webExtensionEnabledState = ConsentSettingsStore.extensionLastSeen == nil ? .disabled : .enabled
+        #endif
     }
 
     var body: some Scene {
@@ -46,17 +56,18 @@ struct HushApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(appState)
+                .environmentObject(settingsModel)
                 .onAppear(perform: refreshEnabledState)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willBecomeActiveNotification)) { _ in
                     refreshEnabledState()
                 }
                 .frame(
-                    minWidth: 320,
-                    idealWidth: 350,
+                    minWidth: 360,
+                    idealWidth: 400,
                     maxWidth: 500,
-                    minHeight: 440,
-                    idealHeight: 460,
-                    maxHeight: 600
+                    minHeight: 580,
+                    idealHeight: 600,
+                    maxHeight: 700
                 )
                 .background(Color.appBackgroundColor.ignoresSafeArea())
         }
@@ -65,17 +76,28 @@ struct HushApp: App {
             CommandGroup(replacing: CommandGroupPlacement.newItem) {}
         }
         .windowStyle(HiddenTitleBarWindowStyle())
+        .windowResizability(.contentSize)
+
+        Settings {
+            SettingsView()
+                .environmentObject(settingsModel)
+                .frame(width: 480, height: 640)
+        }
         #else
         WindowGroup {
-            ZStack {
-                Color.appBackgroundColor.ignoresSafeArea()
-                ContentView()
-                    .environmentObject(appState)
-                    .onAppear(perform: refreshEnabledState)
-                    .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-                        refreshEnabledState()
-                    }
+            NavigationStack {
+                ZStack {
+                    Color.appBackgroundColor.ignoresSafeArea()
+                    ContentView()
+                        .environmentObject(appState)
+                        .onAppear(perform: refreshEnabledState)
+                        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                            refreshEnabledState()
+                        }
+                }
             }
+            .environmentObject(settingsModel)
+            .tint(.invertedBackgroundColor)
         }
         #endif
     }

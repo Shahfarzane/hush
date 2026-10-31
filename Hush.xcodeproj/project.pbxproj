@@ -37,6 +37,12 @@
 		CE0D00000000000000000026 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000001 /* SafariWebExtensionHandler.swift */; };
 		CE0D00000000000000000027 /* ConsentSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000002 /* ConsentSettings.swift */; };
 		CE0D00000000000000000028 /* WebExtension macOS.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000018 /* WebExtension macOS.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CE0D00000000000000000102 /* ConsentSettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000101 /* ConsentSettingsModel.swift */; };
+		CE0D00000000000000000103 /* ConsentSettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000101 /* ConsentSettingsModel.swift */; };
+		CE0D00000000000000000105 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000104 /* SettingsView.swift */; };
+		CE0D00000000000000000106 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000104 /* SettingsView.swift */; };
+		CE0D00000000000000000108 /* ExtensionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000107 /* ExtensionStatusView.swift */; };
+		CE0D00000000000000000109 /* ExtensionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000107 /* ExtensionStatusView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -138,6 +144,9 @@
 		CE0D00000000000000000018 /* WebExtension macOS.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "WebExtension macOS.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE0D00000000000000000019 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CE0D0000000000000000001A /* WebExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WebExtension.entitlements; sourceTree = "<group>"; };
+		CE0D00000000000000000101 /* ConsentSettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsentSettingsModel.swift; sourceTree = "<group>"; };
+		CE0D00000000000000000104 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		CE0D00000000000000000107 /* ExtensionStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionStatusView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -304,6 +313,7 @@
 			isa = PBXGroup;
 			children = (
 				A4D9A156258A06F4009D7004 /* AppState.swift */,
+				CE0D00000000000000000101 /* ConsentSettingsModel.swift */,
 				CE0D00000000000000000002 /* ConsentSettings.swift */,
 			);
 			path = Models;
@@ -313,6 +323,8 @@
 			isa = PBXGroup;
 			children = (
 				A4D9A15A258A06F4009D7004 /* ContentView.swift */,
+				CE0D00000000000000000107 /* ExtensionStatusView.swift */,
+				CE0D00000000000000000104 /* SettingsView.swift */,
 				A4D9A158258A06F4009D7004 /* InstructionsView.swift */,
 				A4E2FFC2258A30B700F0E52A /* EnabledView.swift */,
 			);
@@ -690,6 +702,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE0D00000000000000000108 /* ExtensionStatusView.swift in Sources */,
+				CE0D00000000000000000105 /* SettingsView.swift in Sources */,
+				CE0D00000000000000000102 /* ConsentSettingsModel.swift in Sources */,
 				CE0D00000000000000000004 /* ConsentSettings.swift in Sources */,
 				A4E2FFC3258A30B700F0E52A /* EnabledView.swift in Sources */,
 				A4D9A15D258A06F4009D7004 /* AppState.swift in Sources */,
@@ -704,6 +719,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE0D00000000000000000109 /* ExtensionStatusView.swift in Sources */,
+				CE0D00000000000000000106 /* SettingsView.swift in Sources */,
+				CE0D00000000000000000103 /* ConsentSettingsModel.swift in Sources */,
 				CE0D00000000000000000005 /* ConsentSettings.swift in Sources */,
 				A4F2DABB258CF46D00A7DAA5 /* InstructionsView.swift in Sources */,
 				A4E2FFC4258A30B700F0E52A /* EnabledView.swift in Sources */,

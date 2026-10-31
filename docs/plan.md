@@ -1,6 +1,6 @@
 # Consent levels for Hush: plan
 
-Status: Phases 0 and 1 done 2026-10-31 (see their results sections). Next is Phase 2.
+Status: Phases 0 to 2 done 2026-10-31 (see their results sections). Next is Phase 3.
 
 ## Goal
 
@@ -139,6 +139,14 @@ Each phase ends in a commit that builds and passes its verification.
 **Phase 2: settings panel**
 - `Shared/Views/SettingsView.swift`, `Shared/Views/PausedSitesView.swift`, wiring in `ContentView.swift` and `HushApp.swift` (macOS `Settings` scene).
 - Verify: UI test that picks "Functional only" and asserts the stored App Group value; screenshots of iOS and macOS settings rendered and checked.
+
+**Phase 2 results (2026-10-31)**
+- `Shared/Views/SettingsView.swift`: privacy level (Maximum privacy, Functional only, Balanced, Custom), the four categories with one-line summaries (any change outside a preset selects Custom), banner mode (answer or only hide), hide while answering, and paused sites. Paused sites are added through a prompt and normalised (`https://www.Example.com/x` becomes `example.com`). Styled with Hush's own tokens (yellow background and black accents, black and yellow in dark mode).
+- iOS opens it from "Cookie level: … · Change" on the main screen; macOS from the same link or ⌘, as a `Settings` scene. Every change saves to the App Group and iCloud through `ConsentSettingsModel`.
+- In answer mode the main screen reports the web extension, not the content blocker: macOS asks `SFSafariExtensionManager`; iOS has no such API, so the extension records when it last ran (`extensionLastSeen`) and the app reads that. Hide-only mode keeps the classic content blocker screen.
+- The macOS main window is now sized to its content (`windowResizability(.contentSize)`), which removes the grey bands it showed when wider than 500 pt.
+- Verified: iOS 27.2 simulator and macOS 27.2 screens rendered and checked in light and dark; presets drive the switches, a single switch moves the level to Custom, paused sites store normalised, and the stored App Group JSON matches the screen on both platforms. UI tests `testCookieLevelIsSavedAcrossLaunches` and `testPausedSiteIsNormalizedAndRemovable` pass; `testSettingsIntegration` now switches to hide-only mode first and restores answer mode in a teardown block, and still fails on the iOS 27.2 simulator for the missing ContentBlockerLoader reason noted in Phase 0.
+- Not covered: the iOS "answering" signal stays on after the extension is later turned off, since iOS cannot report that; an end-to-end Safari check of a paused site (the JS side is unit tested).
 
 **Phase 3: answer-mode content blocker list**
 - `scripts/build-blocklist.js` emits both lists; `data/answer-mode-exclusions.txt`; `ContentBlockerRequestHandler.swift` picks by mode; app reloads the blocker on mode change.
