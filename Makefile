@@ -17,6 +17,9 @@ test_ui:
 fetch_external:
 	deno run --allow-write=./data --allow-net scripts/fetch-external.js
 
+fetch_consent_o_matic:
+	deno run --allow-write=./data/vendor,./WebExtension/vendor --allow-net=raw.githubusercontent.com scripts/fetch-consent-o-matic.js
+
 blocklist:
 	deno run --allow-read=./data --allow-env=MINIFY scripts/build-blocklist.js
 
