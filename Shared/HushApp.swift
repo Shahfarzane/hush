@@ -7,7 +7,6 @@ struct HushApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     #endif
 
-    let contentBlockerIdentifier = "\(Bundle.main.bundleIdentifier ?? "ceo.nerd.hush").ContentBlocker"
     let appState = AppState(initialContentBlockerEnabledState: .undetermined)
     let settingsModel = ConsentSettingsModel(settings: ConsentSettingsStore.load() ?? ConsentSettings())
 

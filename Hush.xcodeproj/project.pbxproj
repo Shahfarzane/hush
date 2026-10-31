@@ -43,6 +43,8 @@
 		CE0D00000000000000000106 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000104 /* SettingsView.swift */; };
 		CE0D00000000000000000108 /* ExtensionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000107 /* ExtensionStatusView.swift */; };
 		CE0D00000000000000000109 /* ExtensionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000107 /* ExtensionStatusView.swift */; };
+		CE0D00000000000000000202 /* ConsentSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000002 /* ConsentSettings.swift */; };
+		CE0D00000000000000000203 /* ConsentSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000002 /* ConsentSettings.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -147,6 +149,7 @@
 		CE0D00000000000000000101 /* ConsentSettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsentSettingsModel.swift; sourceTree = "<group>"; };
 		CE0D00000000000000000104 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		CE0D00000000000000000107 /* ExtensionStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionStatusView.swift; sourceTree = "<group>"; };
+		CE0D00000000000000000201 /* ContentBlocker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ContentBlocker.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -296,6 +299,7 @@
 		A4D9A12D258A0376009D7004 /* ContentBlocker */ = {
 			isa = PBXGroup;
 			children = (
+				CE0D00000000000000000201 /* ContentBlocker.entitlements */,
 				A4D9A132258A0376009D7004 /* Info.plist */,
 			);
 			path = ContentBlocker;
@@ -617,6 +621,8 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/blockerList.json",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/blockerList-answer.json",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -636,6 +642,8 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/blockerList.json",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/blockerList-answer.json",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -737,6 +745,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE0D00000000000000000203 /* ConsentSettings.swift in Sources */,
 				A4D9A11B258A0340009D7004 /* ContentBlockerRequestHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -745,6 +754,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE0D00000000000000000202 /* ConsentSettings.swift in Sources */,
 				A4E2FFBD258A2EB700F0E52A /* ContentBlockerRequestHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1108,6 +1118,7 @@
 		A4D9A137258A0376009D7004 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = iOS/ContentBlocker/ContentBlocker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = 89S32876QM;
@@ -1130,6 +1141,7 @@
 		A4D9A138258A0376009D7004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = iOS/ContentBlocker/ContentBlocker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = 89S32876QM;
