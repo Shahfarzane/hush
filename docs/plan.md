@@ -1,6 +1,6 @@
 # Consent levels for Hush: plan
 
-Status: decisions settled 2026-10-31, waiting on the go-ahead for Phase 0. Nothing implemented yet.
+Status: Phase 0 done 2026-10-31 (see "Phase 0 results"). Next is Phase 1.
 
 ## Goal
 
@@ -105,6 +105,17 @@ Each phase ends in a commit that builds and passes its verification.
 - Deployment targets to iOS 17 and macOS 14 (from 14.3 and 11.0). Safari Web Extensions need iOS 15 at minimum; 17 and 14 allow `@Observable` and current SwiftUI `Form` APIs.
 - Spike: a throwaway web extension that injects the Consent-O-Matic engine on a Cookiebot test page in iOS Simulator Safari and macOS Safari. Proves content-script injection, `all_frames`, native messaging, App Group reads, and reading a shared iCloud key-value store from the extension on both platforms before building on them.
 - Verify: both platforms build; spike logs `HandledCMP` and `Cookiebot.consent` reads `preferences: true, statistics: false, marketing: false`.
+
+**Phase 0 results (2026-10-31)**
+- Both platforms answer Cookiebot at "functional only". iOS Simulator (iPhone 17, iOS 27.2) Safari and macOS 27.2 Safari (private window) each stored `necessary:true, preferences:true, statistics:false, marketing:false, method:'explicit'`, read back from the `CookieConsent` cookie. The extension read the settings from the App Group on both.
+- The web extension targets, native handler, settings model and Consent-O-Matic bundle landed here already, so Phase 1 extends them instead of starting from a throwaway.
+- Upstream rule bug: Consent-O-Matic's Cookiebot `SAVE_CONSENT` clicks "Allow selection" and then "Deny" while the dialog fades, saving reject-all whatever the categories. Fixed locally through `data/consent-o-matic-overrides.json`, applied by `WebExtension/src/rules.js`. Worth reporting upstream. Expect more of this; the corpus run in Phase 1 is how we find them.
+- macOS App Group: Xcode's automatic Mac profiles do not carry `group.ceo.nerd.hush`, and the sandboxed extension is refused reading it. macOS now uses `$(TeamIdentifierPrefix)ceo.nerd.hush`, iOS keeps `group.ceo.nerd.hush`, and each target reads its group from the `HushAppGroup` Info.plist key.
+- iCloud key-value store: the macOS extension reads the app's `NSUbiquitousKeyValueStore` value directly, which is what Phase 6 needs. Cross-device sync itself is not yet tested.
+- Build: the "Build web extension" script phase must declare its outputs, otherwise Xcode skips re-signing after it rewrites `content.js` and Safari rejects the extension ("Computing the code signing dictionary failed"). Upstream's "Build block list" phase has the same latent pattern; fix it in Phase 3 when it emits two lists.
+- iOS Safari lists two rows: "Hush" for the web extension and a separate "Content Blocker" row under the Hush name. macOS Safari with profiles needs the extension enabled per profile and asks for Touch ID to allow it in Private Browsing.
+- Simulator limits: the iOS 27.2 simulator has no `com.apple.SafariServices.ContentBlockerLoader` service, so `testSettingsIntegration` (content blocker state) fails there regardless of this work; it needs a real device. The new `testWebExtensionCanBeAllowedOnAllWebsites` passes.
+- Not yet verified: a build on a real iPhone (device provisioning for `group.ceo.nerd.hush` and iCloud), and the App Store Hush content blocker on your iPhone hiding banners before the engine sees them.
 
 **Phase 1: web extension with Consent-O-Matic**
 - New targets `WebExtension iOS` and `WebExtension macOS`, shared `Shared/WebExtension/SafariWebExtensionHandler.swift`, `WebExtension/` holding `manifest.json` (MV3, `content_scripts` at `document_start`, `all_frames`, `match_about_blank`), background script, content script.
