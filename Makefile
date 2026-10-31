@@ -23,6 +23,22 @@ test_swift:
 test_ui:
 	xcodebuild test -project Hush.xcodeproj -scheme 'Hush iOS' -destination 'platform=iOS Simulator,name=iPhone 17'
 
+# Archives both apps and uploads them to App Store Connect for TestFlight.
+# Needs an App Store Connect API key: ASC_KEY_PATH (the .p8 file), ASC_KEY_ID
+# and ASC_ISSUER_ID. Each run gets a new build number from the clock.
+ifndef BUILD_NUMBER
+BUILD_NUMBER := $(shell date +%Y%m%d.%H%M)
+endif
+ASC_AUTH = -allowProvisioningUpdates -authenticationKeyPath "$(ASC_KEY_PATH)" -authenticationKeyID "$(ASC_KEY_ID)" -authenticationKeyIssuerID "$(ASC_ISSUER_ID)"
+PLATFORM_ios = iOS
+PLATFORM_macos = macOS
+
+testflight: testflight_ios testflight_macos
+
+testflight_%:
+	xcodebuild archive -project Hush.xcodeproj -scheme 'Hush $(PLATFORM_$*)' -configuration Release -destination 'generic/platform=$(PLATFORM_$*)' -archivePath build/Hush-$*.xcarchive CURRENT_PROJECT_VERSION=$(BUILD_NUMBER) $(ASC_AUTH)
+	xcodebuild -exportArchive -archivePath build/Hush-$*.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build/export-$* $(ASC_AUTH)
+
 fetch_external:
 	deno run --allow-write=./data --allow-net scripts/fetch-external.js
 
