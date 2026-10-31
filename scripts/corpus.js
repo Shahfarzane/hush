@@ -5,6 +5,7 @@
 import { webkit } from "npm:playwright";
 import { mismatches, readers } from "./src/consent-readers.js";
 import { createBlocker } from "./src/content-blocker.js";
+import { evalSnippets } from "../WebExtension/vendor/autoconsent/autoconsent.esm.js";
 
 const resolveRelative = (path) => new URL(path, import.meta.url).pathname;
 
@@ -13,6 +14,9 @@ const SITES = JSON.parse(
 );
 const CONTENT_SCRIPT = await Deno.readTextFile(
   resolveRelative("../build/WebExtension/content.js"),
+);
+const AUTOCONSENT_SCRIPT = await Deno.readTextFile(
+  resolveRelative("../build/WebExtension/autoconsent.js"),
 );
 const RESULTS = resolveRelative("../build/corpus-results.json");
 
@@ -71,21 +75,40 @@ const CONSENT_COOKIE =
   /consent|optanon|cookie|didomi|borlabs|cky|cmplz|notice|gdpr|uc_/i;
 const SETTLE_MS = 3000;
 
-// Safari gives the content script its own `browser` and `chrome`; stand them
-// up in a closure so the page never sees them.
-const injected = `(() => {
+// Safari gives content scripts their own `browser` and `chrome`; stand them
+// up in a closure so the page never sees them. Messages the background
+// answers with page access (injecting the autoconsent fallback, running its
+// snippets) go to the __hushBackground binding below.
+const inScope = (script) =>
+  `(() => {
   const settings = ${JSON.stringify(SETTINGS)};
   const origins = location.ancestorOrigins;
   const topUrl = origins?.length ? origins[origins.length - 1] + "/" : location.href;
   const respond = (message) => {
     if (message === "GetTabUrl") return topUrl;
     if (message?.type === "getSettings") return settings;
+    if (message?.type === "fallback" || message?.type === "autoconsentEval") {
+      return window.__hushBackground(message);
+    }
     if (message?.type === "report") console.log("HUSH-REPORT " + JSON.stringify(message));
   };
   const browser = { runtime: { sendMessage: async (message) => respond(message) } };
   const chrome = { runtime: { sendMessage: (message, callback) => callback?.(respond(message)) } };
-  ${CONTENT_SCRIPT}
+  ${script}
 })();`;
+const injected = inScope(CONTENT_SCRIPT);
+const injectedAutoconsent = inScope(AUTOCONSENT_SCRIPT);
+
+// Mirrors background.js: no fallback once a frame in the page has answered.
+const background = async ({ frame }, message, reports) => {
+  if (message.type === "fallback") {
+    if (reports.some((report) => report.outcome === "handled")) return false;
+    await frame.evaluate(injectedAutoconsent);
+    return true;
+  }
+  const snippet = evalSnippets[message.snippetId];
+  return snippet ? frame.evaluate(snippet).catch(() => false) : false;
+};
 
 const collectPageData = () =>
   (async () => {
@@ -157,7 +180,45 @@ const collectPageData = () =>
     } catch {
       didomi = null;
     }
-    return { tcData, usercentrics, onetrustGroups, didomi };
+    const settle = (promise, fallback = null) =>
+      Promise.race([
+        promise,
+        new Promise((resolve) => setTimeout(() => resolve(fallback), 3000)),
+      ]).catch(() => fallback);
+    const apis = {};
+    try {
+      apis.osano = window.Osano?.cm?.getConsent?.() ?? null;
+    } catch {
+      apis.osano = null;
+    }
+    try {
+      apis.termly = window.Termly?.getConsentState?.() ?? null;
+    } catch {
+      apis.termly = null;
+    }
+    apis.ketch = typeof window.ketch === "function"
+      ? await settle(
+        new Promise((resolve) =>
+          window.ketch("getConsent", (consent) => resolve(consent?.purposes))
+        ),
+      )
+      : null;
+    apis.consentmanager = typeof window.__cmp === "function"
+      ? await settle(
+        new Promise((resolve) => {
+          const data = window.__cmp("getCMPData", null, resolve);
+          if (data) resolve(data);
+        }),
+      ).then((data) =>
+        data
+          ? (data.purposesList ?? []).map((purpose) => ({
+            name: purpose.name,
+            consented: data.purposeConsents?.[purpose.id] === true,
+          }))
+          : null
+      )
+      : null;
+    return { tcData, usercentrics, onetrustGroups, didomi, ...apis };
   })();
 
 const visit = async (browser, site) => {
@@ -180,6 +241,10 @@ const visit = async (browser, site) => {
           : route.continue();
       });
     }
+    await context.exposeBinding(
+      "__hushBackground",
+      (source, message) => background(source, message, reports),
+    );
     await context.addInitScript(injected);
     const page = await context.newPage();
     page.on("console", (message) => {

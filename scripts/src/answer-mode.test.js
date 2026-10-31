@@ -24,6 +24,10 @@ Deno.test("Hide and block rules of answered platforms are dropped", () => {
       "/otBannerSdk.js",
       "||privacy-center.org^$third-party",
       "||inmobi.com^$third-party",
+      "###truste-consent-track",
+      "||consent.trustarc.com$script",
+      "chipotle.com###ketch-consent-banner",
+      "ConsentManager$script,third-party",
     ]
   ) {
     assertEquals(isAnswerModeExcluded(line, markers), true, line);
@@ -38,9 +42,9 @@ Deno.test("Look-alikes, exceptions and unlisted platforms stay", () => {
       "cookiebot.com##.granify-widget-container",
       "@@||cookiebot.com^$domain=asket.com",
       "example.com#@##onetrust-banner-sdk",
-      "||consent.trustarc.com$script",
-      "###truste-consent-track",
       "###krn-privacy-center",
+      "sketch.london##.cookies-modals",
+      "jobs.wavy.com,trustee-connect.com##.cookie-notice-v2",
       "! OneTrust comment",
     ]
   ) {

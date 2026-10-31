@@ -1,3 +1,4 @@
+import { evalSnippets } from "./vendor/autoconsent/autoconsent.esm.js";
 import { normalizeSettings } from "./src/settings.js";
 
 const NATIVE_APP = "ceo.nerd.hush";
@@ -6,6 +7,11 @@ const NATIVE_APP = "ceo.nerd.hush";
 const SETTINGS_TTL_MS = 5000;
 
 let cache = null;
+
+// Tabs where a frame already answered a banner, keyed to the page URL. The
+// fallback stays out of them so autoconsent cannot overrule a more precise
+// answer given in another frame (Sourcepoint answers inside an iframe).
+const answeredTabs = new Map();
 
 const readSettings = async () => {
   if (cache && Date.now() - cache.readAt < SETTINGS_TTL_MS) {
@@ -36,7 +42,43 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message?.type) {
     case "getSettings":
       return readSettings();
+    // Consent-O-Matic found no banner in this frame; try autoconsent there.
+    case "fallback":
+      if (answeredTabs.get(sender.tab.id) === sender.tab.url) {
+        return Promise.resolve(false);
+      }
+      return browser.scripting.executeScript({
+        target: { tabId: sender.tab.id, frameIds: [sender.frameId] },
+        files: ["autoconsent.js"],
+      }).then(() => true, (error) => {
+        console.error("Hush: injecting autoconsent failed", error);
+        return false;
+      });
+    // Runs one of autoconsent's named snippets in the page's own world.
+    case "autoconsentEval":
+      if (!(message.snippetId in evalSnippets)) return Promise.resolve(false);
+      return browser.scripting.executeScript({
+        target: { tabId: sender.tab.id, frameIds: [sender.frameId] },
+        world: "MAIN",
+        func: evalSnippets[message.snippetId],
+      }).then(
+        ([injection]) => ({ result: injection?.result ?? false }),
+        (error) => ({ result: false, error: String(error) }),
+      ).then(({ result, error }) => {
+        // Logged by the native handler in debug builds only.
+        browser.runtime.sendNativeMessage(NATIVE_APP, {
+          type: "report",
+          outcome: "eval",
+          snippetId: message.snippetId,
+          result: String(result),
+          error,
+        }).catch(() => {});
+        return result;
+      });
     case "report":
+      if (message.outcome === "handled") {
+        answeredTabs.set(sender.tab.id, sender.tab.url);
+      }
       return browser.runtime.sendNativeMessage(NATIVE_APP, message)
         .catch(() => {});
   }

@@ -25,12 +25,16 @@ fetch_external:
 fetch_consent_o_matic:
 	deno run --allow-write=./data/vendor,./WebExtension/vendor --allow-net=raw.githubusercontent.com scripts/fetch-consent-o-matic.js
 
+fetch_autoconsent:
+	deno run --allow-write=./data/vendor,./WebExtension/vendor --allow-net=cdn.jsdelivr.net scripts/fetch-autoconsent.js
+
 EXTENSION_OUT ?= build/WebExtension
 
 extension:
 	mkdir -p "$(EXTENSION_OUT)"
 	deno bundle --quiet --platform browser --minify -o "$(EXTENSION_OUT)/content.js" WebExtension/content.js
 	deno bundle --quiet --platform browser --minify -o "$(EXTENSION_OUT)/background.js" WebExtension/background.js
+	deno bundle --quiet --platform browser --minify -o "$(EXTENSION_OUT)/autoconsent.js" WebExtension/autoconsent.js
 	cp WebExtension/manifest.json WebExtension/content.css "$(EXTENSION_OUT)/"
 
 blocklist:

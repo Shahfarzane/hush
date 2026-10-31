@@ -36,3 +36,8 @@ export const isPaused = ({ pausedSites }, host) =>
 
 export const shouldAnswer = (settings, host) =>
   settings.mode === "answer" && !isPaused(settings, host);
+
+// autoconsent can only accept or refuse everything, so it accepts only when
+// every category is allowed.
+export const autoActionFor = ({ categories }) =>
+  Object.values(categories).every(Boolean) ? "optIn" : "optOut";

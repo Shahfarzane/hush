@@ -4,10 +4,10 @@
 ! hide rule is left out when it contains one of these markers (matched
 ! without regard to case). Exception rules (@@ and #@#) are always kept.
 !
-! Only list platforms the corpus (make test_corpus) shows Hush answering at
-! the chosen level. Platforms not listed here keep being hidden, as in
-! classic Hush. Not listed yet: TrustArc (not answered on ibm.com, only
-! hidden on oracle.com) and Borlabs (no corpus site).
+! Only list platforms the corpus (make test_corpus) shows Hush answering
+! without over-consent, through Consent-O-Matic or the autoconsent fallback.
+! Platforms not listed here keep being hidden, as in classic Hush. Not
+! listed yet: Borlabs (no corpus site) and iubenda (not answered).
 
 ! Cookiebot
 CybotCookiebot
@@ -51,3 +51,36 @@ complianz
 cookieinformation.com
 coi-banner
 coiOverlay
+
+! Osano (answered by Consent-O-Matic)
+osano
+
+! Answered by the autoconsent fallback, which refuses everything unless every
+! category is allowed.
+
+! TrustArc
+trustarc
+truste-
+truste_
+truste.com
+
+! CookieFirst
+cookiefirst
+
+! Termly
+termly
+t-consentprompt
+
+! Ketch
+ketch-
+ketchcdn
+ketchjs
+
+! consentmanager.net (ConsentManager$script blocks its CDN scripts)
+consentmanager.net
+cmpbox
+consentmanager$script
+
+! Axeptio
+axeptio
+axept.io

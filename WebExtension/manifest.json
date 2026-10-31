@@ -3,7 +3,7 @@
   "name": "Hush",
   "description": "Answers cookie banners with the cookie level you chose in Hush.",
   "version": "1.0",
-  "permissions": ["storage", "nativeMessaging"],
+  "permissions": ["storage", "nativeMessaging", "scripting"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "scripts": ["background.js"],
