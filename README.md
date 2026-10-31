@@ -13,6 +13,8 @@
 
 Hush hides cookie banners. This fork can also answer them with a level you pick, so sites store your choice instead of asking again.
 
+Install the beta on iPhone, iPad or Mac through TestFlight: https://testflight.apple.com/join/N9yxQHND (the link opens once Apple's beta review approves a build). After installing, turn on Hush and Hush Content Blocker in Safari's extension settings and allow All Websites.
+
 - Levels: Maximum privacy, Functional only, Balanced, or Custom (functional, performance, advertising and other, each on or off). Necessary cookies are always allowed.
 - Answers come from two open-source rule sets: [Consent-O-Matic](https://github.com/cavi-au/Consent-O-Matic) (MIT) for per-category answers, and DuckDuckGo's [autoconsent](https://github.com/duckduckgo/autoconsent) (MPL-2.0) as a fallback that refuses unless every category is allowed. Hush's own fixes live in `data/consent-o-matic-overrides.json` and `data/consent-rules.json`.
 - A banner with no way to refuse is hidden, never accepted. Platforms neither rule set answers stay hidden by the content blocker, as in the original Hush.
@@ -20,7 +22,7 @@ Hush hides cookie banners. This fork can also answer them with a level you pick,
 - Settings sync between iPhone, iPad and Mac through iCloud. The latest change wins.
 - "Only hide it" mode keeps the original behavior.
 
-Privacy: answering a banner means reading and clicking it, so the Safari web extension needs access to all websites. Everything runs on the device. Only your settings (level, mode, paused sites) leave it, through iCloud key-value storage, and each device can turn that off.
+Privacy: answering a banner means reading and clicking it, so the Safari web extension needs access to all websites. Everything runs on the device. Only your settings (level, mode, paused sites) leave it, through iCloud key-value storage, and each device can turn that off. Details in [PRIVACY.md](PRIVACY.md).
 
 Build and test:
 

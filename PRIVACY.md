@@ -1,33 +1,10 @@
-# Privacy Policy
+# Privacy
 
-Joel Arvidsson built the Hush app as an Open Source app. This SERVICE is provided by Joel Arvidsson at no cost and is intended for use as is.
+Hush Extra collects no data. It has no analytics, ads, accounts or tracking, and the developer receives nothing from your devices.
 
-This page is used to inform visitors regarding my policies with the collection, use, and disclosure of Personal Information if anyone decided to use my Service.
+- The Safari extension reads and clicks cookie banners on the pages you open. That runs on your device. Page content and browsing history never leave it.
+- Your settings (cookie level, banner mode, paused sites) stay on your device. With Sync with iCloud on, Apple's iCloud key-value storage also keeps them in your iCloud account so your other devices get them. Turn sync off in the app's settings to keep them on one device.
+- The content blocker list and the consent rules ship inside the app. Neither the apps nor the extension make network requests of their own.
+- If you install through TestFlight, Apple shares crash reports and feedback with the developer only when you choose to send them.
 
-The terms used in this Privacy Policy have the same meanings as in our Terms and Conditions, which is accessible at Hush unless otherwise defined in this Privacy Policy.
-
-## Information Collection
-
-This Service does not collect any personally identifiable information, nor transmit any data from the device.
-
-## Log Data
-
-This Service does not automatically collect any log data such as crash reports. However, App Store itself may collect crash reports that is made available to the developer if prior consent has been given.
-
-## Links to Other Sites
-
-This Service may contain links to other sites. If you click on a third-party link, you will be directed to that site. Note that these external sites are not operated by me. Therefore, I strongly advise you to review the Privacy Policy of these websites. I have no control over and assume no responsibility for the content, privacy policies, or practices of any third-party sites or services.
-
-## Children’s Privacy
-
-These Services do not address anyone under the age of 13. I do not knowingly collect personally identifiable information from children under 13\. If you are a parent or guardian and you are aware that your child has provided me with personal information, please contact me so that I will be able to do necessary actions.
-
-## Changes to This Privacy Policy
-
-I may update our Privacy Policy from time to time. Thus, you are advised to review this page periodically for any changes. I will notify you of any changes by posting the new Privacy Policy on this page.
-
-This policy is effective as of 2021-01-24
-
-## Contact Us
-
-If you have any questions or suggestions about my Privacy Policy, do not hesitate to contact me at joel@oblador.se.
+Questions: open an issue at https://github.com/Shahfarzane/hush/issues.

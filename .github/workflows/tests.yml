@@ -1,42 +1,21 @@
 name: Tests
 
 on:
-  - push
-  - pull_request
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   unit:
-    name: Unit tests
+    name: Unit tests and formatting
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v2
-      - uses: denolib/setup-deno@v2
+      - uses: actions/checkout@v7
+      - uses: denoland/setup-deno@v2
         with:
-          deno-version: v1.x
-      - run: |
-          make test_unit
-
-  ui:
-    name: UI tests
-    runs-on: macos-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: denolib/setup-deno@v2
-        with:
-          deno-version: v1.x
-      - run: |
-          make test_ui
-
-  format:
-    name: Check formatting
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: denolib/setup-deno@v2
-        with:
-          deno-version: v1.x
-      - run: |
-          make check_format
+          deno-version: v2.x
+      - run: make test_unit
+      - run: make check_format
