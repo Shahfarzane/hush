@@ -1,6 +1,6 @@
 # Consent levels for Hush: plan
 
-Status: Phases 0 to 5 done 2026-10-31 (see their results sections). Next is Phase 6.
+Status: Phases 0 to 6 done 2026-10-31 (see their results sections).
 
 ## Goal
 
@@ -189,6 +189,20 @@ Each phase ends in a commit that builds and passes its verification.
 - Conflict rule: last write wins per whole settings object, stamped with a modification date. Paused sites merge as a set union so a pause added on one device is not dropped by the other.
 - The spike in Phase 0 confirms the extension can read the shared KVS store on both platforms; if not, the app mirrors KVS into the App Group on launch and on `didChangeExternallyNotification`, and the plan notes that iOS picks up changes the next time the app runs.
 - Verify: change the level on the Mac, read it back on the iPhone (Simulator signed into the same Apple Account, then the real devices).
+
+**Phase 6 results (2026-10-31)**
+- Paused sites follow the same rule as the rest: the newer copy wins as a whole. A union would have made unpausing impossible to sync, because the other device would add the site straight back.
+- `SettingsSync.reconcile` in `Shared/Models/ConsentSettings.swift` compares the App Group copy with the iCloud copy by `modifiedAt` and writes the winner to whichever side is older. Defaults are stamped 1970, so a new device takes what another device chose and never pushes its untouched defaults over it.
+- When it syncs:
+  - The app syncs at launch, when it comes to the front, and on `NSUbiquitousKeyValueStore.didChangeExternallyNotification`.
+  - The web extension's native handler syncs on every `getSettings`, so a device picks up changes even when the app has not run there. If the mode changed, the handler reloads the content blocker itself.
+- "Sync with iCloud" in the settings screen is per device and kept in the App Group, never synced. Off means this device neither reads nor writes iCloud.
+- Swift unit tests: a new macOS `HushTests` target (`make test_swift`, ⌘U in the Hush macOS scheme) covers the merge rule and the store's write-back. While being written it caught defaults being pushed to iCloud and a `pushed` flag reported with sync off. UI test `testICloudSyncSwitchIsKeptAcrossLaunches` covers the switch.
+- Verified on macOS Safari, with the local copy made stale on purpose to stand in for a change arriving from another device. Each step was checked through the extension's log and the App Group read back:
+  - A page load pulled the newer iCloud copy into the App Group.
+  - The extension reloaded `ceo.nerd.hush.ContentBlocker` when the mode differed, and the blocker served the answer list.
+  - With sync off, nothing was pushed or pulled.
+  - Turning sync back on pushed the newer local choice, and a later stale copy was replaced by it.
 
 **Later, only on request**: scheduled rule refresh.
 
