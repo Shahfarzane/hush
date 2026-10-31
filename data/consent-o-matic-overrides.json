@@ -736,5 +736,52 @@
   },
   "yahoo_popup": {
     "disable": true
+  },
+  "bing": {
+    "methods": [
+      {
+        "name": "OPEN_OPTIONS",
+        "action": {
+          "type": "list",
+          "actions": [
+            {
+              "type": "click",
+              "target": {
+                "selector": "#bnp_btn_preference"
+              }
+            },
+            {
+              "type": "waitcss",
+              "target": {
+                "selector": ".mcp_row"
+              },
+              "retries": 20,
+              "waitTime": 250
+            }
+          ]
+        }
+      },
+      {
+        "name": "SAVE_CONSENT",
+        "action": {
+          "type": "ifcss",
+          "target": {
+            "selector": "#mcp_savesettings.disabledbtn"
+          },
+          "trueAction": {
+            "type": "click",
+            "target": {
+              "selector": "#bnp_btn_reject"
+            }
+          },
+          "falseAction": {
+            "type": "click",
+            "target": {
+              "selector": "#mcp_savesettings"
+            }
+          }
+        }
+      }
+    ]
   }
 }

@@ -2,7 +2,7 @@
 // that use the common consent platforms, then reads back what each platform
 // stored and compares it with the chosen level. Needs the network, so it is
 // not part of `make test_unit`; run it with `make test_corpus [SITES=...]`.
-import { webkit } from "npm:playwright";
+import { devices, webkit } from "npm:playwright";
 import { mismatches, readers } from "./src/consent-readers.js";
 import { createBlocker } from "./src/content-blocker.js";
 import { evalSnippets } from "../WebExtension/vendor/autoconsent/autoconsent.esm.js";
@@ -21,9 +21,11 @@ const AUTOCONSENT_SCRIPT = await Deno.readTextFile(
 const RESULTS = resolveRelative("../build/corpus-results.json");
 
 // --blocker=answer (default) or --blocker=full applies the content blocker
-// list Hush serves in that mode; --blocker=none runs without one.
+// list Hush serves in that mode; --blocker=none runs without one. --mobile
+// loads pages as an iPhone, which gets some sites' mobile banners.
 const flags = Deno.args.filter((arg) => arg.startsWith("--"));
 const only = Deno.args.filter((arg) => !arg.startsWith("--"));
+const MOBILE = flags.includes("--mobile");
 const BLOCKER_MODE =
   flags.find((flag) => flag.startsWith("--blocker="))?.split("=")[1] ??
     "answer";
@@ -57,15 +59,30 @@ const hideScript = (selectors) =>
   else document.addEventListener("readystatechange", add, { once: true });
 })();`;
 
-const SETTINGS = {
-  version: 1,
-  mode: "answer",
-  categories: {
+// --level=balanced (functional and performance) checks a second level;
+// "functional only" is the default.
+const LEVELS = {
+  functional: {
     functional: true,
     performance: false,
     advertising: false,
     other: false,
   },
+  balanced: {
+    functional: true,
+    performance: true,
+    advertising: false,
+    other: false,
+  },
+};
+const LEVEL =
+  flags.find((flag) => flag.startsWith("--level="))?.split("=")[1] ??
+    "functional";
+
+const SETTINGS = {
+  version: 1,
+  mode: "answer",
+  categories: LEVELS[LEVEL],
   hideWhileAnswering: true,
   pausedSites: [],
 };
@@ -224,7 +241,9 @@ const collectPageData = () =>
 const visit = async (browser, site) => {
   const context = await browser.newContext({
     locale: "en-GB",
-    viewport: { width: 1280, height: 900 },
+    ...(MOBILE
+      ? devices["iPhone 15"]
+      : { viewport: { width: 1280, height: 900 } }),
   });
   const reports = [];
   let answered;

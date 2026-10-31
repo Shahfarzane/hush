@@ -113,6 +113,28 @@ const yahoo = ({ cookies }) => {
   return value ? tcf({ tcData: { purposes: tcStringPurposes(value) } }) : null;
 };
 
+// Bing keeps the choice as "AD=0&AL=0&SM=0" (advertising, analytics,
+// social media) in its BCP cookie.
+const bing = ({ cookies }) => {
+  const value = cookieValue(cookies, "BCP");
+  if (!value) return null;
+  const fields = new URLSearchParams(decode(value));
+  if (!fields.has("AD")) return null;
+  return {
+    performance: fields.get("AL") === "1",
+    advertising: fields.get("AD") === "1" || fields.get("SM") === "1",
+  };
+};
+
+// X's d_prefs cookie is base64 "1:1,consent_version:2,..." after Accept all
+// and "2:1,..." after Refuse non-essential.
+const x = ({ cookies }) => {
+  const value = cookieValue(cookies, "d_prefs");
+  if (!value) return null;
+  const accepted = atob(decode(value)).split(":")[0] === "1";
+  return { performance: accepted, advertising: accepted };
+};
+
 // Usercentrics categories carry a display name ("Functional", "Marketing",
 // or site-specific ones such as "Analytics").
 const usercentrics = ({ usercentrics }) =>
@@ -286,6 +308,8 @@ export const readers = {
   consentmanager,
   axeptio,
   yahoo,
+  bing,
+  x,
 };
 
 // Categories the reader reported that differ from the chosen level.

@@ -25,6 +25,10 @@
 //   counts as advertising (F).
 // - springer, chandago: ad measurement and ad selection are labelled
 //   analytics (B); chandago also has measurement labelled ads (F). Swapped.
+// - bing: "Save Settings" stays disabled until a switch changes, so when the
+//   level matches Bing's all-off defaults the rule clicked a dead button and
+//   left the panel open. It now waits for the panel's switches, and if Save
+//   is still disabled it clicks Bing's own Reject instead.
 // - yahoo_consent, yahoo_popup: disabled. Both target older versions of
 //   consent.yahoo.com: on the current page yahoo_consent claims the banner
 //   with zero clicks (its switches and Save button are on a settings view it
@@ -74,7 +78,9 @@ export const applyOverrides = (rules, overrides) =>
 
 // Vendored rules with Hush's fixes applied, plus rules Hush maintains itself
 // in data/consent-rules.json for platforms Consent-O-Matic does not cover
-// (CookieYes) or no longer matches (Usercentrics' shadow DOM banner).
+// (CookieYes) or no longer matches (Usercentrics' shadow DOM banner, and X,
+// whose banner left #layers and div[role=button] for a "Cookie consent"
+// region with two buttons: Accept first, Refuse second).
 export const buildRules = (vendored, overrides, own) => ({
   ...applyOverrides(vendored, overrides),
   ...own,

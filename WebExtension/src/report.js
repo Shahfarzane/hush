@@ -8,6 +8,8 @@ const CONSENT_COOKIES = [
   "euconsent-v2",
   "cookiefirst-consent",
   "notice_preferences",
+  "BCP",
+  "EuConsent",
 ];
 
 const readConsentCookies = () =>

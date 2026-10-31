@@ -168,3 +168,21 @@ Deno.test("Yahoo's consent page is left to the autoconsent fallback", () => {
     [{ waitForThenClick: "#consent-page button[value=reject]" }],
   );
 });
+
+Deno.test("Bing rejects when Save stays disabled, otherwise saves", () => {
+  const save = applyOverrides(rules, overrides).bing.methods
+    .find((method) => method.name === "SAVE_CONSENT").action;
+  assertEquals(save.target.selector, "#mcp_savesettings.disabledbtn");
+  assertEquals(save.trueAction.target.selector, "#bnp_btn_reject");
+  assertEquals(save.falseAction.target.selector, "#mcp_savesettings");
+});
+
+Deno.test("X refuses unless every category is allowed", () => {
+  const consent = hushRules["x.com"].methods
+    .find((method) => method.name === "DO_CONSENT").action;
+  assertEquals(consent.type, "ifallowall");
+  assertEquals(
+    consent.falseAction.target.selector.endsWith(":last-of-type"),
+    true,
+  );
+});
