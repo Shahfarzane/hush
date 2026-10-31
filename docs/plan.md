@@ -215,6 +215,7 @@ Each phase ends in a commit that builds and passes its verification.
 - cookiebot.com was answered once the extension was allowed to run on the phone; the first screenshots were taken before it ran there.
 - bing.com left its preferences panel open. Its "Save Settings" stays disabled until a switch changes, and at levels matching Bing's all-off defaults nothing changes. The `bing` override now waits for the panel and clicks Bing's own Reject when Save is still disabled. On the iPhone, Bing stored `BCP=AD=0&AL=0&SM=0`.
 - x.com's banner was never detected: X moved it out of `#layers` and replaced `div[role=button]` with buttons in a "Cookie consent" region. A Hush rule (`x.com` in `data/consent-rules.json`) finds that region without relying on English text and clicks Refuse non-essential cookies unless every category is allowed.
+- Guard: a Consent-O-Matic answer with zero clicks no longer counts. The frame reports `no-clicks` and asks for the autoconsent fallback, so a stale rule like Yahoo's cannot leave a banner on screen. With the old Yahoo rules switched back on, the corpus still answered se.yahoo.com through the fallback.
 - The corpus gained `--mobile` (iPhone layout) and `--level=balanced`, and readers for Bing's `BCP` and X's `d_prefs`. Bing passes at both levels on both layouts.
 - After installing a new build over an old one, iOS Safari keeps using the removed copy of the extension until Safari is force-quit.
 
