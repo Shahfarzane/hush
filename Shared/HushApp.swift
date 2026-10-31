@@ -7,7 +7,7 @@ struct HushApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     #endif
 
-    let contentBlockerIdentifier = "\(Bundle.main.bundleIdentifier ?? "se.oblador.Hush").ContentBlocker"
+    let contentBlockerIdentifier = "\(Bundle.main.bundleIdentifier ?? "ceo.nerd.hush").ContentBlocker"
     let appState = AppState(initialContentBlockerEnabledState: .undetermined)
 
     init() {

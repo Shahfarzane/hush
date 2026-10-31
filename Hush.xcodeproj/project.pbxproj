@@ -568,15 +568,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = H28Z7NT4JR;
+				DEVELOPMENT_TEAM = 89S32876QM;
 				INFOPLIST_FILE = HushUITests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = se.oblador.HushUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush.UITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
@@ -589,15 +589,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = H28Z7NT4JR;
+				DEVELOPMENT_TEAM = 89S32876QM;
 				INFOPLIST_FILE = HushUITests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = se.oblador.HushUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush.UITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
@@ -726,15 +726,15 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 6;
-				DEVELOPMENT_TEAM = H28Z7NT4JR;
+				DEVELOPMENT_TEAM = 89S32876QM;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = iOS/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = se.oblador.Hush;
+				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush;
 				PRODUCT_NAME = Hush;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
@@ -750,15 +750,15 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 6;
-				DEVELOPMENT_TEAM = H28Z7NT4JR;
+				DEVELOPMENT_TEAM = 89S32876QM;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = iOS/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = se.oblador.Hush;
+				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush;
 				PRODUCT_NAME = Hush;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
@@ -778,7 +778,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 8;
-				DEVELOPMENT_TEAM = H28Z7NT4JR;
+				DEVELOPMENT_TEAM = 89S32876QM;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = macOS/Info.plist;
@@ -786,8 +786,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = se.oblador.Hush;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush;
 				PRODUCT_NAME = Hush;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
@@ -805,7 +805,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 8;
-				DEVELOPMENT_TEAM = H28Z7NT4JR;
+				DEVELOPMENT_TEAM = 89S32876QM;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = macOS/Info.plist;
@@ -813,8 +813,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = se.oblador.Hush;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush;
 				PRODUCT_NAME = Hush;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
@@ -828,7 +828,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 8;
-				DEVELOPMENT_TEAM = H28Z7NT4JR;
+				DEVELOPMENT_TEAM = 89S32876QM;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = macOS/ContentBlocker/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -836,8 +836,8 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = se.oblador.Hush.ContentBlocker;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush.ContentBlocker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -852,7 +852,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 8;
-				DEVELOPMENT_TEAM = H28Z7NT4JR;
+				DEVELOPMENT_TEAM = 89S32876QM;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = macOS/ContentBlocker/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -860,8 +860,8 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = se.oblador.Hush.ContentBlocker;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush.ContentBlocker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -874,15 +874,15 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 6;
-				DEVELOPMENT_TEAM = H28Z7NT4JR;
+				DEVELOPMENT_TEAM = 89S32876QM;
 				INFOPLIST_FILE = iOS/ContentBlocker/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = se.oblador.Hush.ContentBlocker;
+				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush.ContentBlocker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -896,15 +896,15 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 6;
-				DEVELOPMENT_TEAM = H28Z7NT4JR;
+				DEVELOPMENT_TEAM = 89S32876QM;
 				INFOPLIST_FILE = iOS/ContentBlocker/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = se.oblador.Hush.ContentBlocker;
+				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush.ContentBlocker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;

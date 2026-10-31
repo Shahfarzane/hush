@@ -34,7 +34,7 @@ class HushUITests: XCTestCase {
         scrollToAndTap("Apps")
         scrollToAndTap("Safari")
         scrollToAndTap("Extensions")
-        settingsApp.buttons["se.oblador.Hush.ContentBlocker"].firstMatch.tap()
+        settingsApp.buttons["ceo.nerd.hush.ContentBlocker"].firstMatch.tap()
         let toggle = settingsApp.switches["Allow Extension"].firstMatch
         XCTAssertTrue(toggle.waitForExistence(timeout: 5), "Allow Extension switch not found")
         if toggle.value as? String != (isOn ? "1" : "0") {
