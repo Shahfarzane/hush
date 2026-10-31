@@ -135,6 +135,31 @@ const x = ({ cookies }) => {
   return { performance: accepted, advertising: accepted };
 };
 
+// iubenda keeps the choice in a "_iub_cs-<site id>" cookie, either per
+// purpose (1 necessary, 2 basic interactions and functionalities, 3
+// experience enhancement, 4 measurement, 5 targeting and advertising) or as
+// one "consent" flag. Sites can set other _iub_cs- cookies next to it.
+const iubenda = ({ cookies }) => {
+  const choice = cookies
+    .filter(({ name }) => name.startsWith("_iub_cs-"))
+    .map(({ value }) => {
+      try {
+        return JSON.parse(decode(value));
+      } catch {
+        return null;
+      }
+    })
+    .find((value) => value?.purposes || typeof value?.consent === "boolean");
+  if (!choice) return null;
+  const allowed = (id) => choice.purposes?.[id] ?? choice.consent;
+  return {
+    functional: allowed(2),
+    other: allowed(3),
+    performance: allowed(4),
+    advertising: allowed(5),
+  };
+};
+
 // Usercentrics categories carry a display name ("Functional", "Marketing",
 // or site-specific ones such as "Analytics").
 const usercentrics = ({ usercentrics }) =>
@@ -310,6 +335,7 @@ export const readers = {
   yahoo,
   bing,
   x,
+  iubenda,
 };
 
 // Categories the reader reported that differ from the chosen level.

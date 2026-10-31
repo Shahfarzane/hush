@@ -243,3 +243,35 @@ Deno.test("X's d_prefs tells Accept all from Refuse non-essential", () => {
     advertising: true,
   });
 });
+
+Deno.test("iubenda's purposes map to Hush categories", () => {
+  const rejected = encodeURIComponent(
+    '{"version":"1.109.0","purposes":{"1":true,"2":false,"3":false,"4":false,"5":false},"id":252372}',
+  );
+  assertEquals(readers.iubenda({ cookies: jar({ "_iub_cs-s1": rejected }) }), {
+    functional: false,
+    other: false,
+    performance: false,
+    advertising: false,
+  });
+  const functional = encodeURIComponent(
+    '{"purposes":{"1":true,"2":true,"3":false,"4":false,"5":false}}',
+  );
+  assertEquals(
+    readers.iubenda({ cookies: jar({ "_iub_cs-123": functional }) }).functional,
+    true,
+  );
+  const flagOnly = encodeURIComponent(
+    '{"version":"1.109.0","consent":false,"id":82108305}',
+  );
+  assertEquals(
+    readers.iubenda({
+      cookies: jar({
+        "_iub_cs-s1-granular": '{"gac":"Mn5"}',
+        "_iub_cs-1": flagOnly,
+      }),
+    }),
+    { functional: false, other: false, performance: false, advertising: false },
+  );
+  assertEquals(readers.iubenda({ cookies: [] }), null);
+});
