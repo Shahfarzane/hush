@@ -6,8 +6,11 @@ let contentBlockerIdentifier = "\(Bundle.main.bundleIdentifier ?? "ceo.nerd.hush
 // Holds the settings the views edit and saves every change to the App Group
 // and iCloud, where the Safari extension reads them.
 class ConsentSettingsModel: ObservableObject {
+    private var isReloading = false
+
     @Published var settings: ConsentSettings {
         didSet {
+            guard !isReloading else { return }
             var unstamped = settings
             unstamped.modifiedAt = oldValue.modifiedAt
             guard unstamped != oldValue else { return }
@@ -27,6 +30,14 @@ class ConsentSettingsModel: ObservableObject {
 
     init(settings: ConsentSettings) {
         self.settings = settings
+    }
+
+    // Picks up changes made elsewhere, such as a site paused from Safari.
+    func reload() {
+        guard let stored = ConsentSettingsStore.load(), stored != settings else { return }
+        isReloading = true
+        settings = stored
+        isReloading = false
     }
 
     var level: PrivacyLevel {

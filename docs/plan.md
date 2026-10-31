@@ -1,6 +1,6 @@
 # Consent levels for Hush: plan
 
-Status: Phases 0 to 4 done 2026-10-31 (see their results sections). Next is Phase 5.
+Status: Phases 0 to 5 done 2026-10-31 (see their results sections). Next is Phase 6.
 
 ## Goal
 
@@ -176,6 +176,13 @@ Each phase ends in a commit that builds and passes its verification.
 **Phase 5: popup and polish**
 - Popup with page status and pause toggle; onboarding copy for enabling both extensions, "All Websites" permission, and Private Browsing.
 - Verify: popup on both platforms, pause round-trips to the app.
+
+**Phase 5 results (2026-10-31)**
+- Safari popup (`WebExtension/popup.*`): the site, what Hush did there ("Answered the OneTrust banner with your level", "Refused everything on the TrustArc banner", paused, or nothing answered), the cookie level, and "Pause on this site". The background remembers per tab which platform was answered (in session storage too, since Safari unloads it when idle) and matches it to the page by site, so a redirect such as www.spotify.com to open.spotify.com still shows the answer. Hush's toolbar icon is the logo padded to a template glyph; light and dark use Hush's colours.
+- Pausing from the popup goes through the native handler (`setPaused`), which saves to the App Group and iCloud like the app does. The app reloads settings whenever it comes to the front.
+- Main screen in answer mode: onboarding now covers both Safari entries (the extension and the content blocker), All Websites, and Private Browsing; when the content blocker is off (macOS can tell, iOS devices too), it says so.
+- Verified in iOS 27.2 simulator Safari and macOS Safari: the popup opened from Safari's page menu and the toolbar, showed the OneTrust answer on open.spotify.com, paused the site into the shared settings, the app listed it, and unpausing (popup on macOS, app on iOS) cleared it. A first macOS run showed the popover collapsing to a narrow column; it now has a 300 pt minimum width.
+- Not covered: opening the Hush app from the popup (an extension cannot launch its app on iOS), and the per-tab answer is cleared when Safari restarts the extension (for example after an update).
 
 **Phase 6: iCloud sync between iPhone and Mac**
 - `NSUbiquitousKeyValueStore` holds the settings JSON, with the same `com.apple.developer.ubiquity-kvstore-identifier` on the app and the web extension so the extension's native handler reads synced values even when the app has not been opened on that device. The App Group copy stays as the local cache and as the source for the content blocker handler.

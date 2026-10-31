@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hush</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <picture>
+          <source srcset="images/logo-dark.png"
+            media="(prefers-color-scheme: dark)">
+          <img class="logo" src="images/logo.png" alt="Hush">
+        </picture>
+      </header>
+      <p id="site" class="site"></p>
+      <p id="status"></p>
+      <label id="pause-row" class="switch-row" hidden>
+        <span>Pause on this site</span>
+        <input type="checkbox" id="pause" role="switch">
+      </label>
+      <p id="note" class="muted"
+        hidden>Takes effect when you reload the page.</p>
+      <footer class="muted">
+        Cookie level: <strong id="level"></strong><br>
+        Change it in the Hush app.
+      </footer>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

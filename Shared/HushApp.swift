@@ -25,6 +25,7 @@ struct HushApp: App {
     }
 
     func refreshEnabledState() {
+        settingsModel.reload()
         SFContentBlockerManager.getStateOfContentBlocker(withIdentifier: contentBlockerIdentifier, completionHandler: { (state, error) in
             if let error = error {
                 print("Failed to get content blocker state")
