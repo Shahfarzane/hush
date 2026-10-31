@@ -1,8 +1,14 @@
 import ConsentEngine from "./vendor/consent-o-matic/ConsentEngine.js";
-import rules from "../data/vendor/consent-o-matic-rules.json" with {
+import vendoredRules from "../data/vendor/consent-o-matic-rules.json" with {
   type: "json",
 };
+import overrides from "../data/consent-o-matic-overrides.json" with {
+  type: "json",
+};
+import { applyOverrides } from "./src/rules.js";
 import { consentTypesFor, shouldAnswer } from "./src/settings.js";
+
+const rules = applyOverrides(vendoredRules, overrides);
 
 const insideIframe = window !== window.parent;
 
