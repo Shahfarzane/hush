@@ -6,16 +6,9 @@ Status: Phases 0 to 6 done 2026-10-31 (see their results sections).
 
 Hush today only hides cookie banners. The goal is a mode where Hush answers banners with the user's own choice, at a level set in a settings panel, the way Super Agent does it. The level Shahin uses is "functional cookies only": functional on, performance, advertising and other off. It has to work in Safari on both iOS and macOS.
 
-## What Super Agent does (reference)
+## Background
 
-Sources: the Codex report at `~/Documents/Codex Default/super-agent-investigation-2026-10-31/report.html`, its readable sources in `readable/`, and `evidence/localization-en.json` from Super Agent 4.7.2 (build 4035).
-
-- A Safari Web Extension content script runs at `document_start` in all frames, finds the consent banner, and clicks or toggles controls according to the user's preferences (report section 4, `content.js:120`, `content.js:1433`).
-- Preferences are four categories plus a background-hiding flag. Code fallback, verbatim from `background.js:16940`: `advertising:!1, performance:!0, functional:!0, other:!1, background:!0`.
-- Settings labels, verbatim from `localization-en.json`: "Cookie Preferences", "Functional cookies", "Performance cookies", "Advertising cookies", "Other cookies", presets "Maximum privacy" and "Balanced" (badge "Most popular"), "Or adjust each category", "Whitelist" ("Websites added to your whitelist will still display their cookie banners."), "Easylist" (hide banners before rule execution).
-- Branch choice, from `content.js:1286` and `content.js:1309`: if every optional category is off, use reject-all, then accept-necessary, then edit-settings, then accept-all. If all are on, accept-all. Otherwise edit-settings (per-category toggles), falling back to accept-necessary, reject-all, and last accept-all.
-- Inferred, not verified: "Balanced" equals the code fallback (functional and performance on).
-- Rules come from Super Agent's private CDN (`files-prod.super-agent.com`). We do not use them. We use open-source rule sets instead.
+Super Agent, a commercial Safari extension, answers cookie banners per category: functional, performance, advertising and other, with presets such as "Maximum privacy" and "Balanced", a list of sites to leave alone, and an option to hide banners while it answers. Its site rules are its own and are not used here. This fork builds the same idea on open-source rule sets: Consent-O-Matic (MIT) and DuckDuckGo's autoconsent (MPL-2.0).
 
 ## Why Hush cannot do it today
 
@@ -57,9 +50,9 @@ Putting D under "Other" is a judgment call: D is TCF Purpose 1 (store or access 
 
 1. Site paused (whitelist) or mode is "Hide only": do nothing in JS.
 2. Consent-O-Matic detects a CMP it has a rule for: apply categories exactly. Hide the banner while it works if "Hide banner while answering" is on.
-3. Otherwise autoconsent detects a CMP: all categories off or mixed: opt-out. All on: opt-in. For "functional only" this means functional is refused on these sites too. Super Agent's fallback does the same (reject-all before accept-all).
+3. Otherwise autoconsent detects a CMP: all categories off or mixed: opt-out. All on: opt-in. For "functional only" this means functional is refused on these sites too.
 4. Otherwise the content blocker's hide rules cover it, as Hush does today.
-5. A banner with no way to refuse (only "Accept"): hide it, never accept. This departs from Super Agent, whose last fallback is accept-all.
+5. A banner with no way to refuse (only "Accept"): hide it, never accept.
 
 ### Content blocker interplay (the subtle part)
 
@@ -103,7 +96,7 @@ Each phase ends in a commit that builds and passes its verification.
 
 **Phase 0: fork setup and spike**
 - Create private `Shahfarzane/hush` and make it `origin`; rename the current `origin` (`oblador/hush`) to `upstream` for rule updates.
-- Bundle IDs to `ceo.nerd.hush`, `ceo.nerd.hush.ContentBlocker`, `ceo.nerd.hush.WebExtension`, App Group `group.ceo.nerd.hush`, team ID from Shahin's signing identity via `op-agents`. Files: `Hush.xcodeproj/project.pbxproj`, entitlements, `HushUITests/HushUITests.swift` (hardcodes `se.oblador.Hush.ContentBlocker`).
+- Bundle IDs to `ceo.nerd.hush`, `ceo.nerd.hush.ContentBlocker`, `ceo.nerd.hush.WebExtension`, App Group `group.ceo.nerd.hush`, team ID `89S32876QM`. Files: `Hush.xcodeproj/project.pbxproj`, entitlements, `HushUITests/HushUITests.swift` (hardcodes `se.oblador.Hush.ContentBlocker`).
 - Deployment targets to iOS 17 and macOS 14 (from 14.3 and 11.0). Safari Web Extensions need iOS 15 at minimum; 17 and 14 allow `@Observable` and current SwiftUI `Form` APIs.
 - Spike: a throwaway web extension that injects the Consent-O-Matic engine on a Cookiebot test page in iOS Simulator Safari and macOS Safari. Proves content-script injection, `all_frames`, native messaging, App Group reads, and reading a shared iCloud key-value store from the extension on both platforms before building on them.
 - Verify: both platforms build; spike logs `HandledCMP` and `Cookiebot.consent` reads `preferences: true, statistics: false, marketing: false`.
@@ -219,11 +212,19 @@ Each phase ends in a commit that builds and passes its verification.
 - The corpus gained `--mobile` (iPhone layout) and `--level=balanced`, and readers for Bing's `BCP` and X's `d_prefs`. Bing passes at both levels on both layouts.
 - After installing a new build over an old one, iOS Safari keeps using the removed copy of the extension until Safari is force-quit.
 
+**Distribution through TestFlight (2026-10-31)**
+- App Store Connect record "Hush Extra" (iOS and macOS, bundle ID `ceo.nerd.hush`); the apps still show "Hush" on the device. An internal TestFlight group gets every build, so installs and updates need no cable.
+- `make testflight` archives both apps, exports them with App Store signing and uploads them, using an App Store Connect API key from `ASC_KEY_PATH`, `ASC_KEY_ID` and `ASC_ISSUER_ID`. Build numbers come from the clock (`20261031.1502`). Internal TestFlight builds expire after 90 days.
+- Upload fixes:
+  - Mac Release builds now sign with Apple Development; "-" could not carry the iCloud and App Group entitlements into an archive.
+  - The web extension manifest gained the top-level `icons` App Store Connect requires.
+  - The export uses the system `rsync`, because Homebrew's rsync 3.x breaks `xcodebuild -exportArchive`.
+
 **Later, only on request**: scheduled rule refresh.
 
 ## Test corpus and verification
 
-A Playwright WebKit suite injects the built `content.js` as an init script (same engine as Safari, no extension shell) and visits a fixed list of CMP pages: Cookiebot, OneTrust, Didomi, Usercentrics, Sourcepoint, Quantcast/InMobi, TrustArc, Borlabs, Complianz, CookieYes. For each it reads the stored consent back from the CMP's API or cookie (`Cookiebot.consent`, `OptanonConsent` groups, `__tcfapi('getTCData')` purposes) and asserts the "functional only" result. The Codex investigation's `cookiebot-consent-test` tooling is the starting point for the Cookiebot case.
+A Playwright WebKit suite injects the built `content.js` as an init script (same engine as Safari, no extension shell) and visits a fixed list of CMP pages: Cookiebot, OneTrust, Didomi, Usercentrics, Sourcepoint, Quantcast/InMobi, TrustArc, Borlabs, Complianz, CookieYes. For each it reads the stored consent back from the CMP's API or cookie (`Cookiebot.consent`, `OptanonConsent` groups, `__tcfapi('getTCData')` purposes) and asserts the "functional only" result.
 
 The real-Safari check is manual per phase: iOS Simulator Safari and macOS Safari, then Shahin's iPhone and Mac, with Super Agent and the App Store Hush disabled so they do not race the fork.
 
