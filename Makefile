@@ -37,7 +37,9 @@ testflight: testflight_ios testflight_macos
 
 testflight_%:
 	xcodebuild archive -project Hush.xcodeproj -scheme 'Hush $(PLATFORM_$*)' -configuration Release -destination 'generic/platform=$(PLATFORM_$*)' -archivePath build/Hush-$*.xcarchive CURRENT_PROJECT_VERSION=$(BUILD_NUMBER) $(ASC_AUTH)
-	xcodebuild -exportArchive -archivePath build/Hush-$*.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build/export-$* $(ASC_AUTH)
+	# The export copies with the first rsync on PATH and fails with Homebrew's
+	# rsync 3.x ("syntax or usage error"), so the system one goes first.
+	PATH="/usr/bin:$$PATH" xcodebuild -exportArchive -archivePath build/Hush-$*.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build/export-$* $(ASC_AUTH)
 
 fetch_external:
 	deno run --allow-write=./data --allow-net scripts/fetch-external.js
