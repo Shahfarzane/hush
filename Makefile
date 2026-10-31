@@ -12,7 +12,9 @@ test_unit:
 	deno test --allow-read=./data
 
 test_corpus: extension
-	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js $(SITES)
+	MINIFY=1 make blocklist --silent > build/blockerList.json
+	MINIFY=1 make blocklist --silent BLOCKLIST_FLAGS=--answer-mode > build/blockerList-answer.json
+	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js $(CORPUS_FLAGS) $(SITES)
 
 test_ui:
 	xcodebuild test -project Hush.xcodeproj -scheme 'Hush iOS' -destination 'platform=iOS Simulator,name=iPhone 17'
