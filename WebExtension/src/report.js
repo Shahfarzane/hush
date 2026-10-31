@@ -30,6 +30,10 @@ export const report = (fields) =>
     ...fields,
   }).catch(() => {});
 
+// Consent-O-Matic calls a banner handled even when its rule found nothing to
+// press, as its old Yahoo rules did on today's page. Only a click counts.
+export const isAnswered = (event) => event.handled && event.clicks > 0;
+
 export const reportAnswered = (cmp, clicks) => {
   report({ outcome: "handled", cmp, clicks });
   setTimeout(
