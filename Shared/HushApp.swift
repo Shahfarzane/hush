@@ -11,6 +11,10 @@ struct HushApp: App {
     let appState = AppState(initialContentBlockerEnabledState: .undetermined)
 
     init() {
+        if ConsentSettingsStore.load() == nil {
+            ConsentSettingsStore.save(ConsentSettings())
+        }
+
         SFContentBlockerManager.reloadContentBlocker(withIdentifier: contentBlockerIdentifier,
             completionHandler: { (error) in
                 if let error = error {
