@@ -45,6 +45,8 @@
 		CE0D00000000000000000109 /* ExtensionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000107 /* ExtensionStatusView.swift */; };
 		CE0D00000000000000000202 /* ConsentSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000002 /* ConsentSettings.swift */; };
 		CE0D00000000000000000203 /* ConsentSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000002 /* ConsentSettings.swift */; };
+		CE0D00000000000000000303 /* ConsentSettingsSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000302 /* ConsentSettingsSyncTests.swift */; };
+		CE0D00000000000000000304 /* ConsentSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D00000000000000000002 /* ConsentSettings.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -150,6 +152,8 @@
 		CE0D00000000000000000104 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		CE0D00000000000000000107 /* ExtensionStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionStatusView.swift; sourceTree = "<group>"; };
 		CE0D00000000000000000201 /* ContentBlocker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ContentBlocker.entitlements; sourceTree = "<group>"; };
+		CE0D00000000000000000301 /* HushTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HushTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CE0D00000000000000000302 /* ConsentSettingsSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsentSettingsSyncTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -203,6 +207,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CE0D00000000000000000307 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -222,6 +233,7 @@
 				A4D9A0F5258A02B4009D7004 /* iOS */,
 				A4D9A0FC258A02B4009D7004 /* macOS */,
 				A43F418325975CFD0043E80E /* HushUITests */,
+				CE0D00000000000000000305 /* HushTests */,
 				A4D9A114258A0340009D7004 /* Frameworks */,
 				A4D9A0F4258A02B4009D7004 /* Products */,
 			);
@@ -251,6 +263,7 @@
 				CE0D00000000000000000007 /* WebExtension iOS.appex */,
 				CE0D00000000000000000018 /* WebExtension macOS.appex */,
 				A43F418225975CFD0043E80E /* HushUITests.xctest */,
+				CE0D00000000000000000301 /* HushTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -359,6 +372,14 @@
 				CE0D0000000000000000001A /* WebExtension.entitlements */,
 			);
 			path = WebExtension;
+			sourceTree = "<group>";
+		};
+		CE0D00000000000000000305 /* HushTests */ = {
+			isa = PBXGroup;
+			children = (
+				CE0D00000000000000000302 /* ConsentSettingsSyncTests.swift */,
+			);
+			path = HushTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -494,6 +515,23 @@
 			productReference = CE0D00000000000000000018 /* WebExtension macOS.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		CE0D00000000000000000309 /* HushTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CE0D0000000000000000030C /* Build configuration list for PBXNativeTarget "HushTests" */;
+			buildPhases = (
+				CE0D00000000000000000306 /* Sources */,
+				CE0D00000000000000000307 /* Frameworks */,
+				CE0D00000000000000000308 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HushTests;
+			productName = HushTests;
+			productReference = CE0D00000000000000000301 /* HushTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -507,6 +545,9 @@
 						CreatedOnToolsVersion = 27.2;
 					};
 					CE0D0000000000000000001C = {
+						CreatedOnToolsVersion = 27.2;
+					};
+					CE0D00000000000000000309 = {
 						CreatedOnToolsVersion = 27.2;
 					};
 					A43F418125975CFD0043E80E = {
@@ -547,6 +588,7 @@
 				A4D9A112258A0340009D7004 /* ContentBlocker macOS */,
 				CE0D0000000000000000001C /* WebExtension macOS */,
 				A43F418125975CFD0043E80E /* HushUITests */,
+				CE0D00000000000000000309 /* HushTests */,
 			);
 		};
 /* End PBXProject section */
@@ -598,6 +640,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CE0D0000000000000000001F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CE0D00000000000000000308 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -798,6 +847,15 @@
 			files = (
 				CE0D00000000000000000026 /* SafariWebExtensionHandler.swift in Sources */,
 				CE0D00000000000000000027 /* ConsentSettings.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CE0D00000000000000000306 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CE0D00000000000000000304 /* ConsentSettings.swift in Sources */,
+				CE0D00000000000000000303 /* ConsentSettingsSyncTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1281,6 +1339,44 @@
 			};
 			name = Release;
 		};
+		CE0D0000000000000000030A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 89S32876QM;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush.Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		CE0D0000000000000000030B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 89S32876QM;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush.Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1352,6 +1448,15 @@
 			buildConfigurations = (
 				CE0D00000000000000000022 /* Debug */,
 				CE0D00000000000000000023 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CE0D0000000000000000030C /* Build configuration list for PBXNativeTarget "HushTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CE0D0000000000000000030A /* Debug */,
+				CE0D0000000000000000030B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

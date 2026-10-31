@@ -169,4 +169,27 @@ class HushUITests: XCTestCase {
         resume.tap()
         XCTAssertFalse(resume.waitForExistence(timeout: 2), "example.com was not removed")
     }
+
+    private func iCloudSyncSwitch() -> XCUIElement {
+        let toggle = app.switches["sync with icloud"]
+        while !toggle.isHittable {
+            app.swipeUp()
+        }
+        return toggle
+    }
+
+    func testICloudSyncSwitchIsKeptAcrossLaunches() throws {
+        app.launch()
+        openCookieSettings()
+        XCTAssertEqual(iCloudSyncSwitch().value as? String, "1", "iCloud sync should start on")
+        iCloudSyncSwitch().coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+        XCTAssertEqual(iCloudSyncSwitch().value as? String, "0")
+
+        app.terminate()
+        app.launch()
+        openCookieSettings()
+        XCTAssertEqual(iCloudSyncSwitch().value as? String, "0", "iCloud sync off was not kept")
+        iCloudSyncSwitch().coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+        XCTAssertEqual(iCloudSyncSwitch().value as? String, "1")
+    }
 }

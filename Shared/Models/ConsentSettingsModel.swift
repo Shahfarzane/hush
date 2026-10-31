@@ -3,6 +3,16 @@ import SafariServices
 
 let contentBlockerIdentifier = "\(Bundle.main.bundleIdentifier ?? "ceo.nerd.hush").ContentBlocker"
 
+// The content blocker serves a different list in each mode.
+func reloadContentBlocker() {
+    SFContentBlockerManager.reloadContentBlocker(withIdentifier: contentBlockerIdentifier) { error in
+        if let error = error {
+            print("Failed to reload content blocker")
+            print(error)
+        }
+    }
+}
+
 // Holds the settings the views edit and saves every change to the App Group
 // and iCloud, where the Safari extension reads them.
 class ConsentSettingsModel: ObservableObject {
@@ -17,27 +27,43 @@ class ConsentSettingsModel: ObservableObject {
             settings.modifiedAt = Date()
             ConsentSettingsStore.save(settings)
             if settings.mode != oldValue.mode {
-                // The content blocker serves a different list in each mode.
-                SFContentBlockerManager.reloadContentBlocker(withIdentifier: contentBlockerIdentifier) { error in
-                    if let error = error {
-                        print("Failed to reload content blocker")
-                        print(error)
-                    }
-                }
+                reloadContentBlocker()
             }
+        }
+    }
+
+    @Published var syncsWithICloud: Bool {
+        didSet {
+            guard syncsWithICloud != oldValue else { return }
+            ConsentSettingsStore.syncsWithICloud = syncsWithICloud
+            reload()
         }
     }
 
     init(settings: ConsentSettings) {
         self.settings = settings
+        syncsWithICloud = ConsentSettingsStore.syncsWithICloud
+        NotificationCenter.default.addObserver(
+            forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: NSUbiquitousKeyValueStore.default,
+            queue: .main
+        ) { [weak self] _ in
+            self?.reload()
+        }
     }
 
-    // Picks up changes made elsewhere, such as a site paused from Safari.
+    // Picks up changes made elsewhere: a site paused from Safari, or a change
+    // synced from another device.
     func reload() {
-        guard let stored = ConsentSettingsStore.load(), stored != settings else { return }
+        let synced = ConsentSettingsStore.sync().settings
+        guard synced != settings else { return }
+        let modeChanged = synced.mode != settings.mode
         isReloading = true
-        settings = stored
+        settings = synced
         isReloading = false
+        if modeChanged {
+            reloadContentBlocker()
+        }
     }
 
     var level: PrivacyLevel {

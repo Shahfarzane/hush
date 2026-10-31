@@ -8,20 +8,12 @@ struct HushApp: App {
     #endif
 
     let appState = AppState(initialContentBlockerEnabledState: .undetermined)
-    let settingsModel = ConsentSettingsModel(settings: ConsentSettingsStore.load() ?? ConsentSettings())
+    let settingsModel: ConsentSettingsModel
 
     init() {
-        if ConsentSettingsStore.load() == nil {
-            ConsentSettingsStore.save(ConsentSettings())
-        }
-
-        SFContentBlockerManager.reloadContentBlocker(withIdentifier: contentBlockerIdentifier,
-            completionHandler: { (error) in
-                if let error = error {
-                    print("Failed to reload content blocker")
-                    print(error)
-                }
-        })
+        // On a new device this pulls the settings chosen on another one.
+        settingsModel = ConsentSettingsModel(settings: ConsentSettingsStore.sync().settings)
+        reloadContentBlocker()
     }
 
     func refreshEnabledState() {
