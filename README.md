@@ -20,7 +20,7 @@ Hush hides cookie banners. This fork can also answer them with a level you pick,
 - Settings sync between iPhone, iPad and Mac through iCloud. The latest change wins.
 - "Only hide it" mode keeps the original behavior.
 
-Privacy: answering a banner means reading and clicking it, so the Safari web extension needs access to all websites. Everything runs on the device. Only your settings (level, mode, paused sites) leave it, through iCloud key-value storage, and each device can turn that off.
+Privacy: answering a banner means reading and clicking it, so the Safari web extension needs access to all websites. Everything runs on the device. Only your settings (level, mode, paused sites) leave it, through iCloud key-value storage, and each device can turn that off. Details in [PRIVACY.md](PRIVACY.md).
 
 Build and test:
 
