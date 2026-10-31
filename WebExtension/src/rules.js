@@ -78,7 +78,9 @@ export const applyOverrides = (rules, overrides) =>
 
 // Vendored rules with Hush's fixes applied, plus rules Hush maintains itself
 // in data/consent-rules.json for platforms Consent-O-Matic does not cover
-// (CookieYes) or no longer matches (Usercentrics' shadow DOM banner).
+// (CookieYes) or no longer matches (Usercentrics' shadow DOM banner, and X,
+// whose banner left #layers and div[role=button] for a "Cookie consent"
+// region with two buttons: Accept first, Refuse second).
 export const buildRules = (vendored, overrides, own) => ({
   ...applyOverrides(vendored, overrides),
   ...own,

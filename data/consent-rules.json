@@ -2,21 +2,55 @@
   "cookieyes": {
     "detectors": [
       {
-        "presentMatcher": [{ "type": "css", "target": { "selector": ".cky-consent-container" } }],
+        "presentMatcher": [
+          {
+            "type": "css",
+            "target": {
+              "selector": ".cky-consent-container"
+            }
+          }
+        ],
         "showingMatcher": [
-          { "type": "css", "target": { "selector": ".cky-consent-container .cky-btn-customize", "displayFilter": true } }
+          {
+            "type": "css",
+            "target": {
+              "selector": ".cky-consent-container .cky-btn-customize",
+              "displayFilter": true
+            }
+          }
         ]
       }
     ],
     "methods": [
-      { "name": "HIDE_CMP", "action": { "type": "hide", "target": { "selector": ".cky-consent-container" } } },
+      {
+        "name": "HIDE_CMP",
+        "action": {
+          "type": "hide",
+          "target": {
+            "selector": ".cky-consent-container"
+          }
+        }
+      },
       {
         "name": "OPEN_OPTIONS",
         "action": {
           "type": "list",
           "actions": [
-            { "type": "click", "target": { "selector": ".cky-consent-container .cky-btn-customize" } },
-            { "type": "waitcss", "target": { "selector": ".cky-btn-preferences", "displayFilter": true }, "retries": 10, "waitTime": 250 }
+            {
+              "type": "click",
+              "target": {
+                "selector": ".cky-consent-container .cky-btn-customize"
+              }
+            },
+            {
+              "type": "waitcss",
+              "target": {
+                "selector": ".cky-btn-preferences",
+                "displayFilter": true
+              },
+              "retries": 10,
+              "waitTime": 250
+            }
           ]
         }
       },
@@ -27,63 +61,152 @@
           "consents": [
             {
               "type": "A",
-              "matcher": { "type": "checkbox", "target": { "selector": "#ckySwitchfunctional" } },
-              "toggleAction": { "type": "click", "target": { "selector": "#ckySwitchfunctional" } }
+              "matcher": {
+                "type": "checkbox",
+                "target": {
+                  "selector": "#ckySwitchfunctional"
+                }
+              },
+              "toggleAction": {
+                "type": "click",
+                "target": {
+                  "selector": "#ckySwitchfunctional"
+                }
+              }
             },
             {
               "type": "B",
-              "matcher": { "type": "checkbox", "target": { "selector": "#ckySwitchanalytics" } },
-              "toggleAction": { "type": "click", "target": { "selector": "#ckySwitchanalytics" } }
+              "matcher": {
+                "type": "checkbox",
+                "target": {
+                  "selector": "#ckySwitchanalytics"
+                }
+              },
+              "toggleAction": {
+                "type": "click",
+                "target": {
+                  "selector": "#ckySwitchanalytics"
+                }
+              }
             },
             {
               "type": "B",
-              "matcher": { "type": "checkbox", "target": { "selector": "#ckySwitchperformance" } },
-              "toggleAction": { "type": "click", "target": { "selector": "#ckySwitchperformance" } }
+              "matcher": {
+                "type": "checkbox",
+                "target": {
+                  "selector": "#ckySwitchperformance"
+                }
+              },
+              "toggleAction": {
+                "type": "click",
+                "target": {
+                  "selector": "#ckySwitchperformance"
+                }
+              }
             },
             {
               "type": "F",
-              "matcher": { "type": "checkbox", "target": { "selector": "#ckySwitchadvertisement" } },
-              "toggleAction": { "type": "click", "target": { "selector": "#ckySwitchadvertisement" } }
+              "matcher": {
+                "type": "checkbox",
+                "target": {
+                  "selector": "#ckySwitchadvertisement"
+                }
+              },
+              "toggleAction": {
+                "type": "click",
+                "target": {
+                  "selector": "#ckySwitchadvertisement"
+                }
+              }
             },
             {
               "type": "X",
-              "matcher": { "type": "checkbox", "target": { "selector": "#ckySwitchothers" } },
-              "toggleAction": { "type": "click", "target": { "selector": "#ckySwitchothers" } }
+              "matcher": {
+                "type": "checkbox",
+                "target": {
+                  "selector": "#ckySwitchothers"
+                }
+              },
+              "toggleAction": {
+                "type": "click",
+                "target": {
+                  "selector": "#ckySwitchothers"
+                }
+              }
             }
           ]
         }
       },
       {
         "name": "SAVE_CONSENT",
-        "action": { "type": "click", "target": { "selector": ".cky-btn-preferences", "displayFilter": true } }
+        "action": {
+          "type": "click",
+          "target": {
+            "selector": ".cky-btn-preferences",
+            "displayFilter": true
+          }
+        }
       }
     ]
   },
   "usercentrics-shadow": {
     "detectors": [
       {
-        "presentMatcher": [{ "type": "css", "target": { "selector": "#usercentrics-cmp-ui" } }],
+        "presentMatcher": [
+          {
+            "type": "css",
+            "target": {
+              "selector": "#usercentrics-cmp-ui"
+            }
+          }
+        ],
         "showingMatcher": [
           {
             "type": "css",
-            "parent": { "selector": "#usercentrics-cmp-ui" },
-            "target": { "selector": "#uc-more-link", "displayFilter": true }
+            "parent": {
+              "selector": "#usercentrics-cmp-ui"
+            },
+            "target": {
+              "selector": "#uc-more-link",
+              "displayFilter": true
+            }
           }
         ]
       }
     ],
     "methods": [
-      { "name": "HIDE_CMP", "action": { "type": "hide", "target": { "selector": "#usercentrics-cmp-ui" } } },
+      {
+        "name": "HIDE_CMP",
+        "action": {
+          "type": "hide",
+          "target": {
+            "selector": "#usercentrics-cmp-ui"
+          }
+        }
+      },
       {
         "name": "OPEN_OPTIONS",
         "action": {
           "type": "list",
           "actions": [
-            { "type": "click", "parent": { "selector": "#usercentrics-cmp-ui" }, "target": { "selector": "#uc-more-link" } },
+            {
+              "type": "click",
+              "parent": {
+                "selector": "#usercentrics-cmp-ui"
+              },
+              "target": {
+                "selector": "#uc-more-link"
+              }
+            },
             {
               "type": "waitcss",
-              "parent": { "selector": "#usercentrics-cmp-ui" },
-              "target": { "selector": "#save", "displayFilter": true },
+              "parent": {
+                "selector": "#usercentrics-cmp-ui"
+              },
+              "target": {
+                "selector": "#save",
+                "displayFilter": true
+              },
               "retries": 10,
               "waitTime": 250
             }
@@ -99,39 +222,63 @@
               "type": "A",
               "matcher": {
                 "type": "css",
-                "parent": { "selector": "#usercentrics-cmp-ui" },
-                "target": { "selector": "#uc-category-functional-toggle[aria-checked='true']" }
+                "parent": {
+                  "selector": "#usercentrics-cmp-ui"
+                },
+                "target": {
+                  "selector": "#uc-category-functional-toggle[aria-checked='true']"
+                }
               },
               "toggleAction": {
                 "type": "click",
-                "parent": { "selector": "#usercentrics-cmp-ui" },
-                "target": { "selector": "#uc-category-functional-toggle" }
+                "parent": {
+                  "selector": "#usercentrics-cmp-ui"
+                },
+                "target": {
+                  "selector": "#uc-category-functional-toggle"
+                }
               }
             },
             {
               "type": "B",
               "matcher": {
                 "type": "css",
-                "parent": { "selector": "#usercentrics-cmp-ui" },
-                "target": { "selector": "#uc-category-analytics-toggle[aria-checked='true'], #uc-category-statistics-toggle[aria-checked='true']" }
+                "parent": {
+                  "selector": "#usercentrics-cmp-ui"
+                },
+                "target": {
+                  "selector": "#uc-category-analytics-toggle[aria-checked='true'], #uc-category-statistics-toggle[aria-checked='true']"
+                }
               },
               "toggleAction": {
                 "type": "click",
-                "parent": { "selector": "#usercentrics-cmp-ui" },
-                "target": { "selector": "#uc-category-analytics-toggle, #uc-category-statistics-toggle" }
+                "parent": {
+                  "selector": "#usercentrics-cmp-ui"
+                },
+                "target": {
+                  "selector": "#uc-category-analytics-toggle, #uc-category-statistics-toggle"
+                }
               }
             },
             {
               "type": "F",
               "matcher": {
                 "type": "css",
-                "parent": { "selector": "#usercentrics-cmp-ui" },
-                "target": { "selector": "#uc-category-marketing-toggle[aria-checked='true']" }
+                "parent": {
+                  "selector": "#usercentrics-cmp-ui"
+                },
+                "target": {
+                  "selector": "#uc-category-marketing-toggle[aria-checked='true']"
+                }
               },
               "toggleAction": {
                 "type": "click",
-                "parent": { "selector": "#usercentrics-cmp-ui" },
-                "target": { "selector": "#uc-category-marketing-toggle" }
+                "parent": {
+                  "selector": "#usercentrics-cmp-ui"
+                },
+                "target": {
+                  "selector": "#uc-category-marketing-toggle"
+                }
               }
             }
           ]
@@ -141,9 +288,72 @@
         "name": "SAVE_CONSENT",
         "action": {
           "type": "click",
-          "parent": { "selector": "#usercentrics-cmp-ui" },
-          "target": { "selector": "#save", "displayFilter": true }
+          "parent": {
+            "selector": "#usercentrics-cmp-ui"
+          },
+          "target": {
+            "selector": "#save",
+            "displayFilter": true
+          }
         }
+      }
+    ]
+  },
+  "x.com": {
+    "detectors": [
+      {
+        "presentMatcher": [
+          {
+            "type": "css",
+            "target": {
+              "selector": "div[role=\"region\"][aria-label*=\"cookie\" i] button[data-slot=\"xds-button\"]"
+            }
+          }
+        ],
+        "showingMatcher": [
+          {
+            "type": "css",
+            "target": {
+              "selector": "div[role=\"region\"][aria-label*=\"cookie\" i] button[data-slot=\"xds-button\"]",
+              "displayFilter": true
+            }
+          }
+        ]
+      }
+    ],
+    "methods": [
+      {
+        "name": "HIDE_CMP",
+        "action": {
+          "type": "hide",
+          "target": {
+            "selector": "div[role=\"region\"][aria-label*=\"cookie\" i]"
+          }
+        }
+      },
+      {
+        "name": "OPEN_OPTIONS"
+      },
+      {
+        "name": "DO_CONSENT",
+        "action": {
+          "type": "ifallowall",
+          "trueAction": {
+            "type": "click",
+            "target": {
+              "selector": "div[role=\"region\"][aria-label*=\"cookie\" i] button[data-slot=\"xds-button\"]:first-of-type"
+            }
+          },
+          "falseAction": {
+            "type": "click",
+            "target": {
+              "selector": "div[role=\"region\"][aria-label*=\"cookie\" i] button[data-slot=\"xds-button\"]:last-of-type"
+            }
+          }
+        }
+      },
+      {
+        "name": "SAVE_CONSENT"
       }
     ]
   }

@@ -176,3 +176,13 @@ Deno.test("Bing rejects when Save stays disabled, otherwise saves", () => {
   assertEquals(save.trueAction.target.selector, "#bnp_btn_reject");
   assertEquals(save.falseAction.target.selector, "#mcp_savesettings");
 });
+
+Deno.test("X refuses unless every category is allowed", () => {
+  const consent = hushRules["x.com"].methods
+    .find((method) => method.name === "DO_CONSENT").action;
+  assertEquals(consent.type, "ifallowall");
+  assertEquals(
+    consent.falseAction.target.selector.endsWith(":last-of-type"),
+    true,
+  );
+});
