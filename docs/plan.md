@@ -203,6 +203,12 @@ Each phase ends in a commit that builds and passes its verification.
   - The extension reloaded `ceo.nerd.hush.ContentBlocker` when the mode differed, and the blocker served the answer list.
   - With sync off, nothing was pushed or pulled.
   - Turning sync back on pushed the newer local choice, and a later stale copy was replaced by it.
+- Cross-device, between the Mac and the iOS 27.2 simulator signed in to the same Apple Account. Each copy was matched by its `modifiedAt` stamp:
+  - On launch, the simulator took the Mac's newer copy.
+  - Balanced picked on the Mac reached the open simulator app within 5 s, and its screen updated without a relaunch.
+  - Maximum privacy picked on the simulator reached the running Mac app within 5 s.
+  - With the Hush app closed, a change from the other device reached the extension on the next Safari page load, on both the Mac and the simulator.
+- Not covered: real iPhone hardware, and delay on a slow or offline network (iCloud decides when key-value changes travel).
 
 **Later, only on request**: scheduled rule refresh.
 
