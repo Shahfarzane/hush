@@ -25,6 +25,7 @@
   {"name": "skuola.net", "url": "https://www.skuola.net/", "reader": "iubenda", "answered": true},
   {"name": "tomshw.it", "url": "https://www.tomshw.it/", "reader": "iubenda", "answered": true},
   {"name": "granola.ai", "url": "https://www.granola.ai/", "reader": "iubenda", "answered": true},
+  {"name": "mediamarkt.nl", "url": "https://www.mediamarkt.nl/", "reader": "mediamarkt", "answered": true},
   {"name": "cookiefirst.com", "url": "https://cookiefirst.com/", "reader": "cookiefirst", "answered": true},
   {"name": "axeptio.eu", "url": "https://www.axeptio.eu/en/", "reader": "axeptio", "answered": true},
   {"name": "termly.io", "url": "https://termly.io/", "reader": "termly", "answered": true},

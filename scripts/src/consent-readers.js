@@ -135,6 +135,25 @@ const x = ({ cookies }) => {
   return { performance: accepted, advertising: accepted };
 };
 
+// MediaMarkt and Saturn keep the choice in pwaconsent: a header, "~", then
+// "|"-separated categories, each "name:0|1&" followed by its vendors. Their
+// "comfort" category covers both functional uses and statistics.
+const mediamarkt = ({ cookies }) => {
+  const value = cookieValue(cookies, "pwaconsent");
+  if (!value) return null;
+  const categories = Object.fromEntries(
+    decode(value).split("~")[1]?.split("|")
+      .map((category) => category.split("&")[0].split(":")) ?? [],
+  );
+  if (!("comfort" in categories && "marketing" in categories)) return null;
+  const comfort = categories.comfort === "1";
+  return {
+    functional: comfort,
+    performance: comfort,
+    advertising: categories.marketing === "1",
+  };
+};
+
 // iubenda keeps the choice in a "_iub_cs-<site id>" cookie, either per
 // purpose (1 necessary, 2 basic interactions and functionalities, 3
 // experience enhancement, 4 measurement, 5 targeting and advertising) or as
@@ -338,6 +357,7 @@ export const readers = {
   bing,
   x,
   iubenda,
+  mediamarkt,
 };
 
 // Categories the reader reported that differ from the chosen level.
