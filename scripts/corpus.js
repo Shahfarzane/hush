@@ -4,7 +4,8 @@
 // not part of `make test_unit`; run it with `make test_corpus [SITES=...]`.
 import { devices, webkit } from "npm:playwright";
 import { mismatches, readers } from "./src/consent-readers.js";
-import { createBlocker } from "./src/content-blocker.js";
+import { createMatcher } from "./src/dnr.js";
+import { siteCss } from "../WebExtension/src/hide-css.js";
 import { evalSnippets } from "../WebExtension/vendor/autoconsent/autoconsent.esm.js";
 
 const resolveRelative = (path) => new URL(path, import.meta.url).pathname;
@@ -24,36 +25,52 @@ const AUTOCONSENT_SCRIPT = await Deno.readTextFile(
 );
 const RESULTS = resolveRelative("../build/corpus-results.json");
 
-// --blocker=answer (default) or --blocker=full applies the content blocker
-// list Hush serves in that mode; --blocker=none runs without one. --mobile
-// loads pages as an iPhone, which gets some sites' mobile banners.
+// --blocker=answer (default) or --blocker=full applies the block and hide
+// rules the extension uses in answer or "Only hide it" mode; --blocker=none
+// runs without them. --mobile loads pages as an iPhone, which gets some
+// sites' mobile banners.
 const flags = Deno.args.filter((arg) => arg.startsWith("--"));
 const only = Deno.args.filter((arg) => !arg.startsWith("--"));
 const MOBILE = flags.includes("--mobile");
 const BLOCKER_MODE =
   flags.find((flag) => flag.startsWith("--blocker="))?.split("=")[1] ??
     "answer";
-const BLOCKER_LISTS = {
-  answer: "../build/blockerList-answer.json",
-  full: "../build/blockerList.json",
-};
-const blocker = BLOCKER_LISTS[BLOCKER_MODE]
-  ? createBlocker(
-    JSON.parse(
-      await Deno.readTextFile(resolveRelative(BLOCKER_LISTS[BLOCKER_MODE])),
-    ),
-  )
+const HIDE_MODE = { answer: "answer", full: "hide" }[BLOCKER_MODE];
+const readBuilt = async (path) =>
+  JSON.parse(await Deno.readTextFile(resolveRelative(`../build/${path}`)));
+const blocks = HIDE_MODE
+  ? createMatcher([
+    ...await readBuilt("WebExtension/rules/block-answer.json"),
+    ...(HIDE_MODE === "hide"
+      ? await readBuilt("WebExtension/rules/block-hide-only.json")
+      : []),
+  ])
   : null;
+const GENERIC_CSS = HIDE_MODE
+  ? await Deno.readTextFile(resolveRelative("../build/WebExtension/hide.css"))
+  : "";
+const PER_SITE = HIDE_MODE ? await readBuilt("web-lists/per-site.json") : null;
 
-// Content blockers hide from the first paint, so add the stylesheet as soon
-// as the document exists, in every frame.
-const hideScript = (selectors) =>
+const RESOURCE_TYPES = {
+  stylesheet: "stylesheet",
+  script: "script",
+  image: "image",
+  font: "font",
+  media: "media",
+  xhr: "xmlhttprequest",
+  fetch: "xmlhttprequest",
+  websocket: "websocket",
+};
+const resourceType = (request) =>
+  request.resourceType() === "document"
+    ? request.frame().parentFrame() ? "sub_frame" : "main_frame"
+    : RESOURCE_TYPES[request.resourceType()] ?? "other";
+
+// The manifest's hide.css applies from the first paint; the background
+// injects the rest per site. Here both are style elements.
+const styleScript = (css) =>
   `(() => {
-  const css = ${
-    JSON.stringify(
-      selectors.map((s) => `${s}{display:none!important}`).join("\n"),
-    )
-  };
+  const css = ${JSON.stringify(css)};
   const add = () => {
     const style = document.createElement("style");
     style.textContent = css;
@@ -108,7 +125,7 @@ const inScope = (script) =>
   const respond = (message) => {
     if (message === "GetTabUrl") return topUrl;
     if (message?.type === "getSettings") return settings;
-    if (message?.type === "fallback" || message?.type === "autoconsentEval") {
+    if (["fallback", "autoconsentEval", "hideCss"].includes(message?.type)) {
       return window.__hushBackground(message);
     }
     if (message?.type === "report") console.log("HUSH-REPORT " + JSON.stringify(message));
@@ -122,6 +139,18 @@ const injectedAutoconsent = inScope(AUTOCONSENT_SCRIPT);
 
 // Mirrors background.js: no fallback once a frame in the page has answered.
 const background = async ({ frame }, message, reports) => {
+  if (message.type === "hideCss") {
+    if (!PER_SITE) return;
+    let host;
+    try {
+      host = new URL(frame.url()).hostname;
+    } catch {
+      return;
+    }
+    const css = host && siteCss(PER_SITE, host, HIDE_MODE);
+    if (css) await frame.evaluate(styleScript(css)).catch(() => {});
+    return;
+  }
   if (message.type === "fallback") {
     if (reports.some((report) => report.outcome === "handled")) return false;
     await frame.evaluate(injectedAutoconsent);
@@ -253,13 +282,22 @@ const visit = async (browser, site) => {
   let answered;
   const answeredPromise = new Promise((resolve) => (answered = resolve));
   try {
-    if (blocker) {
-      await context.addInitScript(
-        hideScript(blocker.hiddenSelectors(site.url)),
-      );
+    if (blocks) {
+      await context.addInitScript(styleScript(GENERIC_CSS));
       await context.route("**/*", (route) => {
         const request = route.request();
-        return blocker.blocks(request.url(), site.url, request.resourceType())
+        let initiator;
+        try {
+          initiator = new URL(request.frame().url()).hostname ||
+            new URL(site.url).hostname;
+        } catch {
+          initiator = new URL(site.url).hostname;
+        }
+        return blocks({
+            url: request.url(),
+            type: resourceType(request),
+            initiator,
+          })
           ? route.abort("blockedbyclient")
           : route.continue();
       });
