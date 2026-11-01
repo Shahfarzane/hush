@@ -18,6 +18,10 @@ const insideIframe = window !== window.parent;
 
 const sendMessage = (message) => browser.runtime.sendMessage(message);
 
+// The background injects the hide rules that depend on this site (the
+// manifest's hide.css covers the rest), before anything else happens here.
+sendMessage({ type: "hideCss" }).catch(() => {});
+
 // Ad slots are small; consent banners in frames are not.
 const mayHoldBanner = () =>
   !insideIframe || (window.innerWidth >= 300 && window.innerHeight >= 150);

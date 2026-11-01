@@ -1,5 +1,7 @@
 import { evalSnippets } from "./vendor/autoconsent/autoconsent.esm.js";
 import { normalizeSettings, siteKey } from "./src/settings.js";
+import { siteCss } from "./src/hide-css.js";
+import perSite from "../build/web-lists/per-site.json" with { type: "json" };
 
 const NATIVE_APP = "ceo.nerd.hush";
 // The app cannot push changes into Safari, so re-read settings from the
@@ -52,7 +54,62 @@ const readSettings = async () => {
     settings = normalizeSettings(stored.settings);
   }
   cache = { settings, readAt: Date.now() };
+  syncRulesets(settings.mode);
   return settings;
+};
+
+// Logged by the native handler in debug builds only.
+const debugReport = (fields) =>
+  browser.runtime.sendNativeMessage(NATIVE_APP, { type: "report", ...fields })
+    .catch(() => {});
+
+// "Only hide it" blocks the consent platforms answer mode leaves for the
+// engines to answer. Safari's getEnabledRulesets kept reporting the ruleset
+// off after it took effect, so this page remembers what it applied (once
+// per wake-up; Safari unloads it when idle).
+let appliedMode = null;
+const syncRulesets = async (mode) => {
+  if (appliedMode === mode) return;
+  appliedMode = mode;
+  try {
+    await browser.declarativeNetRequest.updateEnabledRulesets(
+      mode === "hide"
+        ? { enableRulesetIds: ["block_hide_only"] }
+        : { disableRulesetIds: ["block_hide_only"] },
+    );
+    debugReport({ outcome: "rulesets", mode });
+  } catch (error) {
+    appliedMode = null;
+    debugReport({ outcome: "rulesets-error", mode, error: String(error) });
+  }
+};
+
+// The mode without waiting on the app: the hide rules go in as the page
+// starts. readSettings refreshes the cache behind it.
+const currentMode = async () => {
+  if (cache) return cache.settings.mode;
+  readSettings();
+  const stored = await browser.storage.local.get("settings");
+  return normalizeSettings(stored.settings).mode;
+};
+
+const injectSiteCss = async (sender) => {
+  let host;
+  try {
+    host = new URL(sender.url).hostname;
+  } catch {
+    return;
+  }
+  if (!host) return;
+  const css = siteCss(perSite, host, await currentMode());
+  if (!css) return;
+  await browser.scripting.insertCSS({
+    target: { tabId: sender.tab.id, frameIds: [sender.frameId] },
+    css,
+  }).then(
+    () => debugReport({ outcome: "hide-css", host, bytes: css.length }),
+    (error) => debugReport({ outcome: "hide-css-error", host, error: String(error) }),
+  );
 };
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -62,6 +119,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return;
   }
   switch (message?.type) {
+    // Every frame asks as it starts, in both modes.
+    case "hideCss":
+      return injectSiteCss(sender);
     case "getSettings":
       return readSettings();
     // Consent-O-Matic found no banner in this frame; try autoconsent there.

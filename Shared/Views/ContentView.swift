@@ -32,10 +32,8 @@ struct ContentView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var model: ConsentSettingsModel
 
-    // Answering banners needs the web extension; hiding only needs the
-    // content blocker, as in classic Hush.
-    private var enabledState: ContentBlockerEnabledState {
-        model.settings.mode == .answer ? appState.webExtensionEnabledState : appState.contentBlockerEnabledState
+    private var enabledState: ExtensionEnabledState {
+        appState.webExtensionEnabledState
     }
 
     var body: some View {
@@ -53,15 +51,7 @@ struct ContentView: View {
                 alignment: .center
             )
             VStack(alignment: .leading, spacing: 30) {
-                if model.settings.mode == .answer {
-                    ExtensionStatusView()
-                } else {
-                    switch appState.contentBlockerEnabledState {
-                    case .disabled: InstructionsView()
-                    case .enabled: EnabledView()
-                    case .undetermined: EmptyView()
-                    }
-                }
+                ExtensionStatusView()
                 CookieLevelLink()
             }
             .padding()
@@ -74,10 +64,10 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
-            .environmentObject(AppState(initialContentBlockerEnabledState: .enabled))
+            .environmentObject(AppState(webExtensionEnabledState: .enabled))
             .environmentObject(ConsentSettingsModel(settings: ConsentSettings()))
         ContentView()
-            .environmentObject(AppState(initialContentBlockerEnabledState: .disabled))
+            .environmentObject(AppState(webExtensionEnabledState: .disabled))
             .environmentObject(ConsentSettingsModel(settings: ConsentSettings(mode: .hide)))
     }
 }

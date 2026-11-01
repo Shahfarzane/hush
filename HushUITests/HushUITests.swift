@@ -68,53 +68,6 @@ class HushUITests: XCTestCase {
         }
     }
 
-    private func toggleContentBlockerEnabled(isOn: Bool) throws {
-        openExtensionSettings("ceo.nerd.hush.ContentBlocker")
-        setAllowExtension(isOn: isOn)
-        settingsApp.terminate()
-    }
-
-    // The app only re-queries the content blocker state on foreground, and enabling
-    // the blocker can take a moment to settle, so re-foreground until it is shown.
-    private func assertAppShows(_ identifier: String, timeout: TimeInterval = 30) {
-        let deadline = Date().addingTimeInterval(timeout)
-        repeat {
-            app.activate()
-            if app.staticTexts[identifier].waitForExistence(timeout: 3) {
-                return
-            }
-            XCUIDevice.shared.press(.home)
-        } while Date() < deadline
-        XCTFail("App did not show \"\(identifier)\" within \(timeout)s")
-    }
-
-    // The content blocker status only shows when Hush hides banners instead of
-    // answering them.
-    private func setBannerMode(_ mode: String) {
-        openCookieSettings()
-        let picker = app.buttons["banner mode"]
-        while !picker.isHittable {
-            app.swipeUp()
-        }
-        picker.tap()
-        app.buttons[mode].firstMatch.tap()
-        app.navigationBars.buttons.firstMatch.tap()
-    }
-
-    func testSettingsIntegration() throws {
-        app.launch()
-        setBannerMode("Only hide it")
-        // Teardown blocks still run after a failed assertion; defer does not.
-        addTeardownBlock {
-            self.app.activate()
-            self.setBannerMode("Answer with my choices")
-        }
-        try toggleContentBlockerEnabled(isOn: false)
-        assertAppShows("extension disabled")
-        try toggleContentBlockerEnabled(isOn: true)
-        assertAppShows("extension enabled")
-    }
-
     func testWebExtensionCanBeAllowedOnAllWebsites() throws {
         app.launch()
         openExtensionSettings("ceo.nerd.hush.WebExtension")

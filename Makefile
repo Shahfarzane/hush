@@ -13,8 +13,6 @@ test_unit:
 	deno test --allow-read=./data
 
 test_corpus: extension
-	MINIFY=1 make blocklist --silent > build/blockerList.json
-	MINIFY=1 make blocklist --silent BLOCKLIST_FLAGS=--answer-mode > build/blockerList-answer.json
 	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js $(CORPUS_FLAGS) $(SITES)
 
 test_swift:
@@ -56,7 +54,8 @@ EXTENSION_OUT ?= build/WebExtension
 # injects as classic scripts in one global scope, where two minified bundles'
 # top-level names would overwrite each other.
 extension:
-	mkdir -p "$(EXTENSION_OUT)"
+	mkdir -p "$(EXTENSION_OUT)" build/web-lists
+	deno run --allow-read=./data --allow-write="$(EXTENSION_OUT)",./build scripts/build-web-lists.js "$(EXTENSION_OUT)" build/web-lists/per-site.json
 	deno bundle --quiet --platform browser --minify --format iife -o "$(EXTENSION_OUT)/content.js" WebExtension/content.js
 	deno bundle --quiet --platform browser --minify --format iife -o "$(EXTENSION_OUT)/background.js" WebExtension/background.js
 	deno bundle --quiet --platform browser --minify --format iife -o "$(EXTENSION_OUT)/autoconsent.js" WebExtension/autoconsent.js
@@ -64,20 +63,6 @@ extension:
 	cp WebExtension/manifest.json WebExtension/content.css WebExtension/popup.html WebExtension/popup.css "$(EXTENSION_OUT)/"
 	mkdir -p "$(EXTENSION_OUT)/images"
 	cp WebExtension/images/*.png "$(EXTENSION_OUT)/images/"
-
-blocklist:
-	deno run --allow-read=./data --allow-env=MINIFY scripts/build-blocklist.js $(BLOCKLIST_FLAGS)
-
-xcode:
-ifeq ("$(CONFIGURATION_BUILD_DIR)","")
-	$(error CONFIGURATION_BUILD_DIR env is not set, make this command is run from Xcode)
-endif
-ifeq ("$(UNLOCALIZED_RESOURCES_FOLDER_PATH)","")
-	$(error UNLOCALIZED_RESOURCES_FOLDER_PATH env is not set, make this command is run from Xcode)
-endif
-	mkdir -p "$(CONFIGURATION_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)"
-	MINIFY=1 make blocklist --silent > "$(CONFIGURATION_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/blockerList.json"
-	MINIFY=1 make blocklist --silent BLOCKLIST_FLAGS=--answer-mode > "$(CONFIGURATION_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/blockerList-answer.json"
 
 xcode_extension:
 ifeq ("$(CONFIGURATION_BUILD_DIR)","")

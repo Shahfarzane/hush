@@ -1,6 +1,6 @@
 # Consent levels for Hush: plan
 
-Status: Phases 0 to 6 done 2026-10-31, Phase 7 started 2026-11-01 (see their results sections). Phase 8 is planned.
+Status: Phases 0 to 6 done 2026-10-31, Phase 7 started and Phase 8 done 2026-11-01 (see their results sections).
 
 ## Goal
 
@@ -267,6 +267,22 @@ Each phase ends in a commit that builds and passes its verification.
   - The blocklist generator's unit tests cover the new output formats.
   - The corpus runs with the new hiding: no regressions in answer mode, and hide mode hides the corpus banners.
   - On iOS and macOS, Safari shows one Hush. Hide mode hides a banner before it draws (no flash), and switching modes in the app takes effect on the next page load.
+
+**Phase 8 results (2026-11-01)**
+- Safari lists one Hush on iOS and macOS. The `ContentBlocker iOS` and `ContentBlocker macOS` targets, `ContentBlockerRequestHandler`, every `reloadContentBlocker()` call and the content blocker status are gone. The app's status screen reads "Hush is answering" or "Hush is hiding banners", and setup asks for one switch. `EnabledView` (which linked to the original app's App Store page and report form) went with it.
+- `scripts/build-web-lists.js` (via `make extension`) converts the adblock-format lists straight from their lines, not from WebKit JSON, so a `#@#` exception now exempts one selector on one site instead of switching off every earlier rule there:
+  - `rules/block-answer.json` (2,058 rules) and `rules/block-hide-only.json` (70 rules): `declarativeNetRequest` static rulesets, `urlFilter` in adblock syntax, `$third-party`, `$domain=` and resource types mapped to conditions. Exceptions are `allow` rules at priority 2.
+  - `hide.css` (about 650 KB, one rule per selector): the generic selectors no site exempts, applied by the manifest in every frame before the page draws. The two `$generichide` sites are its `exclude_matches`; a unit test keeps those in step with the lists.
+  - `build/web-lists/per-site.json` (about 840 KB, bundled into background.js): site hide rules for 16,141 domains, the 223 generic selectors some site exempts, `#@#` exceptions, and the 24 generic selectors only "Only hide it" uses. Each frame's content script asks as it starts, and the background injects that site's CSS with `scripting.insertCSS`.
+- Mode switches turn `block_hide_only` on or off with `updateEnabledRulesets`. Safari's `getEnabledRulesets` kept reporting it off after it took effect, so the background remembers what it applied per wake-up. In the iOS 27.2 Simulator a switch took a few seconds to apply: the next page load after the switch could still use the old rules.
+- Verified in the iOS 27.2 Simulator, which cannot load content blockers, so everything it hid or blocked came from the new path. A local probe page showed:
+  - an always-on block rule blocking its script;
+  - the hide-only rule blocking in hide mode and letting the script load in answer mode;
+  - `hide.css` hiding its element.
+
+  mediamarkt.nl was still answered in answer mode, and the background injected per-site CSS into Cookiebot's consent iframe. UI tests (4) and Swift unit tests (11) pass, and the macOS app bundle carries only the web extension.
+- The corpus now emulates what ships: `hide.css` as an early stylesheet, the background's per-site CSS on the content script's request, and the rulesets through `scripts/src/dnr.js`. Answer mode is unchanged: 24 pass, 8 stricter, 0 wrong, 0 regressed. The old converter (`convert.js`, `build-blocklist.js`) and its WebKit emulation are removed.
+- Not verified yet: updating a device from a build that still had the content blocker (expected: its row disappears from Safari's extension list), and macOS Safari with the new lists.
 
 **Later, only on request**: scheduled rule refresh.
 
