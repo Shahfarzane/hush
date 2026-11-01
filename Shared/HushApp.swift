@@ -7,31 +7,16 @@ struct HushApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     #endif
 
-    let appState = AppState(initialContentBlockerEnabledState: .undetermined)
+    let appState = AppState()
     let settingsModel: ConsentSettingsModel
 
     init() {
         // On a new device this pulls the settings chosen on another one.
         settingsModel = ConsentSettingsModel(settings: ConsentSettingsStore.sync().settings)
-        reloadContentBlocker()
     }
 
     func refreshEnabledState() {
         settingsModel.reload()
-        SFContentBlockerManager.getStateOfContentBlocker(withIdentifier: contentBlockerIdentifier, completionHandler: { (state, error) in
-            if let error = error {
-                print("Failed to get content blocker state")
-                print(error)
-                DispatchQueue.main.async {
-                    appState.contentBlockerEnabledState = .undetermined
-                }
-            }
-            if let state = state {
-                DispatchQueue.main.async {
-                    appState.contentBlockerEnabledState = state.isEnabled ? .enabled : .disabled
-                }
-            }
-        })
         #if os(macOS)
         SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: webExtensionIdentifier) { (state, error) in
             DispatchQueue.main.async {
