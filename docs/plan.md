@@ -226,6 +226,10 @@ Each phase ends in a commit that builds and passes its verification.
   - The web extension manifest gained the top-level `icons` App Store Connect requires.
   - The export uses the system `rsync`, because Homebrew's rsync 3.x breaks `xcodebuild -exportArchive`.
 
+**granola.ai and the extension icon (2026-11-01)**
+- granola.ai runs the classic iubenda banner, and Hush answers it in WebKit, in the iOS Simulator and on the iPhone (banner found at 0.3 to 1.6 s, saved within 0.3 s). It stayed up on the iPhone because Safari had not let the Hush extension run on that site; the popup still opened and said no banner was answered. Setting Hush to Allow on all websites fixed it. granola.ai is in the corpus now.
+- The manifest icons were opaque squares cut from the iOS app icon, so Safari on the Mac drew them larger than other extensions' rounded icons. They now come from the Mac app icon, which has the rounded shape and the standard margin.
+
 **Later, only on request**: scheduled rule refresh.
 
 ## Test corpus and verification
