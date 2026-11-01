@@ -231,6 +231,26 @@ Deno.test("Bing's BCP cookie maps analytics and social media", () => {
   assertEquals(readers.bing({ cookies: [] }), null);
 });
 
+Deno.test("MediaMarkt's pwaconsent maps comfort and marketing", () => {
+  const cookie = (comfort, marketing) =>
+    encodeURIComponent(
+      `v:1.1&id:789f3a&createdMs:1793517599174~required:1&clf:1,gtm:1|comfort:${comfort}&aic:0,aid:0|marketing:${marketing}&fb:0`,
+    );
+  assertEquals(
+    readers.mediamarkt({ cookies: jar({ pwaconsent: cookie(0, 0) }) }),
+    {
+      functional: false,
+      performance: false,
+      advertising: false,
+    },
+  );
+  assertEquals(
+    readers.mediamarkt({ cookies: jar({ pwaconsent: cookie(1, 0) }) }),
+    { functional: true, performance: true, advertising: false },
+  );
+  assertEquals(readers.mediamarkt({ cookies: [] }), null);
+});
+
 Deno.test("X's d_prefs tells Accept all from Refuse non-essential", () => {
   const refused = "MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw";
   const accepted = "MToxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw";

@@ -1,0 +1,20 @@
+[
+  {
+    "name": "MediaMarkt",
+    "sites": ["mediamarkt.nl"],
+    "banner": "[data-test='mms-privacy-layer']",
+    "acceptAll": "[data-test='pwa-consent-layer-accept-all']",
+    "save": "[data-test='pwa-consent-layer-save-settings']",
+    "switches": [
+      {
+        "selector": "[role='switch']#toggle-category-Comfortabel",
+        "categories": ["functional", "performance"]
+      },
+      {
+        "selector": "[role='switch']#toggle-category-Marketing",
+        "categories": ["advertising"]
+      }
+    ],
+    "switchState": "aria-checked"
+  }
+]

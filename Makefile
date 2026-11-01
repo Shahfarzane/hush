@@ -52,12 +52,15 @@ fetch_autoconsent:
 
 EXTENSION_OUT ?= build/WebExtension
 
+# Each bundle is an IIFE: Safari runs content.js and the autoconsent.js it
+# injects as classic scripts in one global scope, where two minified bundles'
+# top-level names would overwrite each other.
 extension:
 	mkdir -p "$(EXTENSION_OUT)"
-	deno bundle --quiet --platform browser --minify -o "$(EXTENSION_OUT)/content.js" WebExtension/content.js
-	deno bundle --quiet --platform browser --minify -o "$(EXTENSION_OUT)/background.js" WebExtension/background.js
-	deno bundle --quiet --platform browser --minify -o "$(EXTENSION_OUT)/autoconsent.js" WebExtension/autoconsent.js
-	deno bundle --quiet --platform browser --minify -o "$(EXTENSION_OUT)/popup.js" WebExtension/popup.js
+	deno bundle --quiet --platform browser --minify --format iife -o "$(EXTENSION_OUT)/content.js" WebExtension/content.js
+	deno bundle --quiet --platform browser --minify --format iife -o "$(EXTENSION_OUT)/background.js" WebExtension/background.js
+	deno bundle --quiet --platform browser --minify --format iife -o "$(EXTENSION_OUT)/autoconsent.js" WebExtension/autoconsent.js
+	deno bundle --quiet --platform browser --minify --format iife -o "$(EXTENSION_OUT)/popup.js" WebExtension/popup.js
 	cp WebExtension/manifest.json WebExtension/content.css WebExtension/popup.html WebExtension/popup.css "$(EXTENSION_OUT)/"
 	mkdir -p "$(EXTENSION_OUT)/images"
 	cp WebExtension/images/*.png "$(EXTENSION_OUT)/images/"
