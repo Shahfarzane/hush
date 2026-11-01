@@ -20,9 +20,13 @@ const PLATFORMS = [
   [/sirdata/i, "Sirdata"],
 ];
 
+// autoconsent, and site rules used at a mixed level, refuse or accept
+// everything rather than set each category.
+const ALL_OR_NOTHING = /^(autoconsent|site-refuse):/;
+
 export const describeAnswer = (cmp) => {
-  const fallback = cmp.startsWith("autoconsent:");
-  const name = cmp.replace(/^autoconsent:/, "");
+  const fallback = ALL_OR_NOTHING.test(cmp);
+  const name = cmp.replace(ALL_OR_NOTHING, "").replace(/^site:/, "");
   return {
     platform: PLATFORMS.find(([pattern]) => pattern.test(name))?.[1] ?? name,
     fallback,

@@ -9,6 +9,8 @@ import hushRules from "../data/consent-rules.json" with { type: "json" };
 import { buildRules } from "./src/rules.js";
 import { isAnswered, report, reportAnswered } from "./src/report.js";
 import { consentTypesFor, shouldAnswer } from "./src/settings.js";
+import siteRules from "../data/site-rules.json" with { type: "json" };
+import { answerWithSiteRule, siteRuleFor } from "./src/site-rules/answer.js";
 
 const rules = buildRules(vendoredRules, overrides, hushRules);
 
@@ -65,6 +67,18 @@ const run = async () => {
   const settings = await sendMessage({ type: "getSettings" });
   if (!shouldAnswer(settings, topHost)) return;
 
+  // A Hush rule written for this site goes first; it falls through to the
+  // engines below when its banner never shows.
+  const siteRule = mayHoldBanner() &&
+    siteRuleFor(siteRules, insideIframe ? location.host : topHost);
+  if (siteRule) {
+    const answer = await answerWithSiteRule(siteRule, settings);
+    if (answer) {
+      reportAnswered(answer.cmp, answer.clicks);
+      return;
+    }
+  }
+
   ConsentEngine.debugValues = { skipHideMethod: !settings.hideWhileAnswering };
   ConsentEngine.generalSettings = { hideInsteadOfPIP: true };
   ConsentEngine.topFrameUrl = topHost;
@@ -72,15 +86,15 @@ const run = async () => {
     rules,
     consentTypesFor(settings),
     (event) => {
-      if (!isAnswered(event)) {
-        if (event.error) report({ outcome: "error" });
-        if (event.handled) report({ outcome: "no-clicks", cmp: event.cmpName });
-        // Consent-O-Matic left any banner here unanswered; the background
-        // injects the autoconsent fallback into this frame.
-        if (mayHoldBanner()) sendMessage({ type: "fallback" }).catch(() => {});
+      if (isAnswered(event)) {
+        reportAnswered(event.cmpName, event.clicks);
         return;
       }
-      reportAnswered(event.cmpName, event.clicks);
+      if (event.error) report({ outcome: "error" });
+      if (event.handled) report({ outcome: "no-clicks", cmp: event.cmpName });
+      // Consent-O-Matic left any banner here unanswered; the background
+      // injects the autoconsent fallback into this frame.
+      if (mayHoldBanner()) sendMessage({ type: "fallback" }).catch(() => {});
     },
   );
 };

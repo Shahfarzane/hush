@@ -10,6 +10,14 @@ Deno.test("Rule names become platform names", () => {
     platform: "TrustArc",
     fallback: true,
   });
+  assertEquals(describeAnswer("site:MediaMarkt"), {
+    platform: "MediaMarkt",
+    fallback: false,
+  });
+  assertEquals(describeAnswer("site-refuse:someshop.example"), {
+    platform: "someshop.example",
+    fallback: true,
+  });
   assertEquals(describeAnswer("someshop.example"), {
     platform: "someshop.example",
     fallback: false,
