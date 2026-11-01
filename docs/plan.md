@@ -289,7 +289,7 @@ Each phase ends in a commit that builds and passes its verification.
 
   mediamarkt.nl was still answered in answer mode, and the background injected per-site CSS into Cookiebot's consent iframe. UI tests (4) and Swift unit tests (11) pass, and the macOS app bundle carries only the web extension.
 - The corpus now emulates what ships: `hide.css` as an early stylesheet, the background's per-site CSS on the content script's request, and the rulesets through `scripts/src/dnr.js`. Answer mode is unchanged: 24 pass, 8 stricter, 0 wrong, 0 regressed. The old converter (`convert.js`, `build-blocklist.js`) and its WebKit emulation are removed.
-- Not verified yet: updating a device from a build that still had the content blocker (expected: its row disappears from Safari's extension list), and macOS Safari with the new lists.
+- On devices: TestFlight build 20261101.0940 went onto Shahin's iPhone (over a build that still had the content blocker) and his Mac (after Hush had been uninstalled there), and he reported it working on 2026-11-01. The macOS archive carries only the web extension, and Safari on the Mac registers one Hush. The same build went to the public TestFlight group with a note asking testers to switch Hush on again.
 
 **Later, only on request**: scheduled rule refresh.
 
