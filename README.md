@@ -13,11 +13,11 @@
 
 Hush hides cookie banners. This fork can also answer them with a level you pick, so sites store your choice instead of asking again.
 
-Install the beta on iPhone, iPad or Mac through TestFlight: https://testflight.apple.com/join/N9yxQHND (the link opens once Apple's beta review approves a build). After installing, turn on Hush and Hush Content Blocker in Safari's extension settings and allow All Websites.
+Install the beta on iPhone, iPad or Mac through TestFlight: https://testflight.apple.com/join/N9yxQHND (the link opens once Apple's beta review approves a build). After installing, turn on Hush in Safari's extension settings and allow All Websites.
 
 - Levels: Maximum privacy, Functional only, Balanced, or Custom (functional, performance, advertising and other, each on or off). Necessary cookies are always allowed.
-- Answers come from two open-source rule sets: [Consent-O-Matic](https://github.com/cavi-au/Consent-O-Matic) (MIT) for per-category answers, and DuckDuckGo's [autoconsent](https://github.com/duckduckgo/autoconsent) (MPL-2.0) as a fallback that refuses unless every category is allowed. Hush's own fixes live in `data/consent-o-matic-overrides.json` and `data/consent-rules.json`.
-- A banner with no way to refuse is hidden, never accepted. Platforms neither rule set answers stay hidden by the content blocker, as in the original Hush.
+- Answers come from Hush's own site rules (`data/site-rules.json`) and two open-source rule sets: [Consent-O-Matic](https://github.com/cavi-au/Consent-O-Matic) (MIT) for per-category answers, and DuckDuckGo's [autoconsent](https://github.com/duckduckgo/autoconsent) (MPL-2.0) as a fallback that refuses unless every category is allowed. Hush's fixes to those live in `data/consent-o-matic-overrides.json` and `data/consent-rules.json`.
+- A banner with no way to refuse is hidden, never accepted. Banners no rule answers stay hidden by Hush's block and hide lists, as in the original Hush. Safari shows one Hush extension; the lists that used to be a separate content blocker now ship inside it.
 - Pause Hush on a site from the app or the Safari toolbar popup. The popup also shows what Hush did on the page.
 - Settings sync between iPhone, iPad and Mac through iCloud. The latest change wins.
 - "Only hide it" mode keeps the original behavior.
@@ -119,7 +119,7 @@ xcode-select --install
 
 ### Tests
 
-Run blocklist unit tests with:
+Run unit tests (lists, rules, engines) with:
 ```bash
 make test_unit
 ```
@@ -130,11 +130,11 @@ Run UI tests with:
 make test_ui
 ```
 
-### Blocklist
+### Extension
 
-Compile blocklist only with (part of Xcode build):
+Build the Safari web extension, with its block rules (`rules/`), hide stylesheet (`hide.css`) and per-site hide rules, into `build/WebExtension` (part of the Xcode build):
 ```bash
-make blocklist
+make extension
 ```
 
 ## License
