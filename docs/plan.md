@@ -254,6 +254,13 @@ Each phase ends in a commit that builds and passes its verification.
   - iOS Simulator: answered by `site:MediaMarkt` within seconds of the page loading.
 - Corpus tooling: `--corpus=<path>` runs a candidate list, sites with reader `none` count as answered when a rule clicked through their banner, and `build/corpus-results.json` keeps each site's reports (outcome, rule, clicks). Site rules that find their banner but cannot answer report `site-rule-failed` or `site-rule-skipped`.
 - Full corpus: 24 pass, 8 stricter, 0 wrong, 0 regressed.
+- Second round (2026-11-01): the sites from the earlier 45-site scan were loaded with Hush's lists applied (no engines), and only banners still visible counted. Seven of the unanswered ones showed none (substack, mediafire, nhs.uk, bandcamp, wildkamp, niem-handel, cosaporto). Rules were written from the live pages for five:
+  - thincast.com (two pre-ticked categories), revolut.com and aoocci.com (the Kalles Shopify theme's popup) refuse with their reject buttons. Revolut's `rev_cookie_consent` is read back: stricter, everything refused.
+  - vpnunlimited.com (Acceptrics) and myartbroker.com set each category in their panels and save, at both levels and as an iPhone. MyArtBroker keeps its choice in localStorage, which the corpus does not read yet.
+  - `:contains()` now ignores case, since buttons often show CSS-uppercased text.
+  - Not covered: lavietaste.com only offers "Agree", and its Tailwind class names make a hide rule fragile.
+  - Acceptrics and the Kalles theme run on other sites too; they are candidates for upstream rules.
+- Full corpus: 24 pass, 9 stricter, 4 answered without readback, 0 wrong, 0 regressed, 0 unanswered (37 sites).
 
 **Phase 8: one Safari extension instead of two (Shahin, 2026-11-01)**
 - Why: Safari lists "Hush" twice (the content blocker and the web extension), both named Hush on the Mac, and each must be switched on separately, per profile on the Mac. Shahin chose a single extension over clearer names.
