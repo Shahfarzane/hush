@@ -1,6 +1,6 @@
 # Consent levels for Hush: plan
 
-Status: Phases 0 to 6 done 2026-10-31 (see their results sections).
+Status: Phases 0 to 6 done 2026-10-31, Phase 7 started 2026-11-01 (see their results sections). Phase 8 is planned.
 
 ## Goal
 
@@ -229,6 +229,44 @@ Each phase ends in a commit that builds and passes its verification.
 **granola.ai and the extension icon (2026-11-01)**
 - granola.ai runs the classic iubenda banner, and Hush answers it in WebKit, in the iOS Simulator and on the iPhone (banner found at 0.3 to 1.6 s, saved within 0.3 s). It stayed up on the iPhone because Safari had not let the Hush extension run on that site; the popup still opened and said no banner was answered. Setting Hush to Allow on all websites fixed it. granola.ai is in the corpus now.
 - The manifest icons were opaque squares cut from the iOS app icon, so Safari on the Mac drew them larger than other extensions' rounded icons. They now come from the Mac app icon, which has the rounded shape and the standard margin.
+
+**Phase 7: Hush's own site rules (Shahin, 2026-11-01)**
+- Goal: answer banners that neither Consent-O-Matic nor autoconsent knows, on sites people actually visit.
+- First try: run Super Agent's public rule catalog as a third engine. Dropped for three reasons:
+  - It would put their unlicensed data in this public repo.
+  - Run ahead of the other engines, it regressed four corpus sites (bing.com, spiegel.de, termly.io, axeptio.eu) through rougher category mapping.
+  - Run as a gap filler, it answered one site out of 45 candidates.
+- What Hush does instead: rules of its own in `data/site-rules.json`, each written from the live site and proven by a corpus entry, run by a small engine in `WebExtension/src/site-rules/`. Rules for platforms many sites share go upstream to Consent-O-Matic or autoconsent, with Shahin's OK per pull request. Super Agent's catalog stays outside the repo as a list of sites worth checking, never as a source of selectors.
+- Rule format, one object per site:
+  - `name`, `sites` (domains; subdomains match too) and `banner` (the selector the engine waits for, up to 10 s, before any step).
+  - Buttons: `reject`, `necessaryOnly`, `acceptAll`, `openSettings`, `save`; `firstClick` and `shadowRoot` for banners behind a first layer or inside a shadow root.
+  - `switches`: a list of `{selector, categories}`. A switch covering several Hush categories (MediaMarkt's "Comfortabel" is functional and statistics) goes on only when all of them are allowed. `switchState` says how its state reads: `checkbox`, `aria-checked`, `aria-pressed` or `auto`.
+  - Selectors may list comma-separated alternatives and use `:contains('text')`.
+- Paths per level: a mixed level sets the switches and saves; refusing everything prefers `reject`, then `necessaryOnly`, then settings with every switch off; accept all only when every category is allowed. A rule with no way to refuse fails the unit tests. A Save button still disabled at the end falls back to `reject` or `necessaryOnly`.
+- Order: a rule for the page's site runs first. It falls through to Consent-O-Matic when its banner never shows (consent already stored).
+
+**Phase 7 results (2026-11-01)**
+- Super Agent's catalog, tried first, showed where Hush's own engine needed care:
+  - Running it after autoconsent gave up needed a handoff between the content script and the injected autoconsent script. In the iOS Simulator the handoff failed while the corpus passed: Safari runs content.js and the injected autoconsent.js as classic scripts in one global scope, and the two minified bundles' top-level `var`s overwrote each other, so content.js's `sendMessage` returned `true`. Every bundle is now an IIFE (`deno bundle --format iife`). This also ended autoconsent's injection silently breaking anything content.js still had running.
+  - Its rules for well-known platforms were worse than the engines Hush has: Bing's saves through a button that stays disabled, a Sourcepoint entry carried bbcgoodfood.com's button numbers to spiegel.de, Termly's files analytics under functional, and Axeptio's "save" is accept all.
+- MediaMarkt (mediamarkt.nl) is the first Hush rule. Its privacy layer shows its switches straight away and has no reject button, and autoconsent's MediaMarkt rule fails to opt out there. The rule first lost its switches: it started while the page loaded, gave up on them before the layer rendered and saved the defaults. Waiting for the rule's `banner` fixed it.
+  - Corpus, desktop and iPhone: stricter at "functional only" (Comfortabel also covers statistics, so it stays off) and pass at "balanced". A reader decodes MediaMarkt's `pwaconsent` cookie.
+  - iOS Simulator: answered by `site:MediaMarkt` within seconds of the page loading.
+- Corpus tooling: `--corpus=<path>` runs a candidate list, sites with reader `none` count as answered when a rule clicked through their banner, and `build/corpus-results.json` keeps each site's reports (outcome, rule, clicks). Site rules that find their banner but cannot answer report `site-rule-failed` or `site-rule-skipped`.
+- Full corpus: 24 pass, 8 stricter, 0 wrong, 0 regressed.
+
+**Phase 8: one Safari extension instead of two (Shahin, 2026-11-01)**
+- Why: Safari lists "Hush" twice (the content blocker and the web extension), both named Hush on the Mac, and each must be switched on separately, per profile on the Mac. Shahin chose a single extension over clearer names.
+- Cost, accepted: "Only hide it" then needs the same website access as answering. Today the content blocker needs none.
+- The content blocker's list (about 23,300 hide rules and 1,700 block rules) moves into the web extension:
+  - Block rules become `declarativeNetRequest` static rulesets, one for answer mode and one for hide mode, switched with `updateEnabledRulesets` when the mode changes. Safari publishes no rule limit; Mozilla documents 50 static rulesets with 10 enabled, and Chrome guarantees 30,000 static rules. The first step measures Safari's real limit on iOS and macOS.
+  - Hide rules that apply everywhere become a stylesheet in the manifest's `content_scripts.css`, which Safari applies before the page draws. It holds the answer-mode list, so banners Hush answers stay visible to the engines.
+  - Site-specific hide rules and the extra hide-mode selectors are injected by the content script, from a host-keyed table, as soon as the document exists. Settings come from `storage.local` (the background already caches them there) instead of a native message, so nothing waits on the app.
+- Removed: the `ContentBlocker iOS` and `ContentBlocker macOS` targets, `ContentBlockerRequestHandler`, `reloadContentBlocker()`, and the app's instructions for the second switch.
+- Verify:
+  - The blocklist generator's unit tests cover the new output formats.
+  - The corpus runs with the new hiding: no regressions in answer mode, and hide mode hides the corpus banners.
+  - On iOS and macOS, Safari shows one Hush. Hide mode hides a banner before it draws (no flash), and switching modes in the app takes effect on the next page load.
 
 **Later, only on request**: scheduled rule refresh.
 
