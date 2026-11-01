@@ -28,7 +28,7 @@
   {"name": "mediamarkt.nl", "url": "https://www.mediamarkt.nl/", "reader": "mediamarkt", "answered": true},
   {"name": "thincast.com", "url": "https://www.thincast.com/", "reader": "none", "answered": true},
   {"name": "vpnunlimited.com", "url": "https://www.vpnunlimited.com/", "reader": "none", "answered": true},
-  {"name": "revolut.com", "url": "https://www.revolut.com/", "reader": "none", "answered": true},
+  {"name": "revolut.com", "url": "https://www.revolut.com/", "reader": "revolut", "answered": true},
   {"name": "myartbroker.com", "url": "https://www.myartbroker.com/", "reader": "none", "answered": true},
   {"name": "aoocci.com", "url": "https://www.aoocci.com/", "reader": "none", "answered": true},
   {"name": "cookiefirst.com", "url": "https://cookiefirst.com/", "reader": "cookiefirst", "answered": true},

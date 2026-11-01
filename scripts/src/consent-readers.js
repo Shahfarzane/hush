@@ -154,6 +154,23 @@ const mediamarkt = ({ cookies }) => {
   };
 };
 
+// Revolut keeps the choice in rev_cookie_consent, JSON with one flag per
+// category; "preferences" are its functional cookies.
+const revolut = ({ cookies }) => {
+  const value = cookieValue(cookies, "rev_cookie_consent");
+  if (!value) return null;
+  try {
+    const choice = JSON.parse(decode(value));
+    return {
+      functional: choice.preferences === true,
+      performance: choice.analytics === true,
+      advertising: choice.advertising === true,
+    };
+  } catch {
+    return null;
+  }
+};
+
 // iubenda keeps the choice in a "_iub_cs-<site id>" cookie, either per
 // purpose (1 necessary, 2 basic interactions and functionalities, 3
 // experience enhancement, 4 measurement, 5 targeting and advertising) or as
@@ -358,6 +375,7 @@ export const readers = {
   x,
   iubenda,
   mediamarkt,
+  revolut,
 };
 
 // Categories the reader reported that differ from the chosen level.

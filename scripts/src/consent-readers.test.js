@@ -251,6 +251,21 @@ Deno.test("MediaMarkt's pwaconsent maps comfort and marketing", () => {
   assertEquals(readers.mediamarkt({ cookies: [] }), null);
 });
 
+Deno.test("Revolut's rev_cookie_consent maps its three categories", () => {
+  const cookie = encodeURIComponent(
+    '{"preferences":true,"analytics":false,"advertising":false}',
+  );
+  assertEquals(
+    readers.revolut({ cookies: jar({ rev_cookie_consent: cookie }) }),
+    {
+      functional: true,
+      performance: false,
+      advertising: false,
+    },
+  );
+  assertEquals(readers.revolut({ cookies: [] }), null);
+});
+
 Deno.test("X's d_prefs tells Accept all from Refuse non-essential", () => {
   const refused = "MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw";
   const accepted = "MToxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw";
