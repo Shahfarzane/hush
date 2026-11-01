@@ -1,6 +1,7 @@
 import { siteKey } from "../settings.js";
 import { report } from "../report.js";
 import { runRule } from "./engine.js";
+import { query, waitFor } from "./dom.js";
 import { CATEGORIES } from "./plan.js";
 
 // The rule for a host: one whose sites list the host or a parent domain,
@@ -31,11 +32,18 @@ const cmpName = (rule, path, categories) => {
 // Consent-O-Matic's class: content.css makes it transparent.
 const HIDER = "ConsentOMatic-CMP-Hider";
 
+// The rule starts while the page loads. A banner that has not shown by then
+// was answered before, or the site skipped it: the other engines take over.
+const BANNER_TIMEOUT_MS = 10000;
+
 export const answerWithSiteRule = async (rule, settings) => {
-  const banner = rule.banner && settings.hideWhileAnswering
-    ? document.querySelector(rule.banner)
-    : null;
-  banner?.classList.add(HIDER);
+  const banner = await waitFor(
+    () => query(rule.banner),
+    document,
+    BANNER_TIMEOUT_MS,
+  );
+  if (!banner) return null;
+  if (settings.hideWhileAnswering) banner.classList.add(HIDER);
   try {
     const result = await runRule(rule, settings.categories);
     if (result.answered && result.clicks > 0) {
@@ -53,6 +61,6 @@ export const answerWithSiteRule = async (rule, settings) => {
     });
     return null;
   } finally {
-    banner?.classList.remove(HIDER);
+    banner.classList.remove(HIDER);
   }
 };

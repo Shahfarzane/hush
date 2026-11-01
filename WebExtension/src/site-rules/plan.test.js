@@ -169,6 +169,7 @@ Deno.test("Every rule in data/site-rules.json is well formed", () => {
     const unknown = Object.keys(rule).filter((field) => !FIELDS.has(field));
     assertEquals(unknown, [], `${rule.name}: unknown fields`);
     assertEquals(typeof rule.name, "string");
+    assertEquals(typeof rule.banner, "string", `${rule.name}: no banner`);
     assertEquals(rule.sites.length > 0, true, `${rule.name}: no sites`);
     for (const entry of rule.switches ?? []) {
       assertEquals(typeof entry.selector, "string", `${rule.name}: selector`);

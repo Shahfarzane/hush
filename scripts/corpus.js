@@ -325,10 +325,10 @@ const visit = async (browser, site) => {
       stored,
       differences,
       consentCookies,
-      reports: reports.map(({ outcome, cmp, reason, path }) => ({
+      reports: reports.map(({ outcome, cmp, clicks, path }) => ({
         outcome,
         cmp,
-        reason,
+        clicks,
         path,
       })),
     };
