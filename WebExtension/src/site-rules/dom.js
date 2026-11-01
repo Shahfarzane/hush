@@ -1,6 +1,7 @@
 // DOM helpers for site rules. A selector string may list alternatives
 // separated by commas (the first one found wins) and may use
-// :contains('text') to match an element by its text.
+// :contains('text') to match an element by its text, ignoring case (buttons
+// often show their text uppercased by CSS).
 
 const CONTAINS = /^(.*):contains\(['"]?([^'"]+)['"]?\)(.*)$/;
 
@@ -14,11 +15,14 @@ export const parseContains = (selector) => {
   };
 };
 
+const hasText = (element, text) =>
+  element.textContent.toLowerCase().includes(text.toLowerCase());
+
 const queryOne = (selector, root) => {
   const contains = parseContains(selector);
   if (!contains) return root.querySelector(selector);
   for (const element of root.querySelectorAll(contains.before)) {
-    if (!element.textContent.includes(contains.text)) continue;
+    if (!hasText(element, contains.text)) continue;
     if (!contains.after) return element;
     const inner = element.querySelector(contains.after);
     if (inner) return inner;
@@ -30,7 +34,7 @@ const queryEvery = (selector, root) => {
   const contains = parseContains(selector);
   if (!contains) return [...root.querySelectorAll(selector)];
   return [...root.querySelectorAll(contains.before)]
-    .filter((element) => element.textContent.includes(contains.text))
+    .filter((element) => hasText(element, contains.text))
     .flatMap((element) =>
       contains.after ? [...element.querySelectorAll(contains.after)] : [element]
     );
