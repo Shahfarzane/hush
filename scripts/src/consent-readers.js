@@ -316,6 +316,8 @@ const axeptio = ({ cookies }) => {
 };
 
 export const readers = {
+  // Sites whose stored consent Hush cannot decode.
+  none: () => null,
   cookiebot,
   onetrust,
   tcf,

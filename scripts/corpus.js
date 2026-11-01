@@ -9,8 +9,12 @@ import { evalSnippets } from "../WebExtension/vendor/autoconsent/autoconsent.esm
 
 const resolveRelative = (path) => new URL(path, import.meta.url).pathname;
 
+// --corpus=<path> runs another site list in the same format, such as
+// candidates to try before adding them to data/corpus.json.
+const CORPUS = Deno.args.find((arg) => arg.startsWith("--corpus="))
+  ?.split("=")[1];
 const SITES = JSON.parse(
-  await Deno.readTextFile(resolveRelative("../data/corpus.json")),
+  await Deno.readTextFile(CORPUS ?? resolveRelative("../data/corpus.json")),
 );
 const CONTENT_SCRIPT = await Deno.readTextFile(
   resolveRelative("../build/WebExtension/content.js"),
@@ -294,7 +298,11 @@ const visit = async (browser, site) => {
     const wrong = differences.filter((difference) =>
       difference.endsWith("=true")
     );
-    const answeredStatus = ["pass", "stricter"];
+    // A site with no way to read its stored consent counts as answered when
+    // a rule clicked through its banner.
+    const answeredStatus = site.reader === "none"
+      ? ["pass", "stricter", "no-readback"]
+      : ["pass", "stricter"];
     const status = wrong.length
       ? "wrong"
       : differences.length
@@ -317,6 +325,12 @@ const visit = async (browser, site) => {
       stored,
       differences,
       consentCookies,
+      reports: reports.map(({ outcome, cmp, reason, path }) => ({
+        outcome,
+        cmp,
+        reason,
+        path,
+      })),
     };
   } catch (error) {
     return { ...site, status: "error", error: String(error).split("\n")[0] };
