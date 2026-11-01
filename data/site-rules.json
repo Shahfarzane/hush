@@ -16,5 +16,64 @@
       }
     ],
     "switchState": "aria-checked"
+  },
+  {
+    "name": "Thincast",
+    "sites": ["thincast.com"],
+    "banner": "#modal-center:has(#RejectCookies)",
+    "reject": "#RejectCookies",
+    "acceptAll": "#AcceptCookies"
+  },
+  {
+    "name": "Acceptrics",
+    "sites": ["vpnunlimited.com"],
+    "banner": "#acceptricsCookieBanner",
+    "reject": "#acceptricsRejectAllBtn",
+    "acceptAll": "#acceptricsAcceptAllBtn",
+    "openSettings": "#acceptricsChooseSettingsBtn",
+    "save": "#acceptricsSaveSettingsBtn",
+    "switches": [
+      {
+        "selector": "#acceptricsCookieModal input#functional",
+        "categories": ["functional"]
+      },
+      {
+        "selector": "#acceptricsCookieModal input#analytics",
+        "categories": ["performance"]
+      },
+      {
+        "selector": "#acceptricsCookieModal input#marketing",
+        "categories": ["advertising"]
+      }
+    ],
+    "switchState": "checkbox"
+  },
+  {
+    "name": "Revolut",
+    "sites": ["revolut.com"],
+    "banner": "button:contains('Reject non-essential cookies')",
+    "reject": "button:contains('Reject non-essential cookies')",
+    "acceptAll": "button:contains('Accept all')"
+  },
+  {
+    "name": "MyArtBroker",
+    "sites": ["myartbroker.com"],
+    "banner": "[data-test='cookies-accept-all']",
+    "acceptAll": "[data-test='cookies-accept-all']",
+    "openSettings": "button:contains('Cookie settings')",
+    "save": "button:contains('Confirm')",
+    "switches": [
+      { "selector": "input[type='checkbox'][name='Functional']", "categories": ["functional"] },
+      { "selector": "input[type='checkbox'][name='Performance']", "categories": ["performance"] },
+      { "selector": "input[type='checkbox'][name='Targeting']", "categories": ["advertising"] }
+    ],
+    "switchState": "checkbox"
+  },
+  {
+    "name": "Kalles theme",
+    "sites": ["aoocci.com"],
+    "banner": "#t4s-popup__cookies-law",
+    "reject": "#t4s-popup__cookies-law .t4s-pp_cookies__decline-btn",
+    "acceptAll": "#t4s-popup__cookies-law .t4s-pp_cookies__accept-btn"
   }
 ]
