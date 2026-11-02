@@ -1,6 +1,6 @@
 # Consent levels for Hush: plan
 
-Status: Phases 0 to 6 done 2026-10-31, Phase 7 started and Phase 8 done 2026-11-01 (see their results sections).
+Status: Phases 0 to 6 done 2026-10-31, Phase 7 started and Phase 8 done 2026-11-01, third round of site checks done 2026-11-02 (see their results sections).
 
 ## Goal
 
@@ -275,6 +275,12 @@ Each phase ends in a commit that builds and passes its verification.
 - lufthansa.com exposed a Consent-O-Matic rule bug. `onetrust_banner` is a utility rule: it hides the banner and clicks `#onetrust-pc-btn-handler` to open settings, but when a site has no such button it clicks Accept All. Lufthansa opens settings with a link (`.optanon-show-settings`), so Hush accepted every category behind the hidden banner, and the corpus read performance and advertising as allowed. The override in `data/consent-o-matic-overrides.json` adds that link and falls back to Reject All, never Accept; `onetrust_pcpanel` then sets each category. Lufthansa now passes at "functional only".
 - Seen while debugging, not fixed: Consent-O-Matic's 5-second "no banner" timer is not cancelled once it finds a banner, so an answer that starts late can be cut off. With the rule fixed, Lufthansa's answer finishes in time; no corpus site fails from the timer today.
 - Full corpus: 25 pass, 9 stricter, 4 answered without readback, 0 wrong, 0 regressed (38 sites).
+- Rules for the other seven, each written from the live banner:
+  - getterms.io runs GetTerms, a consent platform whose widget sits in the `cookie-widget-wrapper` shadow root. It is a Consent-O-Matic rule in `data/consent-rules.json`, so every GetTerms site is covered: the preferences button is the one with `aria-haspopup="dialog"`, and each category switch has `role="switch"` and an aria-label naming it.
+  - Site rules in `data/site-rules.json`: bounce.com (all three categories pre-switched on), grok.com (OneTrust behind its own switches), mtmo.nl (BeTheme's consent bar), nordiblinds.com, snap.com and uniav.com. uniav.com has no refuse button, and its settings view's "ACCEPT ALL" grants every category, so the rule saves with "SAVE CHANGES".
+  - nordiblinds.com and mtmo.nl draw their banner on the server and attach its click handlers one to two seconds later, so an early press on the settings button did nothing. The engine now presses it again, once a second for up to five seconds, until the rule's Save button shows.
+  - New corpus readers for GetTerms, Nordiblinds, Snap, Universal AV and BeTheme read back what each site stored; all five store "functional only". bounce.com keeps its choice in localStorage (checked by hand: functional on, analytics and advertising off).
+- Full corpus: 31 pass, 9 stricter, 5 answered without readback, 0 wrong, 0 regressed, 0 unanswered (45 sites).
 
 **Phase 8: one Safari extension instead of two (Shahin, 2026-11-01)**
 - Why: Safari lists "Hush" twice (the content blocker and the web extension), both named Hush on the Mac, and each must be switched on separately, per profile on the Mac. Shahin chose a single extension over clearer names.
