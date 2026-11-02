@@ -75,5 +75,138 @@
     "banner": "#t4s-popup__cookies-law",
     "reject": "#t4s-popup__cookies-law .t4s-pp_cookies__decline-btn",
     "acceptAll": "#t4s-popup__cookies-law .t4s-pp_cookies__accept-btn"
+  },
+  {
+    "name": "Bounce",
+    "sites": ["bounce.com"],
+    "banner": "[data-testid='CookieModal']",
+    "acceptAll": "[data-testid='CookieModal'] button:contains('Accept all')",
+    "openSettings": "[data-testid='CookieModal'] button:contains('Manage Preferences')",
+    "save": "[data-testid='CookieModal'] button:contains('Save preferences')",
+    "switches": [
+      {
+        "selector": "[data-testid='CookieModal'] div:has(> div > input[type=checkbox]):contains('Functional') input[type=checkbox]",
+        "categories": ["functional"]
+      },
+      {
+        "selector": "[data-testid='CookieModal'] div:has(> div > input[type=checkbox]):contains('Analytics') input[type=checkbox]",
+        "categories": ["performance"]
+      },
+      {
+        "selector": "[data-testid='CookieModal'] div:has(> div > input[type=checkbox]):contains('Advertising') input[type=checkbox]",
+        "categories": ["advertising"]
+      }
+    ],
+    "switchState": "checkbox"
+  },
+  {
+    "name": "Grok",
+    "sites": ["grok.com"],
+    "banner": "[data-cookie-banner]",
+    "reject": "[data-cookie-banner] button:contains('Reject All')",
+    "acceptAll": "[data-cookie-banner] button:contains('Accept All Cookies')",
+    "openSettings": "[data-cookie-banner] button:contains('Cookie Settings')",
+    "save": "button:contains('Save preferences')",
+    "switches": [
+      {
+        "selector": "button[aria-label='Toggle Functional Cookies']",
+        "categories": ["functional"]
+      },
+      {
+        "selector": "button[aria-label='Toggle Performance Cookies']",
+        "categories": ["performance"]
+      },
+      {
+        "selector": "button[aria-label='Toggle Targeting Cookies']",
+        "categories": ["advertising"]
+      }
+    ],
+    "switchState": "aria-checked"
+  },
+  {
+    "name": "BeTheme consent",
+    "sites": ["mtmo.nl"],
+    "banner": "#mfn-consent-mode",
+    "reject": "#consent_deny",
+    "acceptAll": "#consent_allow",
+    "openSettings": "#consent_customize",
+    "save": "#consent_selected",
+    "switches": [
+      {
+        "selector": "#cookies_analytics",
+        "categories": ["performance"]
+      },
+      {
+        "selector": "#cookies_marketing",
+        "categories": ["advertising"]
+      }
+    ],
+    "switchState": "checkbox"
+  },
+  {
+    "name": "Nordiblinds",
+    "sites": ["nordiblinds.com"],
+    "banner": "div.fixed.inset-0 button:contains('Customize')",
+    "acceptAll": "div.fixed.inset-0 button:contains('Accept all')",
+    "openSettings": "div.fixed.inset-0 button:contains('Customize')",
+    "save": "div.fixed.inset-0 button:contains('Save')",
+    "switches": [
+      {
+        "selector": "div:has(> button[role=switch]):contains('Functional') button[role=switch]",
+        "categories": ["functional"]
+      },
+      {
+        "selector": "div:has(> button[role=switch]):contains('Analytics') button[role=switch]",
+        "categories": ["performance"]
+      },
+      {
+        "selector": "div:has(> button[role=switch]):contains('Marketing') button[role=switch]",
+        "categories": ["advertising"]
+      }
+    ],
+    "switchState": "aria-checked"
+  },
+  {
+    "name": "Snap",
+    "sites": ["snap.com"],
+    "banner": "[data-testid='mwp-cookie-landing-screen']",
+    "reject": "[data-testid='mwp-cookie-landing-screen'] button:contains('Essential Only')",
+    "acceptAll": "[data-testid='mwp-cookie-landing-screen'] button:contains('Accept All')",
+    "openSettings": "[data-testid='mwp-cookie-landing-screen'] button:contains('Cookie Menu')",
+    "save": "button:contains('Accept Selected')",
+    "switches": [
+      {
+        "selector": "#WorOjRa5Zk8srxeWYm0IR-slider",
+        "categories": ["functional"]
+      },
+      {
+        "selector": "#4cEKiLvF1Q2mxkQuNV9PSs-slider",
+        "categories": ["performance"]
+      },
+      {
+        "selector": "#3X9qL7WZbuiI2pIW2ZY5aO-slider",
+        "categories": ["advertising"]
+      }
+    ],
+    "switchState": "checkbox"
+  },
+  {
+    "name": "Universal AV",
+    "sites": ["uniav.com"],
+    "banner": "#cookie-consent button.manage",
+    "acceptAll": "#cookie-consent button.acceptall",
+    "openSettings": "#cookie-consent button.manage",
+    "save": "#cookie-consent button.save",
+    "switches": [
+      {
+        "selector": "#cookie-consent div.toggle-set:contains('Analytics') input",
+        "categories": ["performance"]
+      },
+      {
+        "selector": "#cookie-consent div.toggle-set:contains('Marketing') input",
+        "categories": ["advertising"]
+      }
+    ],
+    "switchState": "checkbox"
   }
 ]
