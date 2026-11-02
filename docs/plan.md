@@ -226,6 +226,11 @@ Each phase ends in a commit that builds and passes its verification.
   - The web extension manifest gained the top-level `icons` App Store Connect requires.
   - The export uses the system `rsync`, because Homebrew's rsync 3.x breaks `xcodebuild -exportArchive`.
 
+**Mac disk image (Shahin, 2026-11-02)**
+- `make dmg` archives the Mac app, exports it with Developer ID signing, notarizes and staples the app, puts it in `build/Hush.dmg` beside an Applications link (`diskutil image create`, since `hdiutil create` is deprecated on macOS 27), then signs, notarizes and staples the image. It deletes everything else it built, because Safari lists every Hush.app on disk.
+- Xcode's API key signing first tried cloud-managed Developer ID signing, which needs an Admin key. The export now signs manually with the keychain's Developer ID Application certificate and two `MAC_APP_DIRECT` profiles, "Hush Developer ID (ceo.nerd.hush)" and "Hush Developer ID (ceo.nerd.hush.WebExtension)", made through the App Store Connect API. They carry the iCloud key-value and App Group entitlements and expire with the certificate on 1 February 2027.
+- Verified: both notarizations accepted, and Gatekeeper (`spctl`) accepts the disk image and the app inside it as "Notarized Developer ID". Not yet installed over the TestFlight copy on Shahin's Mac.
+
 **granola.ai and the extension icon (2026-11-01)**
 - granola.ai runs the classic iubenda banner, and Hush answers it in WebKit, in the iOS Simulator and on the iPhone (banner found at 0.3 to 1.6 s, saved within 0.3 s). It stayed up on the iPhone because Safari had not let the Hush extension run on that site; the popup still opened and said no banner was answered. Setting Hush to Allow on all websites fixed it. granola.ai is in the corpus now.
 - The manifest icons were opaque squares cut from the iOS app icon, so Safari on the Mac drew them larger than other extensions' rounded icons. They now come from the Mac app icon, which has the rounded shape and the standard margin.

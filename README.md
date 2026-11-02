@@ -31,7 +31,10 @@ make test_unit      # Deno unit tests
 make test_swift     # settings sync tests (macOS)
 make test_corpus    # loads real consent pages in WebKit and reads back what each site stored
 make testflight ASC_KEY_PATH=AuthKey.p8 ASC_KEY_ID=<key id> ASC_ISSUER_ID=<issuer id>
+make dmg ASC_KEY_PATH=AuthKey.p8 ASC_KEY_ID=<key id> ASC_ISSUER_ID=<issuer id>
 ```
+
+`make dmg` builds `build/Hush.dmg`, a notarized Mac disk image signed with Developer ID, for installing without TestFlight. It needs the Developer ID Application certificate in the keychain and the Developer ID provisioning profiles named in `ExportOptions-DeveloperID.plist`. It installs the same app as TestFlight (same bundle ID), so it replaces a TestFlight copy.
 
 `make test_corpus` also takes site names and `CORPUS_FLAGS="--mobile --level=balanced"`. Design notes and results per phase are in [docs/plan.md](docs/plan.md).
 
