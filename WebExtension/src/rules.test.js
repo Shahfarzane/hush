@@ -208,6 +208,21 @@ Deno.test("iubenda's tb-banner rejects unless every category is allowed", () => 
   );
 });
 
+Deno.test("Didomi saves with Save preferences, not the Reject all toggle", () => {
+  const { methods } = applyOverrides(rules, overrides)["didomi.io"];
+  const consent = methods.find((method) => method.name === "DO_CONSENT");
+  const last = consent.action.actions.at(-1);
+  assertEquals(
+    last.trueAction.target.selector.endsWith("#btn-toggle-save"),
+    true,
+  );
+  const save = methods.find((method) => method.name === "SAVE_CONSENT");
+  assertEquals(
+    save.action.trueAction.target.selector.endsWith("#btn-toggle-save"),
+    true,
+  );
+});
+
 Deno.test("OneTrust's banner rule opens settings and never clicks Accept", () => {
   const utility = applyOverrides(rules, overrides).onetrust_banner.methods
     .find((method) => method.name === "UTILITY").action;

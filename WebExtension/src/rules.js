@@ -16,6 +16,13 @@
 // - didomi.io DO_CONSENT: "Functionality" and "Authentication and
 //   authorization management" were grouped with device storage (D), so
 //   functional purposes were refused. They now get their own A branch.
+//   Didomi's newer popup (researchgate.net, didomi.io) has "Reject all",
+//   "Accept all" and "Save preferences" in its footer, and the first two
+//   only flip every switch. Saving the partner view just returns to the
+//   purposes, so the rule now waits for them and presses Save preferences
+//   (#btn-toggle-save); before, nothing was saved and both the banner and
+//   the popup stayed open. SAVE_CONSENT presses it too instead of the first
+//   footer button, which there is the "Reject all" toggle.
 // - amazon: its advertising control is labelled functional (A), so
 //   "functional only" switched advertising on. Retyped to ads (F).
 // - cookieinformation: one markup variant labels statistics functional (A),
