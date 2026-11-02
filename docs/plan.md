@@ -291,6 +291,11 @@ Each phase ends in a commit that builds and passes its verification.
 - The corpus now emulates what ships: `hide.css` as an early stylesheet, the background's per-site CSS on the content script's request, and the rulesets through `scripts/src/dnr.js`. Answer mode is unchanged: 24 pass, 8 stricter, 0 wrong, 0 regressed. The old converter (`convert.js`, `build-blocklist.js`) and its WebKit emulation are removed.
 - On devices: TestFlight build 20261101.0940 went onto Shahin's iPhone (over a build that still had the content blocker) and his Mac (after Hush had been uninstalled there), and he reported it working on 2026-11-01. The macOS archive carries only the web extension, and Safari on the Mac registers one Hush. The same build went to the public TestFlight group with a note asking testers to switch Hush on again.
 
+**Checked and dropped (2026-11-02): a popup note when Hush is not allowed on a site**
+- The idea: after granola.ai went unanswered because Hush lacked website access there, the popup should say so instead of "No cookie banner answered".
+- In the iOS 27.2 Simulator, with Hush's access to example.com revoked, Safari does not open the popup at all: its page menu shows "Hush, Permission Required", and tapping it brings up Safari's own prompt (Allow for One Day, Always Allow, Cancel). Once allowed, Safari runs the content script on the open page straight away, and the popup reported it running. Reinstalling Hush under an open page also left the script running.
+- So the popup never opens on a page where Hush cannot run, and a note for that state would never show. Not built. The app's setup already asks for Allow on all websites, which is what prevents the granola case.
+
 **Later, only on request**: scheduled rule refresh.
 
 ## Test corpus and verification
