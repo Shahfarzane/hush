@@ -35,5 +35,6 @@
   {"name": "axeptio.eu", "url": "https://www.axeptio.eu/en/", "reader": "axeptio", "answered": true},
   {"name": "termly.io", "url": "https://termly.io/", "reader": "termly", "answered": true},
   {"name": "sirdata.com", "url": "https://www.sirdata.com/en/", "reader": "tcf", "answered": true},
-  {"name": "ketch.com", "url": "https://www.ketch.com/", "reader": "ketch", "answered": true}
+  {"name": "ketch.com", "url": "https://www.ketch.com/", "reader": "ketch", "answered": true},
+  {"name": "lufthansa.com", "url": "https://www.lufthansa.com/", "reader": "onetrust"}
 ]
