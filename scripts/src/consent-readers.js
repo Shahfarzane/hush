@@ -351,6 +351,68 @@ const axeptio = ({ cookies }) => {
   return { other: vendors.some(([, consented]) => consented === true) };
 };
 
+// A JSON cookie value, or null when it is missing or not JSON.
+const jsonCookie = (cookies, name) => {
+  const value = cookieValue(cookies, name);
+  if (!value) return null;
+  try {
+    return JSON.parse(decode(value));
+  } catch {
+    return null;
+  }
+};
+
+const getterms = ({ cookies }) => {
+  const choice = jsonCookie(cookies, "getterms_cookie_consent")
+    ?.cookie_preferences;
+  if (!choice) return null;
+  return {
+    functional: choice.Functional === true,
+    performance: choice.Analytics === true,
+    advertising: choice.Marketing === true,
+    other: choice.Unclassified === true,
+  };
+};
+
+const nordiblinds = ({ cookies }) => {
+  const choice = jsonCookie(cookies, "cookie_prefs_new");
+  if (!choice) return null;
+  return {
+    functional: choice.functional === true,
+    performance: choice.analytics === true,
+    advertising: choice.marketing === true,
+  };
+};
+
+const snap = ({ cookies }) => {
+  if (!cookieValue(cookies, "sc-cookies-accepted")) return null;
+  return {
+    functional: cookieValue(cookies, "Preferences") === "true",
+    performance: cookieValue(cookies, "Performance") === "true",
+    advertising: cookieValue(cookies, "Marketing") === "true",
+  };
+};
+
+// Universal AV's own banner, not Cookiebot, despite the cookie's name.
+const uniav = ({ cookies }) => {
+  const groups = jsonCookie(cookies, "CookieConsent")?.groups;
+  if (!groups) return null;
+  return {
+    performance: groups.analytics === "granted",
+    advertising: groups.marketing === "granted",
+  };
+};
+
+// BeTheme's consent bar stores Google consent mode values.
+const betheme = ({ cookies }) => {
+  const choice = jsonCookie(cookies, "mfnConsent");
+  if (!choice) return null;
+  return {
+    performance: choice.analytics_storage === "granted",
+    advertising: choice.ad_storage === "granted",
+  };
+};
+
 export const readers = {
   // Sites whose stored consent Hush cannot decode.
   none: () => null,
@@ -376,6 +438,11 @@ export const readers = {
   iubenda,
   mediamarkt,
   revolut,
+  getterms,
+  nordiblinds,
+  snap,
+  uniav,
+  betheme,
 };
 
 // Categories the reader reported that differ from the chosen level.

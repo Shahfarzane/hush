@@ -310,3 +310,73 @@ Deno.test("iubenda's purposes map to Hush categories", () => {
   );
   assertEquals(readers.iubenda({ cookies: [] }), null);
 });
+
+Deno.test("GetTerms' getterms_cookie_consent maps its categories", () => {
+  const cookie = encodeURIComponent(JSON.stringify({
+    widget_preferences_set: true,
+    cookie_preferences: {
+      "Essential Cookies": true,
+      Functional: true,
+      Marketing: false,
+      Analytics: false,
+      Unclassified: false,
+    },
+  }));
+  assertEquals(
+    readers.getterms({ cookies: jar({ getterms_cookie_consent: cookie }) }),
+    { functional: true, performance: false, advertising: false, other: false },
+  );
+  assertEquals(readers.getterms({ cookies: [] }), null);
+});
+
+Deno.test("Nordiblinds' cookie_prefs_new maps its categories", () => {
+  const cookie = encodeURIComponent(
+    '{"essential":true,"functional":true,"analytics":false,"marketing":false}',
+  );
+  assertEquals(
+    readers.nordiblinds({ cookies: jar({ cookie_prefs_new: cookie }) }),
+    { functional: true, performance: false, advertising: false },
+  );
+  assertEquals(readers.nordiblinds({ cookies: [] }), null);
+});
+
+Deno.test("Snap keeps one cookie per category", () => {
+  assertEquals(
+    readers.snap({
+      cookies: jar({
+        "sc-cookies-accepted": "true",
+        Preferences: "true",
+        Performance: "false",
+        Marketing: "false",
+      }),
+    }),
+    { functional: true, performance: false, advertising: false },
+  );
+  assertEquals(readers.snap({ cookies: [] }), null);
+});
+
+Deno.test("Universal AV's CookieConsent groups say granted or denied", () => {
+  const cookie = encodeURIComponent(JSON.stringify({
+    accepted: true,
+    groups: { necessary: "granted", analytics: "denied", marketing: "denied" },
+  }));
+  assertEquals(
+    readers.uniav({ cookies: jar({ CookieConsent: cookie }) }),
+    { performance: false, advertising: false },
+  );
+  assertEquals(readers.uniav({ cookies: [] }), null);
+});
+
+Deno.test("BeTheme's mfnConsent holds Google consent mode values", () => {
+  const cookie = encodeURIComponent(JSON.stringify({
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied",
+    analytics_storage: "denied",
+  }));
+  assertEquals(
+    readers.betheme({ cookies: jar({ mfnConsent: cookie }) }),
+    { performance: false, advertising: false },
+  );
+  assertEquals(readers.betheme({ cookies: [] }), null);
+});

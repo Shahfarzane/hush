@@ -37,11 +37,11 @@
   {"name": "sirdata.com", "url": "https://www.sirdata.com/en/", "reader": "tcf", "answered": true},
   {"name": "ketch.com", "url": "https://www.ketch.com/", "reader": "ketch", "answered": true},
   {"name": "lufthansa.com", "url": "https://www.lufthansa.com/", "reader": "onetrust", "answered": true},
-  {"name": "getterms.io", "url": "https://www.getterms.io/", "reader": "none"},
-  {"name": "bounce.com", "url": "https://www.bounce.com/", "reader": "none"},
-  {"name": "grok.com", "url": "https://grok.com/", "reader": "onetrust"},
-  {"name": "mtmo.nl", "url": "https://www.mtmo.nl/", "reader": "none"},
-  {"name": "nordiblinds.com", "url": "https://www.nordiblinds.com/", "reader": "none"},
-  {"name": "snap.com", "url": "https://www.snap.com/", "reader": "none"},
-  {"name": "uniav.com", "url": "https://www.uniav.com/", "reader": "none"}
+  {"name": "getterms.io", "url": "https://www.getterms.io/", "reader": "getterms", "answered": true},
+  {"name": "bounce.com", "url": "https://www.bounce.com/", "reader": "none", "answered": true},
+  {"name": "grok.com", "url": "https://grok.com/", "reader": "onetrust", "answered": true},
+  {"name": "mtmo.nl", "url": "https://www.mtmo.nl/", "reader": "betheme", "answered": true},
+  {"name": "nordiblinds.com", "url": "https://www.nordiblinds.com/", "reader": "nordiblinds", "answered": true},
+  {"name": "snap.com", "url": "https://www.snap.com/", "reader": "snap", "answered": true},
+  {"name": "uniav.com", "url": "https://www.uniav.com/", "reader": "uniav", "answered": true}
 ]
