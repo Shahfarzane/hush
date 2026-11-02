@@ -226,6 +226,11 @@ Each phase ends in a commit that builds and passes its verification.
   - The web extension manifest gained the top-level `icons` App Store Connect requires.
   - The export uses the system `rsync`, because Homebrew's rsync 3.x breaks `xcodebuild -exportArchive`.
 
+**Mac disk image (Shahin, 2026-11-02)**
+- `make dmg` archives the Mac app, exports it with Developer ID signing, notarizes and staples the app, puts it in `build/Hush.dmg` beside an Applications link (`diskutil image create`, since `hdiutil create` is deprecated on macOS 27), then signs, notarizes and staples the image. It deletes everything else it built, because Safari lists every Hush.app on disk.
+- Xcode's API key signing first tried cloud-managed Developer ID signing, which needs an Admin key. The export now signs manually with the keychain's Developer ID Application certificate and two `MAC_APP_DIRECT` profiles, "Hush Developer ID (ceo.nerd.hush)" and "Hush Developer ID (ceo.nerd.hush.WebExtension)", made through the App Store Connect API. They carry the iCloud key-value and App Group entitlements and expire with the certificate on 1 February 2027.
+- Verified: both notarizations accepted, and Gatekeeper (`spctl`) accepts the disk image and the app inside it as "Notarized Developer ID". Not yet installed over the TestFlight copy on Shahin's Mac.
+
 **granola.ai and the extension icon (2026-11-01)**
 - granola.ai runs the classic iubenda banner, and Hush answers it in WebKit, in the iOS Simulator and on the iPhone (banner found at 0.3 to 1.6 s, saved within 0.3 s). It stayed up on the iPhone because Safari had not let the Hush extension run on that site; the popup still opened and said no banner was answered. Setting Hush to Allow on all websites fixed it. granola.ai is in the corpus now.
 - The manifest icons were opaque squares cut from the iOS app icon, so Safari on the Mac drew them larger than other extensions' rounded icons. They now come from the Mac app icon, which has the rounded shape and the standard margin.
@@ -290,6 +295,11 @@ Each phase ends in a commit that builds and passes its verification.
   mediamarkt.nl was still answered in answer mode, and the background injected per-site CSS into Cookiebot's consent iframe. UI tests (4) and Swift unit tests (11) pass, and the macOS app bundle carries only the web extension.
 - The corpus now emulates what ships: `hide.css` as an early stylesheet, the background's per-site CSS on the content script's request, and the rulesets through `scripts/src/dnr.js`. Answer mode is unchanged: 24 pass, 8 stricter, 0 wrong, 0 regressed. The old converter (`convert.js`, `build-blocklist.js`) and its WebKit emulation are removed.
 - On devices: TestFlight build 20261101.0940 went onto Shahin's iPhone (over a build that still had the content blocker) and his Mac (after Hush had been uninstalled there), and he reported it working on 2026-11-01. The macOS archive carries only the web extension, and Safari on the Mac registers one Hush. The same build went to the public TestFlight group with a note asking testers to switch Hush on again.
+
+**Checked and dropped (2026-11-02): a popup note when Hush is not allowed on a site**
+- The idea: after granola.ai went unanswered because Hush lacked website access there, the popup should say so instead of "No cookie banner answered".
+- In the iOS 27.2 Simulator, with Hush's access to example.com revoked, Safari does not open the popup at all: its page menu shows "Hush, Permission Required", and tapping it brings up Safari's own prompt (Allow for One Day, Always Allow, Cancel). Once allowed, Safari runs the content script on the open page straight away, and the popup reported it running. Reinstalling Hush under an open page also left the script running.
+- So the popup never opens on a page where Hush cannot run, and a note for that state would never show. Not built. The app's setup already asks for Allow on all websites, which is what prevents the granola case.
 
 **Later, only on request**: scheduled rule refresh.
 

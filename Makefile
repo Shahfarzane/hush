@@ -39,6 +39,34 @@ testflight_%:
 	# rsync 3.x ("syntax or usage error"), so the system one goes first.
 	PATH="/usr/bin:$$PATH" xcodebuild -exportArchive -archivePath build/Hush-$*.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build/export-$* $(ASC_AUTH)
 
+# A Developer ID signed and notarized build/Hush.dmg, for installing the Mac
+# app without TestFlight. Needs the Developer ID Application certificate in
+# the keychain and the two Developer ID provisioning profiles named in
+# ExportOptions-DeveloperID.plist installed (Xcode's API key signing cannot
+# make them without an Admin key). The notary service takes the same API key
+# variables as testflight.
+DMG_DIR = build/dmg
+NOTARY_AUTH = --key "$(ASC_KEY_PATH)" --key-id "$(ASC_KEY_ID)" --issuer "$(ASC_ISSUER_ID)" --wait
+
+dmg:
+	rm -rf $(DMG_DIR) build/Hush.dmg
+	xcodebuild archive -project Hush.xcodeproj -scheme 'Hush macOS' -configuration Release -destination 'generic/platform=macOS' -archivePath $(DMG_DIR)/Hush.xcarchive -derivedDataPath $(DMG_DIR)/DerivedData CURRENT_PROJECT_VERSION=$(BUILD_NUMBER) $(ASC_AUTH)
+	PATH="/usr/bin:$$PATH" xcodebuild -exportArchive -archivePath $(DMG_DIR)/Hush.xcarchive -exportOptionsPlist ExportOptions-DeveloperID.plist -exportPath $(DMG_DIR)/export $(ASC_AUTH)
+	# The app gets its own ticket, so it opens offline after being copied
+	# out of the disk image.
+	ditto -c -k --keepParent $(DMG_DIR)/export/Hush.app $(DMG_DIR)/Hush.zip
+	xcrun notarytool submit $(DMG_DIR)/Hush.zip $(NOTARY_AUTH)
+	xcrun stapler staple $(DMG_DIR)/export/Hush.app
+	mkdir -p $(DMG_DIR)/root
+	ditto $(DMG_DIR)/export/Hush.app $(DMG_DIR)/root/Hush.app
+	ln -s /Applications $(DMG_DIR)/root/Applications
+	diskutil image create from --format UDZO --volumeName Hush $(DMG_DIR)/root build/Hush.dmg
+	codesign --sign "Developer ID Application" --timestamp build/Hush.dmg
+	xcrun notarytool submit build/Hush.dmg $(NOTARY_AUTH)
+	xcrun stapler staple build/Hush.dmg
+	# Safari lists every Hush.app it finds on disk, so only the image stays.
+	rm -rf $(DMG_DIR)
+
 fetch_external:
 	deno run --allow-write=./data --allow-net scripts/fetch-external.js
 
