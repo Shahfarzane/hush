@@ -207,3 +207,18 @@ Deno.test("iubenda's tb-banner rejects unless every category is allowed", () => 
     true,
   );
 });
+
+Deno.test("OneTrust's banner rule opens settings and never clicks Accept", () => {
+  const utility = applyOverrides(rules, overrides).onetrust_banner.methods
+    .find((method) => method.name === "UTILITY").action;
+  assertEquals(JSON.stringify(utility).includes("accept"), false);
+  const open = utility.actions.find((action) => action.type === "ifcss");
+  assertEquals(
+    open.trueAction.target.selector.includes(".optanon-show-settings"),
+    true,
+  );
+  assertEquals(
+    open.falseAction.target.selector,
+    "#onetrust-reject-all-handler",
+  );
+});

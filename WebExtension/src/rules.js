@@ -32,6 +32,12 @@
 // - iubuenda (iubenda's classic banner): OPEN_OPTIONS clicked Customize and
 //   the rule went on before iubenda drew its preferences panel (~180 ms), so
 //   no switch was set and Save was never pressed. It now waits for Save.
+// - onetrust_banner UTILITY: hides the banner and clicks OneTrust's settings
+//   button, but when the site has no #onetrust-pc-btn-handler it clicked
+//   Accept All instead. lufthansa.com opens settings with a link
+//   (.optanon-show-settings), so Hush accepted every category there behind
+//   the hidden banner. The rule now also finds that link, and falls back to
+//   Reject All, never Accept.
 // - yahoo_consent, yahoo_popup: disabled. Both target older versions of
 //   consent.yahoo.com: on the current page yahoo_consent claims the banner
 //   with zero clicks (its switches and Save button are on a settings view it
