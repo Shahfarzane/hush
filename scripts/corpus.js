@@ -212,7 +212,10 @@ const collectPageData = () =>
     }
     let didomi = null;
     try {
-      const { purposes } = window.Didomi?.getUserStatus?.() ?? {};
+      // Until a choice is saved Didomi lists every purpose as disabled, which
+      // reads the same as refusing them.
+      const saved = window.Didomi?.shouldConsentBeCollected?.() === false;
+      const { purposes } = saved ? window.Didomi.getUserStatus() : {};
       if (purposes) {
         const essential = new Set(purposes.essential ?? []);
         const keep = (ids) => ids.filter((id) => !essential.has(id));

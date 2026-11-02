@@ -724,10 +724,54 @@
               "parent": {
                 "selector": ".didomi-consent-popup-footer .didomi-consent-popup-actions"
               }
+            },
+            {
+              "type": "waitcss",
+              "target": {
+                "selector": ".didomi-consent-popup-preferences-purposes #btn-toggle-save"
+              },
+              "retries": 20,
+              "waitTime": 50
+            },
+            {
+              "type": "ifcss",
+              "target": {
+                "selector": ".didomi-consent-popup-preferences-purposes #btn-toggle-save"
+              },
+              "trueAction": {
+                "type": "click",
+                "target": {
+                  "selector": ".didomi-consent-popup-preferences-purposes #btn-toggle-save"
+                }
+              }
             }
           ]
         },
         "name": "DO_CONSENT"
+      },
+      {
+        "action": {
+          "type": "ifcss",
+          "target": {
+            "selector": ".didomi-consent-popup-actions #btn-toggle-save"
+          },
+          "trueAction": {
+            "type": "click",
+            "target": {
+              "selector": ".didomi-consent-popup-actions #btn-toggle-save"
+            }
+          },
+          "falseAction": {
+            "type": "click",
+            "target": {
+              "selector": ".didomi-components-button:first-child"
+            },
+            "parent": {
+              "selector": ".didomi-consent-popup-footer .didomi-consent-popup-actions"
+            }
+          }
+        },
+        "name": "SAVE_CONSENT"
       }
     ]
   },

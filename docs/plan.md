@@ -1,6 +1,6 @@
 # Consent levels for Hush: plan
 
-Status: Phases 0 to 6 done 2026-10-31, Phase 7 started and Phase 8 done 2026-11-01, third round of site checks done 2026-11-02 (see their results sections).
+Status: Phases 0 to 6 done 2026-10-31, Phase 7 started and Phase 8 done 2026-11-01, third round of site checks and the Didomi save fix done 2026-11-02 (see their results sections).
 
 ## Goal
 
@@ -280,6 +280,15 @@ Each phase ends in a commit that builds and passes its verification.
   - Site rules in `data/site-rules.json`: bounce.com (all three categories pre-switched on), grok.com (OneTrust behind its own switches), mtmo.nl (BeTheme's consent bar), nordiblinds.com, snap.com and uniav.com. uniav.com has no refuse button, and its settings view's "ACCEPT ALL" grants every category, so the rule saves with "SAVE CHANGES".
   - nordiblinds.com and mtmo.nl draw their banner on the server and attach its click handlers one to two seconds later, so an early press on the settings button did nothing. The engine now presses it again, once a second for up to five seconds, until the rule's Save button shows.
   - New corpus readers for GetTerms, Nordiblinds, Snap, Universal AV and BeTheme read back what each site stored; all five store "functional only". bounce.com keeps its choice in localStorage (checked by hand: functional on, analytics and advertising off).
+- Full corpus: 31 pass, 9 stricter, 5 answered without readback, 0 wrong, 0 regressed, 0 unanswered (45 sites).
+
+**ResearchGate and Didomi's newer popup (2026-11-02)**
+- Seen in Safari on the Mac: researchgate.net kept its banner up, with Didomi's preferences popup open and every purpose set to Reject.
+- ResearchGate answers scripted visits with a bot check (WebKit, Chrome for Testing and curl alike), so the corpus cannot load it. Its tag script (`/javascript/tags.js`, read from the Wayback Machine) loads Didomi from `sdk.privacy-center.org` with notice `eRtfgCjq` for logged-out visitors. A stand-in page served on the `www.researchgate.net` origin in WebKit loads that notice, and with the built content script it reproduced the screenshot exactly.
+- Cause: Didomi's newer popup has "Reject all", "Accept all" and "Save preferences" in its footer, and the first two only flip every switch. Hush's Didomi rule sets each purpose, opens "View our partners", blocks every partner and presses that view's Save, which in this popup only returns to the purposes. The rule then clicked the footer's first button, the "Reject all" toggle. Nothing was saved, yet Hush reported the banner answered (20 clicks), which kept the autoconsent fallback out.
+- Fix in `data/consent-o-matic-overrides.json`: after the partner view, wait for the purposes view and press `#btn-toggle-save`; `SAVE_CONSENT` presses it too instead of the first footer button. On the stand-in, Didomi now stores the choice (`euconsent-v2` set, `shouldConsentBeCollected()` false) and the banner and popup close. "Balanced" reads stricter, since ResearchGate files content measurement under its advertising purposes.
+- The corpus read Didomi's purposes from `getUserStatus()`, which lists every purpose as disabled before any choice is saved, so an unsaved popup read as "pass". The reader now waits for `shouldConsentBeCollected()` to be false; with it, the old build reads "answered without readback" on the stand-in. didomi.io and 20minutes.fr still read back a saved choice.
+- ResearchGate is not in the corpus, since the live site only shows the harness its bot check.
 - Full corpus: 31 pass, 9 stricter, 5 answered without readback, 0 wrong, 0 regressed, 0 unanswered (45 sites).
 
 **Phase 8: one Safari extension instead of two (Shahin, 2026-11-01)**
