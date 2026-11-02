@@ -43,15 +43,16 @@ testflight_%:
 # app without TestFlight. Needs the Developer ID Application certificate in
 # the keychain and the two Developer ID provisioning profiles named in
 # ExportOptions-DeveloperID.plist installed (Xcode's API key signing cannot
-# make them without an Admin key). The notary service takes the same API key
-# variables as testflight.
+# make them without an Admin key). The archive signs with them too, so no
+# Apple Development certificate is needed (CI runners have none). The notary
+# service takes the same API key variables as testflight.
 DMG_DIR = build/dmg
 NOTARY_AUTH = --key "$(ASC_KEY_PATH)" --key-id "$(ASC_KEY_ID)" --issuer "$(ASC_ISSUER_ID)" --wait
 
 dmg:
 	rm -rf $(DMG_DIR) build/Hush.dmg
-	xcodebuild archive -project Hush.xcodeproj -scheme 'Hush macOS' -configuration Release -destination 'generic/platform=macOS' -archivePath $(DMG_DIR)/Hush.xcarchive -derivedDataPath $(DMG_DIR)/DerivedData CURRENT_PROJECT_VERSION=$(BUILD_NUMBER) $(ASC_AUTH)
-	PATH="/usr/bin:$$PATH" xcodebuild -exportArchive -archivePath $(DMG_DIR)/Hush.xcarchive -exportOptionsPlist ExportOptions-DeveloperID.plist -exportPath $(DMG_DIR)/export $(ASC_AUTH)
+	xcodebuild archive -project Hush.xcodeproj -scheme 'Hush macOS' -configuration Release -destination 'generic/platform=macOS' -archivePath $(DMG_DIR)/Hush.xcarchive -derivedDataPath $(DMG_DIR)/DerivedData CURRENT_PROJECT_VERSION=$(BUILD_NUMBER) CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Developer ID Application" 'PROVISIONING_PROFILE_SPECIFIER=Hush Developer ID ($$(PRODUCT_BUNDLE_IDENTIFIER))'
+	PATH="/usr/bin:$$PATH" xcodebuild -exportArchive -archivePath $(DMG_DIR)/Hush.xcarchive -exportOptionsPlist ExportOptions-DeveloperID.plist -exportPath $(DMG_DIR)/export
 	# The app gets its own ticket, so it opens offline after being copied
 	# out of the disk image.
 	ditto -c -k --keepParent $(DMG_DIR)/export/Hush.app $(DMG_DIR)/Hush.zip
