@@ -115,6 +115,8 @@ struct ContentView: View {
             }
             .formStyle(.grouped)
             .navigationTitle(page.title)
+            // The page header names the page, so the toolbar does not.
+            .toolbar(removing: .title)
         }
     }
 }
