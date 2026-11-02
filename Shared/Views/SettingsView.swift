@@ -37,7 +37,12 @@ struct TitleAndSummary: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
             Text(summary)
+                // The Mac's footnote size is too small to read next to body text.
+                #if os(macOS)
+                .font(.subheadline)
+                #else
                 .font(.footnote)
+                #endif
                 .foregroundStyle(.secondary)
         }
     }
