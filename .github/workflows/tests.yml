@@ -19,3 +19,19 @@ jobs:
           deno-version: v2.x
       - run: make test_unit
       - run: make check_format
+
+  apps:
+    name: App builds and Swift tests
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v7
+      # The Xcode build runs `make xcode_extension`, which needs Deno.
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Use Xcode 27.2
+        run: sudo xcode-select --switch /Applications/Xcode_27.2.app
+      - name: Build the iOS app
+        run: xcodebuild build -project Hush.xcodeproj -scheme 'Hush iOS' -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO
+      - name: Build the macOS app and run the Swift tests
+        run: xcodebuild test -project Hush.xcodeproj -scheme 'Hush macOS' -destination 'platform=macOS' -only-testing:HushTests CODE_SIGNING_ALLOWED=NO
