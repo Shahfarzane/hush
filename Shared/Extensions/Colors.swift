@@ -1,11 +1,7 @@
 import SwiftUI
 
 extension Color {
-    public static var appBackgroundColor: Color {
-        return Color.init("AppBackgroundColor")
-    }
-
-    public static var invertedBackgroundColor: Color {
-        return Color.init("InvertedBackgroundColor")
-    }
+    // Hush's yellow, used as a fill behind black symbols. Text and controls
+    // use the accent color, which is darker in light mode for contrast.
+    static let brandYellow = Color("BrandYellow")
 }

@@ -13,7 +13,7 @@
 
 Hush hides cookie banners. This fork can also answer them with a level you pick, so sites store your choice instead of asking again.
 
-Install the beta on iPhone, iPad or Mac through TestFlight: https://testflight.apple.com/join/N9yxQHND (the link opens once Apple's beta review approves a build). After installing, turn on Hush in Safari's extension settings and allow All Websites.
+Install the beta on iPhone, iPad or Mac through TestFlight: https://testflight.apple.com/join/N9yxQHND (the link opens once Apple's beta review approves a build). After installing, turn on Hush in Safari's extension settings and allow All Websites. The fork needs iOS 26 or macOS 26 or later.
 
 - Levels: Maximum privacy, Functional only, Balanced, or Custom (functional, performance, advertising and other, each on or off). Necessary cookies are always allowed.
 - Answers come from Hush's own site rules (`data/site-rules.json`) and two open-source rule sets: [Consent-O-Matic](https://github.com/cavi-au/Consent-O-Matic) (MIT) for per-category answers, and DuckDuckGo's [autoconsent](https://github.com/duckduckgo/autoconsent) (MPL-2.0) as a fallback that refuses unless every category is allowed. Hush's fixes to those live in `data/consent-o-matic-overrides.json` and `data/consent-rules.json`.

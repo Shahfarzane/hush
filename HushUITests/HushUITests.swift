@@ -80,22 +80,20 @@ class HushUITests: XCTestCase {
         settingsApp.terminate()
     }
 
-    private func openCookieSettings() {
-        let link = app.buttons["change cookie level"]
-        XCTAssertTrue(link.waitForExistence(timeout: 10), "Cookie level link not found")
-        link.tap()
-        XCTAssertTrue(app.navigationBars["Cookie level"].waitForExistence(timeout: 10), "Cookie level page did not open")
+    // The settings share the app's one screen with the extension status.
+    private func waitForCookieSettings() {
+        XCTAssertTrue(app.buttons["level functionalOnly"].waitForExistence(timeout: 10), "Privacy levels not found")
     }
 
     func testCookieLevelIsSavedAcrossLaunches() throws {
         app.launch()
-        openCookieSettings()
+        waitForCookieSettings()
         app.buttons["level maximumPrivacy"].tap()
         XCTAssertFalse(app.switches["Functional cookies"].exists, "Category switches should only show for Custom")
 
         app.terminate()
         app.launch()
-        openCookieSettings()
+        waitForCookieSettings()
         XCTAssertTrue(app.buttons["level maximumPrivacy"].isSelected, "Maximum privacy was not kept")
 
         // Custom starts from the current level and shows its switches.
@@ -111,7 +109,7 @@ class HushUITests: XCTestCase {
 
     func testPausedSiteIsNormalizedAndRemovable() throws {
         app.launch()
-        openCookieSettings()
+        waitForCookieSettings()
         let pause = app.buttons["pause a site"]
         while !pause.isHittable {
             app.swipeUp()
@@ -138,14 +136,14 @@ class HushUITests: XCTestCase {
 
     func testICloudSyncSwitchIsKeptAcrossLaunches() throws {
         app.launch()
-        openCookieSettings()
+        waitForCookieSettings()
         XCTAssertEqual(iCloudSyncSwitch().value as? String, "1", "iCloud sync should start on")
         iCloudSyncSwitch().coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
         XCTAssertEqual(iCloudSyncSwitch().value as? String, "0")
 
         app.terminate()
         app.launch()
-        openCookieSettings()
+        waitForCookieSettings()
         XCTAssertEqual(iCloudSyncSwitch().value as? String, "0", "iCloud sync off was not kept")
         iCloudSyncSwitch().coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
         XCTAssertEqual(iCloudSyncSwitch().value as? String, "1")

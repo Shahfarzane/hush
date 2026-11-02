@@ -20,6 +20,29 @@ extension PrivacyLevel {
     }
 }
 
+extension ConsentSettings.Mode {
+    var title: String {
+        switch self {
+        case .answer: return "Answer with my choices"
+        case .hide: return "Only hide it"
+        }
+    }
+}
+
+struct TitleAndSummary: View {
+    var title: String
+    var summary: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+            Text(summary)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
 struct LevelRow: View {
     var level: PrivacyLevel
     var isSelected: Bool
@@ -28,18 +51,13 @@ struct LevelRow: View {
     var body: some View {
         Button(action: select) {
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(level.title)
-                        .foregroundColor(.primary)
-                    Text(level.summary)
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                }
+                TitleAndSummary(title: level.title, summary: level.summary)
+                    .foregroundStyle(.primary)
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark")
                         .font(.body.weight(.semibold))
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.tint)
                 }
             }
             .contentShape(Rectangle())
@@ -57,16 +75,114 @@ struct CategoryToggle: View {
 
     var body: some View {
         Toggle(isOn: $isOn) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                Text(summary)
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-            }
+            TitleAndSummary(title: title, summary: summary)
         }
         .toggleStyle(.switch)
-        .tint(.invertedBackgroundColor)
+        .tint(.accentColor)
         .accessibilityIdentifier(title)
+    }
+}
+
+// The level list and, for Custom, the category switches under it.
+struct PrivacyLevelSections: View {
+    @EnvironmentObject var model: ConsentSettingsModel
+    // Custom stays picked while its switches still match a preset.
+    @State private var isCustomizing = false
+
+    private var selectedLevel: PrivacyLevel {
+        isCustomizing ? .custom : model.level
+    }
+
+    private func select(_ level: PrivacyLevel) {
+        withAnimation {
+            isCustomizing = level == .custom
+            model.level = level
+        }
+    }
+
+    var body: some View {
+        Section {
+            #if os(macOS)
+            // Mac uses radio buttons for one choice out of a few.
+            Picker("Privacy level", selection: Binding(get: { selectedLevel }, set: select)) {
+                ForEach(PrivacyLevel.allCases) { level in
+                    TitleAndSummary(title: level.title, summary: level.summary)
+                        .padding(.vertical, 2)
+                        .tag(level)
+                        .accessibilityIdentifier("level \(level.rawValue)")
+                }
+            }
+            .pickerStyle(.radioGroup)
+            .labelsHidden()
+            #else
+            ForEach(PrivacyLevel.allCases) { level in
+                LevelRow(level: level, isSelected: selectedLevel == level) {
+                    select(level)
+                }
+            }
+            #endif
+        } header: {
+            // On the Mac the page title already says it.
+            #if os(iOS)
+            Text("Privacy level")
+            #endif
+        } footer: {
+            Text("Necessary cookies are always allowed.")
+        }
+
+        if selectedLevel == .custom {
+            Section {
+                CategoryToggle(
+                    title: "Functional cookies",
+                    summary: "Remember your logins, language and other preferences.",
+                    isOn: $model.settings.categories.functional)
+                CategoryToggle(
+                    title: "Performance cookies",
+                    summary: "Help sites count visits and see how their pages perform.",
+                    isOn: $model.settings.categories.performance)
+                CategoryToggle(
+                    title: "Advertising cookies",
+                    summary: "Track you across sites for targeted ads. Social media cookies count here.",
+                    isOn: $model.settings.categories.advertising)
+                CategoryToggle(
+                    title: "Other cookies",
+                    summary: "Anything a site does not put in the categories above.",
+                    isOn: $model.settings.categories.other)
+            } header: {
+                Text("Cookie categories")
+            }
+        }
+    }
+}
+
+struct BannersSection: View {
+    @EnvironmentObject var model: ConsentSettingsModel
+
+    var body: some View {
+        Section {
+            Picker("When Hush sees a banner", selection: $model.settings.mode) {
+                ForEach([ConsentSettings.Mode.answer, .hide], id: \.self) { mode in
+                    Text(mode.title).tag(mode)
+                }
+            }
+            #if os(iOS)
+            // A menu's value wraps under this label on a phone, so the
+            // choices are rows and the label is the section header.
+            .pickerStyle(.inline)
+            .labelsHidden()
+            #endif
+            .accessibilityIdentifier("banner mode")
+            Toggle("Hide the banner while answering", isOn: $model.settings.hideWhileAnswering)
+                .toggleStyle(.switch)
+                .tint(.accentColor)
+                .disabled(model.settings.mode == .hide)
+        } header: {
+            #if os(iOS)
+            Text("When Hush sees a banner")
+            #endif
+        } footer: {
+            Text("Banners with no way to refuse are hidden, never accepted.")
+        }
     }
 }
 
@@ -81,32 +197,66 @@ struct PausedSitesSection: View {
         newSite = ""
     }
 
+    private var addButton: some View {
+        Button {
+            rejectedInput = false
+            isAdding = true
+        } label: {
+            #if os(macOS)
+            Text("Pause a Site…")
+            #else
+            Label("Pause a site…", systemImage: "plus")
+            #endif
+        }
+        .accessibilityIdentifier("pause a site")
+    }
+
     var body: some View {
         Section {
+            #if os(macOS)
+            if model.settings.pausedSites.isEmpty {
+                ContentUnavailableView(
+                    "No Paused Sites",
+                    systemImage: "pause.circle",
+                    description: Text("Hush handles cookie banners on every site."))
+            }
+            #endif
             ForEach(model.settings.pausedSites, id: \.self) { site in
                 HStack {
-                    Text(site)
+                    Label(site, systemImage: "pause.circle")
                     Spacer()
                     Button(role: .destructive) {
                         model.unpause(site)
                     } label: {
                         Image(systemName: "minus.circle.fill")
+                            .foregroundStyle(.red)
                     }
                     .buttonStyle(.borderless)
                     .accessibilityLabel("Resume \(site)")
                 }
             }
-            Button("Pause a site…") {
-                rejectedInput = false
-                isAdding = true
+            #if os(macOS)
+            // Like the Add buttons under lists in System Settings.
+            HStack {
+                Spacer()
+                addButton
             }
-            .accessibilityIdentifier("pause a site")
+            #else
+            addButton
+            #endif
         } header: {
+            #if os(iOS)
             Text("Paused sites")
+            #endif
         } footer: {
-            Text(rejectedInput
-                 ? "That doesn't look like a site name."
-                 : "Hush leaves cookie banners alone on these sites and their subdomains.")
+            if rejectedInput {
+                Text("That doesn't look like a site name.")
+            } else {
+                // On the Mac the page header says this.
+                #if os(iOS)
+                Text("Hush leaves cookie banners alone on these sites and their subdomains.")
+                #endif
+            }
         }
         .alert("Pause a site", isPresented: $isAdding) {
             TextField("example.com", text: $newSite)
@@ -126,101 +276,32 @@ struct PausedSitesSection: View {
     }
 }
 
-struct CookieCategoriesSection: View {
+struct SyncSection: View {
     @EnvironmentObject var model: ConsentSettingsModel
 
     var body: some View {
         Section {
-            CategoryToggle(
-                title: "Functional cookies",
-                summary: "Remember your logins, language and other preferences.",
-                isOn: $model.settings.categories.functional)
-            CategoryToggle(
-                title: "Performance cookies",
-                summary: "Help sites count visits and see how their pages perform.",
-                isOn: $model.settings.categories.performance)
-            CategoryToggle(
-                title: "Advertising cookies",
-                summary: "Track you across sites for targeted ads. Social media cookies count here.",
-                isOn: $model.settings.categories.advertising)
-            CategoryToggle(
-                title: "Other cookies",
-                summary: "Anything a site does not put in the categories above.",
-                isOn: $model.settings.categories.other)
-        } header: {
-            Text("Cookie categories")
+            Toggle(isOn: $model.syncsWithICloud) {
+                Label("Sync with iCloud", systemImage: "icloud")
+            }
+            .toggleStyle(.switch)
+            .tint(.accentColor)
+            .accessibilityIdentifier("sync with icloud")
+        } footer: {
+            Text("Uses the same level, banner choice and paused sites on your iPhone, iPad and Mac. The latest change wins.")
         }
     }
 }
 
-struct SettingsView: View {
-    @EnvironmentObject var model: ConsentSettingsModel
-    // Custom stays picked while its switches still match a preset.
-    @State private var isCustomizing = false
-
-    private var selectedLevel: PrivacyLevel {
-        isCustomizing ? .custom : model.level
-    }
-
-    var body: some View {
+struct SettingsSections_Previews: PreviewProvider {
+    static var previews: some View {
         Form {
-            Section {
-                ForEach(PrivacyLevel.allCases) { level in
-                    LevelRow(level: level, isSelected: selectedLevel == level) {
-                        withAnimation {
-                            isCustomizing = level == .custom
-                            model.level = level
-                        }
-                    }
-                }
-            } header: {
-                Text("Privacy level")
-            } footer: {
-                Text("Necessary cookies are always allowed.")
-            }
-
-            if selectedLevel == .custom {
-                CookieCategoriesSection()
-            }
-
-            Section {
-                Picker("When Hush sees a banner", selection: $model.settings.mode) {
-                    Text("Answer with my choices").tag(ConsentSettings.Mode.answer)
-                    Text("Only hide it").tag(ConsentSettings.Mode.hide)
-                }
-                .accessibilityIdentifier("banner mode")
-                Toggle("Hide the banner while answering", isOn: $model.settings.hideWhileAnswering)
-                    .toggleStyle(.switch)
-                    .tint(.invertedBackgroundColor)
-                    .disabled(model.settings.mode == .hide)
-            } header: {
-                Text("Banners")
-            } footer: {
-                Text("Banners with no way to refuse are hidden, never accepted.")
-            }
-
+            PrivacyLevelSections()
+            BannersSection()
             PausedSitesSection()
-
-            Section {
-                Toggle("Sync with iCloud", isOn: $model.syncsWithICloud)
-                    .toggleStyle(.switch)
-                    .tint(.invertedBackgroundColor)
-                    .accessibilityIdentifier("sync with icloud")
-            } footer: {
-                Text("Uses the same level, banner choice and paused sites on your iPhone, iPad and Mac. The latest change wins.")
-            }
+            SyncSection()
         }
         .formStyle(.grouped)
-        .scrollContentBackground(.hidden)
-        .background(Color.appBackgroundColor.ignoresSafeArea())
-        .tint(.invertedBackgroundColor)
-        .navigationTitle("Cookie level")
-    }
-}
-
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsView()
-            .environmentObject(ConsentSettingsModel(settings: ConsentSettings()))
+        .environmentObject(ConsentSettingsModel(settings: ConsentSettings()))
     }
 }
