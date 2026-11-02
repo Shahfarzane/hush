@@ -197,8 +197,30 @@ struct PausedSitesSection: View {
         newSite = ""
     }
 
+    private var addButton: some View {
+        Button {
+            rejectedInput = false
+            isAdding = true
+        } label: {
+            #if os(macOS)
+            Text("Pause a Site…")
+            #else
+            Label("Pause a site…", systemImage: "plus")
+            #endif
+        }
+        .accessibilityIdentifier("pause a site")
+    }
+
     var body: some View {
         Section {
+            #if os(macOS)
+            if model.settings.pausedSites.isEmpty {
+                ContentUnavailableView(
+                    "No Paused Sites",
+                    systemImage: "pause.circle",
+                    description: Text("Hush handles cookie banners on every site."))
+            }
+            #endif
             ForEach(model.settings.pausedSites, id: \.self) { site in
                 HStack {
                     Label(site, systemImage: "pause.circle")
@@ -213,21 +235,28 @@ struct PausedSitesSection: View {
                     .accessibilityLabel("Resume \(site)")
                 }
             }
-            Button {
-                rejectedInput = false
-                isAdding = true
-            } label: {
-                Label("Pause a site…", systemImage: "plus")
+            #if os(macOS)
+            // Like the Add buttons under lists in System Settings.
+            HStack {
+                Spacer()
+                addButton
             }
-            .accessibilityIdentifier("pause a site")
+            #else
+            addButton
+            #endif
         } header: {
             #if os(iOS)
             Text("Paused sites")
             #endif
         } footer: {
-            Text(rejectedInput
-                 ? "That doesn't look like a site name."
-                 : "Hush leaves cookie banners alone on these sites and their subdomains.")
+            if rejectedInput {
+                Text("That doesn't look like a site name.")
+            } else {
+                // On the Mac the page header says this.
+                #if os(iOS)
+                Text("Hush leaves cookie banners alone on these sites and their subdomains.")
+                #endif
+            }
         }
         .alert("Pause a site", isPresented: $isAdding) {
             TextField("example.com", text: $newSite)

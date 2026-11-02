@@ -31,9 +31,9 @@ struct HushApp: App {
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
                     refreshEnabledState()
                 }
-                .frame(minWidth: 620, minHeight: 440)
+                .frame(minWidth: 600, minHeight: 420)
         }
-        .defaultSize(width: 760, height: 540)
+        .defaultSize(width: 680, height: 480)
         .windowResizability(.contentMinSize)
         #else
         WindowGroup {

@@ -23,6 +23,50 @@ enum Page: String, CaseIterable, Identifiable {
         case .paused: return "pause.circle"
         }
     }
+
+    // The filled version for the page header.
+    var headerImage: String {
+        switch self {
+        case .status: return "checkmark.shield.fill"
+        case .level: return "hand.raised.fill"
+        case .banners: return "rectangle.bottomhalf.inset.filled"
+        case .paused: return "pause.circle.fill"
+        }
+    }
+
+    var summary: String {
+        switch self {
+        case .status: return ""
+        case .level: return "Which cookies Hush allows when it answers a banner for you."
+        case .banners: return "What Hush does when a site asks about cookies."
+        case .paused: return "Hush leaves cookie banners alone on these sites and their subdomains."
+        }
+    }
+}
+
+// The icon, title and summary System Settings puts at the top of a pane.
+struct PageHeader: View {
+    var page: Page
+
+    var body: some View {
+        Section {
+            HStack(spacing: 14) {
+                Image(systemName: page.headerImage)
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.black)
+                    .frame(width: 44, height: 44)
+                    .background(Color.brandYellow, in: .rect(cornerRadius: 10))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(page.title)
+                        .font(.title3.weight(.semibold))
+                    Text(page.summary)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.vertical, 4)
+        }
+    }
 }
 
 // What the Status page shows of the other pages.
@@ -59,10 +103,13 @@ struct ContentView: View {
                     SummarySection()
                     SyncSection()
                 case .level:
+                    PageHeader(page: page)
                     PrivacyLevelSections()
                 case .banners:
+                    PageHeader(page: page)
                     BannersSection()
                 case .paused:
+                    PageHeader(page: page)
                     PausedSitesSection()
                 }
             }
