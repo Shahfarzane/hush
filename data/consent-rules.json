@@ -466,5 +466,175 @@
         "name": "SAVE_CONSENT"
       }
     ]
+  },
+  "getterms": {
+    "detectors": [
+      {
+        "presentMatcher": [
+          {
+            "type": "css",
+            "target": {
+              "selector": "cookie-widget-wrapper"
+            }
+          }
+        ],
+        "showingMatcher": [
+          {
+            "type": "css",
+            "parent": {
+              "selector": "cookie-widget-wrapper"
+            },
+            "target": {
+              "selector": "#gtCookieWidget",
+              "displayFilter": true
+            }
+          }
+        ]
+      }
+    ],
+    "methods": [
+      {
+        "name": "HIDE_CMP",
+        "action": {
+          "type": "hide",
+          "target": {
+            "selector": "cookie-widget-wrapper"
+          }
+        }
+      },
+      {
+        "name": "OPEN_OPTIONS",
+        "action": {
+          "type": "list",
+          "actions": [
+            {
+              "type": "click",
+              "parent": {
+                "selector": "cookie-widget-wrapper"
+              },
+              "target": {
+                "selector": "#gtCookieWidget button[aria-haspopup='dialog']"
+              }
+            },
+            {
+              "type": "waitcss",
+              "parent": {
+                "selector": "cookie-widget-wrapper"
+              },
+              "target": {
+                "selector": "#gt-cookie-dialog button[role='switch']",
+                "displayFilter": true
+              },
+              "retries": 10,
+              "waitTime": 250
+            }
+          ]
+        }
+      },
+      {
+        "name": "DO_CONSENT",
+        "action": {
+          "type": "consent",
+          "consents": [
+            {
+              "type": "A",
+              "matcher": {
+                "type": "css",
+                "parent": {
+                  "selector": "cookie-widget-wrapper"
+                },
+                "target": {
+                  "selector": "#gt-cookie-dialog button[role='switch'][aria-label='Allow Functional Cookies'][aria-checked='true']"
+                }
+              },
+              "toggleAction": {
+                "type": "click",
+                "parent": {
+                  "selector": "cookie-widget-wrapper"
+                },
+                "target": {
+                  "selector": "#gt-cookie-dialog button[role='switch'][aria-label='Allow Functional Cookies']"
+                }
+              }
+            },
+            {
+              "type": "B",
+              "matcher": {
+                "type": "css",
+                "parent": {
+                  "selector": "cookie-widget-wrapper"
+                },
+                "target": {
+                  "selector": "#gt-cookie-dialog button[role='switch'][aria-label='Allow Performance Cookies'][aria-checked='true']"
+                }
+              },
+              "toggleAction": {
+                "type": "click",
+                "parent": {
+                  "selector": "cookie-widget-wrapper"
+                },
+                "target": {
+                  "selector": "#gt-cookie-dialog button[role='switch'][aria-label='Allow Performance Cookies']"
+                }
+              }
+            },
+            {
+              "type": "F",
+              "matcher": {
+                "type": "css",
+                "parent": {
+                  "selector": "cookie-widget-wrapper"
+                },
+                "target": {
+                  "selector": "#gt-cookie-dialog button[role='switch'][aria-label='Allow Advertising Cookies'][aria-checked='true']"
+                }
+              },
+              "toggleAction": {
+                "type": "click",
+                "parent": {
+                  "selector": "cookie-widget-wrapper"
+                },
+                "target": {
+                  "selector": "#gt-cookie-dialog button[role='switch'][aria-label='Allow Advertising Cookies']"
+                }
+              }
+            },
+            {
+              "type": "X",
+              "matcher": {
+                "type": "css",
+                "parent": {
+                  "selector": "cookie-widget-wrapper"
+                },
+                "target": {
+                  "selector": "#gt-cookie-dialog button[role='switch'][aria-label='Allow Unclassified'][aria-checked='true']"
+                }
+              },
+              "toggleAction": {
+                "type": "click",
+                "parent": {
+                  "selector": "cookie-widget-wrapper"
+                },
+                "target": {
+                  "selector": "#gt-cookie-dialog button[role='switch'][aria-label='Allow Unclassified']"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "SAVE_CONSENT",
+        "action": {
+          "type": "click",
+          "parent": {
+            "selector": "cookie-widget-wrapper"
+          },
+          "target": {
+            "selector": "#gt-cookie-dialog button[aria-label='Save cookie preferences']"
+          }
+        }
+      }
+    ]
   }
 }

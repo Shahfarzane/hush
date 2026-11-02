@@ -91,7 +91,9 @@ export const applyOverrides = (rules, overrides) =>
 // whose banner left #layers and div[role=button] for a "Cookie consent"
 // region with two buttons: Accept first, Refuse second; and iubenda 1.109's
 // tb-banner web components, three shadow roots deep, whose buttons keep the
-// classes reject-button and accept-button in every language).
+// classes reject-button and accept-button in every language; and GetTerms'
+// widget in the cookie-widget-wrapper shadow root, whose preferences button
+// is the one with aria-haspopup="dialog").
 export const buildRules = (vendored, overrides, own) => ({
   ...applyOverrides(vendored, overrides),
   ...own,

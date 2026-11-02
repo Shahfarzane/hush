@@ -1,6 +1,6 @@
 import { planFor, switchAllowed } from "./plan.js";
 import { needsClick } from "./switches.js";
-import { query, queryAll, realisticClick, waitFor } from "./dom.js";
+import { isShown, query, queryAll, realisticClick, waitFor } from "./dom.js";
 
 // How long a step waits for its element: the banner may still be loading
 // when the rule starts, and a settings panel can take a moment to draw.
@@ -70,6 +70,22 @@ export const runRule = async (rule, categories) => {
     }
     realisticClick(target);
     clicks += 1;
+    // A page drawn on the server shows its buttons before their click
+    // handlers are attached (nordiblinds.com and mtmo.nl, one to two
+    // seconds), so a press that showed nothing new is repeated until the
+    // step times out.
+    if (step.until) {
+      const deadline = Date.now() + STEP_TIMEOUT_MS;
+      const opened = () => {
+        const element = query(step.until, root);
+        return element && isShown(element) ? element : null;
+      };
+      while (!await waitFor(opened, root, SWITCH_TIMEOUT_MS)) {
+        if (Date.now() >= deadline) return failed();
+        realisticClick(target);
+        clicks += 1;
+      }
+    }
   }
   return { path: plan.path, clicks, answered: true };
 };
