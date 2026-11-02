@@ -1,5 +1,4 @@
 import SwiftUI
-import SafariServices
 
 @main
 struct HushApp: App {
@@ -17,64 +16,34 @@ struct HushApp: App {
 
     func refreshEnabledState() {
         settingsModel.reload()
-        #if os(macOS)
-        SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: webExtensionIdentifier) { (state, error) in
-            DispatchQueue.main.async {
-                appState.webExtensionEnabledState = state.map { $0.isEnabled ? .enabled : .disabled } ?? .undetermined
-            }
+        Task { @MainActor in
+            appState.webExtensionEnabledState = await SafariExtension.state()
         }
-        #else
-        appState.webExtensionEnabledState = ConsentSettingsStore.extensionLastSeen == nil ? .disabled : .enabled
-        #endif
     }
 
     var body: some Scene {
         #if os(macOS)
+        Window("Hush", id: "main") {
+            ContentView()
+                .environmentObject(appState)
+                .environmentObject(settingsModel)
+                .onAppear(perform: refreshEnabledState)
+                .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+                    refreshEnabledState()
+                }
+                .frame(minWidth: 620, minHeight: 440)
+        }
+        .defaultSize(width: 760, height: 540)
+        .windowResizability(.contentMinSize)
+        #else
         WindowGroup {
             ContentView()
                 .environmentObject(appState)
                 .environmentObject(settingsModel)
                 .onAppear(perform: refreshEnabledState)
-                .onReceive(NotificationCenter.default.publisher(for: NSApplication.willBecomeActiveNotification)) { _ in
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                     refreshEnabledState()
                 }
-                .frame(
-                    minWidth: 360,
-                    idealWidth: 400,
-                    maxWidth: 500,
-                    minHeight: 580,
-                    idealHeight: 600,
-                    maxHeight: 700
-                )
-                .background(Color.appBackgroundColor.ignoresSafeArea())
-        }
-        .commands {
-            // Disable "New Window" command
-            CommandGroup(replacing: CommandGroupPlacement.newItem) {}
-        }
-        .windowStyle(HiddenTitleBarWindowStyle())
-        .windowResizability(.contentSize)
-
-        Settings {
-            SettingsView()
-                .environmentObject(settingsModel)
-                .frame(width: 480, height: 640)
-        }
-        #else
-        WindowGroup {
-            NavigationStack {
-                ZStack {
-                    Color.appBackgroundColor.ignoresSafeArea()
-                    ContentView()
-                        .environmentObject(appState)
-                        .onAppear(perform: refreshEnabledState)
-                        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-                            refreshEnabledState()
-                        }
-                }
-            }
-            .environmentObject(settingsModel)
-            .tint(.invertedBackgroundColor)
         }
         #endif
     }

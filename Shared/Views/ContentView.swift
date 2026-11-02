@@ -1,65 +1,93 @@
 import SwiftUI
 
-struct CookieLevelLink: View {
-    @EnvironmentObject var model: ConsentSettingsModel
+#if os(macOS)
+enum Page: String, CaseIterable, Identifiable {
+    case status, level, banners, paused
 
-    private var label: some View {
-        Text("Change")
-            .underline()
-            .bold()
-            .foregroundColor(.primary)
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .status: return "Status"
+        case .level: return "Privacy Level"
+        case .banners: return "Banners"
+        case .paused: return "Paused Sites"
+        }
     }
 
+    var systemImage: String {
+        switch self {
+        case .status: return "checkmark.shield"
+        case .level: return "hand.raised"
+        case .banners: return "rectangle.bottomhalf.inset.filled"
+        case .paused: return "pause.circle"
+        }
+    }
+}
+
+// What the Status page shows of the other pages.
+struct SummarySection: View {
+    @EnvironmentObject var model: ConsentSettingsModel
+
     var body: some View {
-        HStack(spacing: 0) {
-            Text("Cookie level: ").bold()
-            Text(model.level.title)
-                .accessibilityIdentifier("current cookie level")
-            Text(" · ")
-            #if os(macOS)
-            SettingsLink { label }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("change cookie level")
-            #else
-            NavigationLink { SettingsView() } label: { label }
-                .accessibilityIdentifier("change cookie level")
-            #endif
+        Section {
+            LabeledContent("Privacy level") {
+                Text(model.level.title)
+                    .accessibilityIdentifier("current cookie level")
+            }
+            LabeledContent("When Hush sees a banner", value: model.settings.mode.title)
+            LabeledContent("Paused sites", value: model.settings.pausedSites.count.formatted())
         }
     }
 }
 
 struct ContentView: View {
-    @EnvironmentObject var appState: AppState
-    @EnvironmentObject var model: ConsentSettingsModel
-
-    private var enabledState: ExtensionEnabledState {
-        appState.webExtensionEnabledState
-    }
+    @State private var page: Page? = .status
 
     var body: some View {
-        VStack ( alignment: .leading, spacing: 40) {
-            Spacer()
-            VStack {
-                Image(enabledState == .disabled ? "Disabled" : "Enabled")
-                    .resizable()
-                    .renderingMode(.template)
-                    .foregroundColor(.invertedBackgroundColor)
-                    .frame(width: 200, height: 155)
+        NavigationSplitView {
+            List(Page.allCases, selection: $page) { page in
+                Label(page.title, systemImage: page.systemImage)
             }
-            .frame(
-                maxWidth: .infinity,
-                alignment: .center
-            )
-            VStack(alignment: .leading, spacing: 30) {
-                ExtensionStatusView()
-                CookieLevelLink()
+            .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 260)
+        } detail: {
+            let page = page ?? .status
+            Form {
+                switch page {
+                case .status:
+                    ExtensionStatusSection()
+                    SummarySection()
+                    SyncSection()
+                case .level:
+                    PrivacyLevelSections()
+                case .banners:
+                    BannersSection()
+                case .paused:
+                    PausedSitesSection()
+                }
             }
-            .padding()
-            Spacer()
+            .formStyle(.grouped)
+            .navigationTitle(page.title)
         }
-        .frame(maxWidth: 400)
     }
 }
+#else
+struct ContentView: View {
+    var body: some View {
+        NavigationStack {
+            Form {
+                ExtensionStatusSection()
+                PrivacyLevelSections()
+                BannersSection()
+                PausedSitesSection()
+                SyncSection()
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Hush")
+        }
+    }
+}
+#endif
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
