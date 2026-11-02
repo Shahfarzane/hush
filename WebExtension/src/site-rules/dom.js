@@ -68,6 +68,12 @@ export const queryAll = (selectors, root = document) => {
   return [];
 };
 
+// Whether the element takes up space on the page. Hush's own hider only
+// makes a banner transparent, so a hidden-while-answering panel still counts.
+export const isShown = (element) =>
+  element.getClientRects().length > 0 &&
+  getComputedStyle(element).visibility !== "hidden";
+
 // Resolves with what find() returns once it is truthy (or non-empty), or
 // with null after timeout ms. Watches the root for changes and also polls,
 // since attribute and style changes do not always come with new nodes.

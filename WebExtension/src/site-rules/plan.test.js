@@ -35,8 +35,10 @@ const SHOP = {
 
 Deno.test("A mixed level sets switches when the rule has them", () => {
   assertEquals(pathFor(SHOP, FUNCTIONAL), "settings");
+  // The settings button is pressed again until Save shows: a page drawn
+  // on the server shows it before its click handler is attached.
   assertEquals(planFor(SHOP, FUNCTIONAL).steps, [
-    { click: "#settings" },
+    { click: "#settings", until: "#save" },
     { switches: SHOP.switches, switchState: "checkbox" },
     { click: "#save", ifDisabled: "#reject" },
   ]);

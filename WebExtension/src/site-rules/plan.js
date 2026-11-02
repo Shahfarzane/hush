@@ -45,7 +45,10 @@ export const planFor = (rule, categories) => {
     steps.push({ click: rule[path] });
     return { path, steps };
   }
-  if (rule.openSettings) steps.push({ click: rule.openSettings });
+  // Settings count as open once their save button shows.
+  if (rule.openSettings) {
+    steps.push({ click: rule.openSettings, until: rule.save });
+  }
   steps.push({
     switches: rule.switches,
     switchState: rule.switchState ?? "auto",
