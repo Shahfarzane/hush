@@ -40,9 +40,12 @@ jobs:
           echo -n "$DEVELOPER_ID_P12" | base64 --decode -o "$RUNNER_TEMP/developer-id.p12"
           security import "$RUNNER_TEMP/developer-id.p12" -P "$DEVELOPER_ID_P12_PASSWORD" -f pkcs12 -k "$keychain" -T /usr/bin/codesign
           rm "$RUNNER_TEMP/developer-id.p12"
-          # codesign needs the intermediate to build the chain.
-          curl -fsSL https://www.apple.com/certificateauthority/DeveloperIDCA.cer -o "$RUNNER_TEMP/DeveloperIDCA.cer"
-          security import "$RUNNER_TEMP/DeveloperIDCA.cer" -k "$keychain"
+          # codesign needs the intermediate to build the chain. The runner
+          # image usually has it already, and importing it twice fails.
+          if ! security find-certificate -c "Developer ID Certification Authority" > /dev/null 2>&1; then
+            curl -fsSL https://www.apple.com/certificateauthority/DeveloperIDCA.cer -o "$RUNNER_TEMP/DeveloperIDCA.cer"
+            security import "$RUNNER_TEMP/DeveloperIDCA.cer" -k "$keychain"
+          fi
           security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain" > /dev/null
           security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
 
