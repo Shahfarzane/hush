@@ -809,5 +809,56 @@
         }
       }
     ]
+  },
+  "onetrust_banner": {
+    "methods": [
+      {
+        "name": "UTILITY",
+        "action": {
+          "type": "list",
+          "actions": [
+            {
+              "type": "hide",
+              "target": {
+                "selector": "#onetrust-banner-sdk"
+              },
+              "hideFromDetection": true,
+              "forceHide": true
+            },
+            {
+              "type": "hide",
+              "target": {
+                "childFilter": {
+                  "target": {
+                    "selector": "#cookie-consent-preferences"
+                  }
+                },
+                "selector": "#cookie-consent-wrapper"
+              },
+              "hideFromDetection": true,
+              "forceHide": true
+            },
+            {
+              "type": "ifcss",
+              "target": {
+                "selector": "#onetrust-pc-btn-handler, #cookie-consent-preferences, #onetrust-banner-sdk .optanon-show-settings"
+              },
+              "trueAction": {
+                "type": "click",
+                "target": {
+                  "selector": "#onetrust-pc-btn-handler, #cookie-consent-preferences, #onetrust-banner-sdk .optanon-show-settings"
+                }
+              },
+              "falseAction": {
+                "type": "click",
+                "target": {
+                  "selector": "#onetrust-reject-all-handler"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
   }
 }
