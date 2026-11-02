@@ -270,6 +270,12 @@ Each phase ends in a commit that builds and passes its verification.
   - Acceptrics and the Kalles theme run on other sites too; they are candidates for upstream rules.
 - Full corpus: 24 pass, 9 stricter, 4 answered without readback, 0 wrong, 0 regressed, 0 unanswered (37 sites).
 
+**Third round of site checks (2026-11-02)**
+- The 39 domain names left in Super Agent's private catalog were scanned again with the current extension: 11 answered by the engines, 28 not. Loaded with only Hush's lists applied, 8 of those 28 still showed a banner (bounce.com, getterms.io, grok.com, lufthansa.com, mtmo.nl, nordiblinds.com, snap.com, uniav.com); the rest showed none, or a bot wall or a non-consent modal.
+- lufthansa.com exposed a Consent-O-Matic rule bug. `onetrust_banner` is a utility rule: it hides the banner and clicks `#onetrust-pc-btn-handler` to open settings, but when a site has no such button it clicks Accept All. Lufthansa opens settings with a link (`.optanon-show-settings`), so Hush accepted every category behind the hidden banner, and the corpus read performance and advertising as allowed. The override in `data/consent-o-matic-overrides.json` adds that link and falls back to Reject All, never Accept; `onetrust_pcpanel` then sets each category. Lufthansa now passes at "functional only".
+- Seen while debugging, not fixed: Consent-O-Matic's 5-second "no banner" timer is not cancelled once it finds a banner, so an answer that starts late can be cut off. With the rule fixed, Lufthansa's answer finishes in time; no corpus site fails from the timer today.
+- Full corpus: 25 pass, 9 stricter, 4 answered without readback, 0 wrong, 0 regressed (38 sites).
+
 **Phase 8: one Safari extension instead of two (Shahin, 2026-11-01)**
 - Why: Safari lists "Hush" twice (the content blocker and the web extension), both named Hush on the Mac, and each must be switched on separately, per profile on the Mac. Shahin chose a single extension over clearer names.
 - Cost, accepted: "Only hide it" then needs the same website access as answering. Today the content blocker needs none.
