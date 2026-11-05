@@ -7,7 +7,12 @@ import overrides from "../data/consent-o-matic-overrides.json" with {
 };
 import hushRules from "../data/consent-rules.json" with { type: "json" };
 import { buildRules } from "./src/rules.js";
-import { isAnswered, report, reportAnswered } from "./src/report.js";
+import {
+  isAnswered,
+  report,
+  reportAnswered,
+  stillAnswering,
+} from "./src/report.js";
 import { consentTypesFor, shouldAnswer } from "./src/settings.js";
 import siteRules from "../data/site-rules.json" with { type: "json" };
 import { answerWithSiteRule, siteRuleFor } from "./src/site-rules/answer.js";
@@ -90,6 +95,10 @@ const run = async () => {
     rules,
     consentTypesFor(settings),
     (event) => {
+      if (stillAnswering(event, ConsentEngine.singleton)) {
+        ConsentEngine.singleton.startStopTimeout();
+        return;
+      }
       if (isAnswered(event)) {
         reportAnswered(event.cmpName, event.clicks);
         return;
