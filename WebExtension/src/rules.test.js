@@ -123,8 +123,16 @@ Deno.test("Cookiebot saves the selection without clicking Deny after it", () => 
 Deno.test("Quantcast only saves from the options view, never Accept", () => {
   const methods = applyOverrides(rules, overrides).quantcast2b.methods;
   const save = methods.find((method) => method.name === "SAVE_CONSENT").action;
-  assertEquals(save.target.selector, "#save-and-exit");
-  assertEquals(save.falseAction, undefined);
+  assertEquals(save.type, "click");
+  assertEquals(save.target.displayFilter, true);
+  // The summary screen's primary button is Agree; it has no footer links.
+  assertEquals(
+    save.target.selector.split(", "),
+    [
+      "#save-and-exit",
+      '.qc-cmp2-footer:has(.qc-cmp2-footer-links) button[mode="primary"]',
+    ],
+  );
   assertEquals(JSON.stringify(save).includes("accept"), false);
 });
 

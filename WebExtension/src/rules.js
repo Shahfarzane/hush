@@ -12,7 +12,9 @@
 //   languages, and SAVE_CONSENT then clicked the primary button, which on
 //   the summary screen is Accept. Any other language (Swedish on feber.se)
 //   accepted everything. Options now open by id, and saving only happens
-//   from the options view.
+//   from the options view: #save-and-exit, or on markup without ids
+//   (astro-seek.com) the primary button of a footer that has the options
+//   view's links. The summary's footer has no links, so Agree stays out.
 // - didomi.io DO_CONSENT: "Functionality" and "Authentication and
 //   authorization management" were grouped with device storage (D), so
 //   functional purposes were refused. They now get their own A branch.

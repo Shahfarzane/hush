@@ -278,16 +278,10 @@
       {
         "name": "SAVE_CONSENT",
         "action": {
-          "type": "ifcss",
+          "type": "click",
           "target": {
-            "selector": "#save-and-exit",
+            "selector": "#save-and-exit, .qc-cmp2-footer:has(.qc-cmp2-footer-links) button[mode=\"primary\"]",
             "displayFilter": true
-          },
-          "trueAction": {
-            "type": "click",
-            "target": {
-              "selector": "#save-and-exit"
-            }
           }
         }
       }
