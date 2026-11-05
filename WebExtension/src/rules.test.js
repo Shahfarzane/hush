@@ -40,6 +40,15 @@ Deno.test("Overrides replace only the named method", () => {
   assertEquals(result.other.methods, [{ name: "A", v: 1 }]);
 });
 
+Deno.test("An override can replace a rule's detectors", () => {
+  const result = applyOverrides({
+    cmp: { detectors: [{ present: 1 }], methods: [] },
+    other: { detectors: [{ present: 1 }], methods: [] },
+  }, { cmp: { detectors: [{ present: 2 }] } });
+  assertEquals(result.cmp.detectors, [{ present: 2 }]);
+  assertEquals(result.other.detectors, [{ present: 1 }]);
+});
+
 Deno.test("Retype changes the category of matching consents only", () => {
   const consent = (selector, type) => ({
     matcher: { type: "css", target: { selector } },
@@ -123,8 +132,16 @@ Deno.test("Cookiebot saves the selection without clicking Deny after it", () => 
 Deno.test("Quantcast only saves from the options view, never Accept", () => {
   const methods = applyOverrides(rules, overrides).quantcast2b.methods;
   const save = methods.find((method) => method.name === "SAVE_CONSENT").action;
-  assertEquals(save.target.selector, "#save-and-exit");
-  assertEquals(save.falseAction, undefined);
+  assertEquals(save.type, "click");
+  assertEquals(save.target.displayFilter, true);
+  // The summary screen's primary button is Agree; it has no footer links.
+  assertEquals(
+    save.target.selector.split(", "),
+    [
+      "#save-and-exit",
+      '.qc-cmp2-footer:has(.qc-cmp2-footer-links) button[mode="primary"]',
+    ],
+  );
   assertEquals(JSON.stringify(save).includes("accept"), false);
 });
 
@@ -221,6 +238,41 @@ Deno.test("Didomi saves with Save preferences, not the Reject all toggle", () =>
     save.action.trueAction.target.selector.endsWith("#btn-toggle-save"),
     true,
   );
+});
+
+Deno.test("TrustArc's popup hider leaves the shadow root dialog alone", () => {
+  const [detector] = applyOverrides(rules, overrides).trustarc_popup_hider
+    .detectors;
+  for (const matcher of [detector.presentMatcher, detector.showingMatcher]) {
+    assertEquals(
+      matcher[0].target.selector,
+      ".truste_box_overlay:not(:has(.trustarc_newcm_container))",
+    );
+  }
+});
+
+Deno.test("TrustArc's dialog sets each category and never accepts by itself", () => {
+  const rule = hushRules.trustarc_newcm;
+  const step = (name) =>
+    rule.methods.find((method) => method.name === name).action;
+  assertEquals(
+    consentsOf(step("DO_CONSENT")).map((consent) => consent.type),
+    ["A", "B", "F"],
+  );
+  // The rows go in with empty titles, which match no category.
+  const [, titles] = step("OPEN_OPTIONS").action.actions;
+  assertEquals(titles.target.selector, ".cookiecat h3:empty");
+  assertEquals(titles.negated, true);
+  const save = step("SAVE_CONSENT").action;
+  // Submitting swaps in a confirmation; only Close releases the page.
+  assertEquals(
+    save.trueAction.actions.map((action) => action.target.selector),
+    [".submit", ".close", ".close"],
+  );
+  const allow = save.falseAction;
+  assertEquals(allow.type, "ifallowall");
+  assertEquals(allow.trueAction.target.selector, ".call");
+  assertEquals(allow.falseAction.target.selector, ".required");
 });
 
 Deno.test("OneTrust's banner rule opens settings and never clicks Accept", () => {

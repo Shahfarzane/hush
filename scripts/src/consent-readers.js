@@ -252,6 +252,20 @@ const trustarc = ({ cookies }) => {
   return { functional: level >= 1, advertising: level >= 2 };
 };
 
+// Audible runs TrustArc with four categories, so notice_preferences level 2
+// is functional there, not advertising. notice_gdpr_prefs names each allowed
+// category: "0|2:" is required and functional.
+const audible = ({ cookies }) => {
+  const value = cookieValue(cookies, "notice_gdpr_prefs");
+  if (!value) return null;
+  const allowed = decode(value).split(":")[0].split("|");
+  return {
+    performance: allowed.includes("1"),
+    functional: allowed.includes("2"),
+    advertising: allowed.includes("3"),
+  };
+};
+
 // Didomi.getUserStatus() lists purpose ids such as "select_basic_ads".
 const didomi = ({ didomi }) =>
   didomi
@@ -424,6 +438,7 @@ export const readers = {
   complianz,
   borlabs,
   trustarc,
+  audible,
   didomi,
   cookieinformation,
   cookiefirst,

@@ -278,16 +278,10 @@
       {
         "name": "SAVE_CONSENT",
         "action": {
-          "type": "ifcss",
+          "type": "click",
           "target": {
-            "selector": "#save-and-exit",
+            "selector": "#save-and-exit, .qc-cmp2-footer:has(.qc-cmp2-footer-links) button[mode=\"primary\"]",
             "displayFilter": true
-          },
-          "trueAction": {
-            "type": "click",
-            "target": {
-              "selector": "#save-and-exit"
-            }
           }
         }
       }
@@ -902,6 +896,29 @@
             }
           ]
         }
+      }
+    ]
+  },
+  "trustarc_popup_hider": {
+    "detectors": [
+      {
+        "presentMatcher": [
+          {
+            "type": "css",
+            "target": {
+              "selector": ".truste_box_overlay:not(:has(.trustarc_newcm_container))"
+            }
+          }
+        ],
+        "showingMatcher": [
+          {
+            "type": "css",
+            "target": {
+              "selector": ".truste_box_overlay:not(:has(.trustarc_newcm_container))",
+              "displayFilter": true
+            }
+          }
+        ]
       }
     ]
   }

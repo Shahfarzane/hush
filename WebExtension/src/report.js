@@ -34,6 +34,12 @@ export const report = (fields) =>
 // press, as its old Yahoo rules did on today's page. Only a click counts.
 export const isAnswered = (event) => event.handled && event.clicks > 0;
 
+// Consent-O-Matic's five-second "no banner here" timer keeps running once a
+// rule has started, so a rule still at work gets reported as no banner.
+// Taken at its word, the fallback would start clicking the same dialog.
+export const stillAnswering = (event, engine) =>
+  !event.handled && !event.error && engine.checkRunning;
+
 export const reportAnswered = (cmp, clicks) => {
   report({ outcome: "handled", cmp, clicks });
   setTimeout(
