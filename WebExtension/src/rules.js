@@ -1,8 +1,9 @@
 // Fixes for vendored Consent-O-Matic rules, kept in
 // data/consent-o-matic-overrides.json so they survive re-vendoring. An
-// override can replace whole methods by name (`methods`), change the
-// category of consents whose selectors contain a given string (`retype`), or
-// leave a rule out (`disable`) so the autoconsent fallback answers instead.
+// override can replace whole methods by name (`methods`), replace how a rule
+// is found (`detectors`), change the category of consents whose selectors
+// contain a given string (`retype`), or leave a rule out (`disable`) so the
+// autoconsent fallback answers instead.
 //
 // Current overrides:
 // - cookiebot SAVE_CONSENT: upstream clicks "Allow selection" and then
@@ -47,6 +48,11 @@
 //   (.optanon-show-settings), so Hush accepted every category there behind
 //   the hidden banner. The rule now also finds that link, and falls back to
 //   Reject All, never Accept.
+// - trustarc_popup_hider: hides TrustArc's overlay for up to five seconds
+//   while the iframe rule (trustarcframe) answers. The newer dialog has no
+//   iframe, so it hid the overlay for nothing, kept every other rule waiting
+//   and put the dialog back unanswered. It now skips that dialog, which
+//   trustarc_newcm answers.
 // - yahoo_consent, yahoo_popup: disabled. Both target older versions of
 //   consent.yahoo.com: on the current page yahoo_consent claims the banner
 //   with zero clicks (its switches and Save button are on a settings view it
@@ -87,6 +93,7 @@ export const applyOverrides = (rules, overrides) =>
       );
       return [name, {
         ...rule,
+        detectors: override.detectors ?? rule.detectors,
         methods: override.retype
           ? retypeConsents(methods, override.retype)
           : methods,
@@ -102,7 +109,9 @@ export const applyOverrides = (rules, overrides) =>
 // tb-banner web components, three shadow roots deep, whose buttons keep the
 // classes reject-button and accept-button in every language; and GetTerms'
 // widget in the cookie-widget-wrapper shadow root, whose preferences button
-// is the one with aria-haspopup="dialog").
+// is the one with aria-haspopup="dialog"; and TrustArc's dialog in the
+// .trustarc_newcm_container shadow root, which replaced the iframe its
+// vendored rule answers, and whose switches name the refusing button .on).
 export const buildRules = (vendored, overrides, own) => ({
   ...applyOverrides(vendored, overrides),
   ...own,

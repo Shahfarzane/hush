@@ -380,3 +380,25 @@ Deno.test("BeTheme's mfnConsent holds Google consent mode values", () => {
   );
   assertEquals(readers.betheme({ cookies: [] }), null);
 });
+
+Deno.test("Audible's TrustArc lists each category it allows", () => {
+  const stored = (value) => ({
+    cookies: [{ name: "notice_gdpr_prefs", value }],
+  });
+  assertEquals(readers.audible(stored("0%7C2%3A")), {
+    performance: false,
+    functional: true,
+    advertising: false,
+  });
+  assertEquals(readers.audible(stored("0:")), {
+    performance: false,
+    functional: false,
+    advertising: false,
+  });
+  assertEquals(readers.audible(stored("0|1|2|3:")), {
+    performance: true,
+    functional: true,
+    advertising: true,
+  });
+  assertEquals(readers.audible({ cookies: [] }), null);
+});
