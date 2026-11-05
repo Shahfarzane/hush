@@ -168,8 +168,11 @@ const collectPageData = () =>
         try {
           window.__tcfapi("getTCData", 2, (data, success) => {
             clearTimeout(timer);
+            // While the dialog is up a CMP reports every purpose as refused,
+            // which reads the same as a saved refusal.
+            const saved = data?.eventStatus !== "cmpuishown";
             resolve(
-              success && data?.purpose
+              success && saved && data?.purpose
                 ? { purposes: data.purpose.consents }
                 : null,
             );
