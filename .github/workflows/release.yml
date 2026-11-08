@@ -1,0 +1,124 @@
+name: Release
+
+# Pushing a version tag (v1.2.0) builds the notarized DMG, uploads both apps
+# to TestFlight with the same build number, and only then publishes the DMG
+# as a GitHub Release, so every release reaches both. A manual run, on any
+# ref, is a dry run: it keeps the DMG with the run and exports the TestFlight
+# builds without uploading them.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: DMG and TestFlight
+    runs-on: xcode-27
+    # The signing secrets live in this environment, which only master and
+    # version tags can use.
+    environment: release
+    steps:
+      - uses: actions/checkout@v7
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Use Xcode 27.2
+        run: sudo xcode-select --switch /Applications/Xcode_27.2.app
+      - name: Install the signing certificates and profiles
+        env:
+          DEVELOPER_ID_P12: ${{ secrets.DEVELOPER_ID_P12 }}
+          DEVELOPER_ID_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+          DEVELOPER_ID_PROFILE_APP: ${{ secrets.DEVELOPER_ID_PROFILE_APP }}
+          DEVELOPER_ID_PROFILE_EXTENSION: ${{ secrets.DEVELOPER_ID_PROFILE_EXTENSION }}
+          # Apple Distribution and 3rd Party Mac Developer Installer.
+          APP_STORE_P12: ${{ secrets.APP_STORE_P12 }}
+          APP_STORE_P12_PASSWORD: ${{ secrets.APP_STORE_P12_PASSWORD }}
+          APP_STORE_PROFILE_IOS_APP: ${{ secrets.APP_STORE_PROFILE_IOS_APP }}
+          APP_STORE_PROFILE_IOS_EXTENSION: ${{ secrets.APP_STORE_PROFILE_IOS_EXTENSION }}
+          APP_STORE_PROFILE_MAC_APP: ${{ secrets.APP_STORE_PROFILE_MAC_APP }}
+          APP_STORE_PROFILE_MAC_EXTENSION: ${{ secrets.APP_STORE_PROFILE_MAC_EXTENSION }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          keychain_password="$(uuidgen)"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          import_p12() {
+            echo -n "$1" | base64 --decode -o "$RUNNER_TEMP/identity.p12"
+            security import "$RUNNER_TEMP/identity.p12" -P "$2" -f pkcs12 -k "$keychain" -T /usr/bin/codesign -T /usr/bin/productbuild
+            rm "$RUNNER_TEMP/identity.p12"
+          }
+          import_p12 "$DEVELOPER_ID_P12" "$DEVELOPER_ID_P12_PASSWORD"
+          import_p12 "$APP_STORE_P12" "$APP_STORE_P12_PASSWORD"
+          # codesign needs the intermediates to build the chains: Developer ID
+          # (G1) for the DMG, WWDR G3 for Apple Distribution and the installer
+          # certificate. The runner image usually has them already, and
+          # importing one twice fails, so each is matched by its SHA-1.
+          for ca in DeveloperIDCA:3B166C3B7DC4B751C9FE2AFAB9135641E388E186 AppleWWDRCAG3:06EC06599F4ED0027CC58956B4D3AC1255114F35; do
+            if ! security find-certificate -a -Z | grep -q "SHA-1 hash: ${ca#*:}"; then
+              curl -fsSL "https://www.apple.com/certificateauthority/${ca%%:*}.cer" -o "$RUNNER_TEMP/${ca%%:*}.cer"
+              security import "$RUNNER_TEMP/${ca%%:*}.cer" -k "$keychain"
+            fi
+          done
+          security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain" > /dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+
+          profiles="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
+          mkdir -p "$profiles"
+          for profile in "$DEVELOPER_ID_PROFILE_APP" "$DEVELOPER_ID_PROFILE_EXTENSION" \
+            "$APP_STORE_PROFILE_IOS_APP" "$APP_STORE_PROFILE_IOS_EXTENSION" \
+            "$APP_STORE_PROFILE_MAC_APP" "$APP_STORE_PROFILE_MAC_EXTENSION"; do
+            echo -n "$profile" | base64 --decode -o "$RUNNER_TEMP/profile.provisionprofile"
+            uuid="$(security cms -D -i "$RUNNER_TEMP/profile.provisionprofile" | plutil -extract UUID raw -o - -)"
+            mv "$RUNNER_TEMP/profile.provisionprofile" "$profiles/$uuid.provisionprofile"
+          done
+
+          echo -n "$ASC_KEY_P8" | base64 --decode -o "$RUNNER_TEMP/AuthKey.p8"
+      # One build number for the DMG and both TestFlight builds. A tag's
+      # comes from the time it was made, so a re-run reuses it; App Store
+      # Connect then refuses a platform that was already uploaded, and the
+      # fix is a new tag. Stockholm time keeps it above builds uploaded with
+      # make testflight on a Mac, which use local time.
+      - name: Pick the build number
+        env:
+          TZ: Europe/Stockholm
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            git fetch --no-tags origin "+$GITHUB_REF:$GITHUB_REF"
+            number="$(git for-each-ref --format='%(creatordate:format-local:%Y%m%d.%H%M)' "$GITHUB_REF")"
+          else
+            number="$(date +%Y%m%d.%H%M)"
+          fi
+          echo "BUILD_NUMBER=$number" >> "$GITHUB_ENV"
+      - name: Build, sign and notarize the DMG
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: make dmg ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8" ASC_KEY_ID="$ASC_KEY_ID" ASC_ISSUER_ID="$ASC_ISSUER_ID"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Hush-dmg
+          path: build/Hush.dmg
+          if-no-files-found: error
+      # Only a tag push uploads and publishes. A manual run, even one
+      # started on a tag, exports the TestFlight builds and stops there.
+      - name: TestFlight (upload on tag pushes, export only on manual runs)
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          TESTFLIGHT_DESTINATION: ${{ github.event_name == 'push' && 'upload' || 'export' }}
+        run: make testflight SIGNING=manual TESTFLIGHT_DESTINATION="$TESTFLIGHT_DESTINATION" ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8" ASC_KEY_ID="$ASC_KEY_ID" ASC_ISSUER_ID="$ASC_ISSUER_ID"
+      - name: Publish the release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" build/Hush.dmg --title "Hush $GITHUB_REF_NAME" --generate-notes
+      - name: Remove the signing keychain and key
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
+          rm -f "$RUNNER_TEMP/AuthKey.p8" "$RUNNER_TEMP/identity.p12" "$RUNNER_TEMP/profile.provisionprofile"
