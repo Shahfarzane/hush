@@ -1,10 +1,10 @@
 name: Release
 
-# A version tag (v1.2.0) builds the notarized DMG, uploads both apps to
-# TestFlight with the same build number, and only then publishes the DMG as
-# a GitHub Release, so every release reaches both. A manual run is a dry run:
-# it keeps the DMG with the run and exports the TestFlight builds without
-# uploading them.
+# Pushing a version tag (v1.2.0) builds the notarized DMG, uploads both apps
+# to TestFlight with the same build number, and only then publishes the DMG
+# as a GitHub Release, so every release reaches both. A manual run, on any
+# ref, is a dry run: it keeps the DMG with the run and exports the TestFlight
+# builds without uploading them.
 on:
   push:
     tags: ["v*"]
@@ -55,12 +55,14 @@ jobs:
           import_p12 "$DEVELOPER_ID_P12" "$DEVELOPER_ID_P12_PASSWORD"
           import_p12 "$APP_STORE_P12" "$APP_STORE_P12_PASSWORD"
           # codesign needs the intermediates to build the chains: Developer ID
-          # for the DMG, WWDR G3 for Apple Distribution and the installer
+          # (G1) for the DMG, WWDR G3 for Apple Distribution and the installer
           # certificate. The runner image usually has them already, and
-          # importing one it has fails, which is fine.
-          for ca in DeveloperIDCA AppleWWDRCAG3; do
-            curl -fsSL "https://www.apple.com/certificateauthority/$ca.cer" -o "$RUNNER_TEMP/$ca.cer"
-            security import "$RUNNER_TEMP/$ca.cer" -k "$keychain" || true
+          # importing one twice fails, so each is matched by its SHA-1.
+          for ca in DeveloperIDCA:3B166C3B7DC4B751C9FE2AFAB9135641E388E186 AppleWWDRCAG3:06EC06599F4ED0027CC58956B4D3AC1255114F35; do
+            if ! security find-certificate -a -Z | grep -q "SHA-1 hash: ${ca#*:}"; then
+              curl -fsSL "https://www.apple.com/certificateauthority/${ca%%:*}.cer" -o "$RUNNER_TEMP/${ca%%:*}.cer"
+              security import "$RUNNER_TEMP/${ca%%:*}.cer" -k "$keychain"
+            fi
           done
           security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain" > /dev/null
           security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
@@ -76,27 +78,42 @@ jobs:
           done
 
           echo -n "$ASC_KEY_P8" | base64 --decode -o "$RUNNER_TEMP/AuthKey.p8"
-      # One build number for the DMG and both TestFlight builds.
+      # One build number for the DMG and both TestFlight builds. A tag's
+      # comes from the time it was made, so a re-run reuses it; App Store
+      # Connect then refuses a platform that was already uploaded, and the
+      # fix is a new tag. Stockholm time keeps it above builds uploaded with
+      # make testflight on a Mac, which use local time.
       - name: Pick the build number
-        run: echo "BUILD_NUMBER=$(date -u +%Y%m%d.%H%M)" >> "$GITHUB_ENV"
+        env:
+          TZ: Europe/Stockholm
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            git fetch --no-tags origin "+$GITHUB_REF:$GITHUB_REF"
+            number="$(git for-each-ref --format='%(creatordate:format-local:%Y%m%d.%H%M)' "$GITHUB_REF")"
+          else
+            number="$(date +%Y%m%d.%H%M)"
+          fi
+          echo "BUILD_NUMBER=$number" >> "$GITHUB_ENV"
       - name: Build, sign and notarize the DMG
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: make dmg ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8" ASC_KEY_ID="$ASC_KEY_ID" ASC_ISSUER_ID="$ASC_ISSUER_ID"
-      - name: TestFlight (upload on tags, export only on manual runs)
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          TESTFLIGHT_DESTINATION: ${{ startsWith(github.ref, 'refs/tags/') && 'upload' || 'export' }}
-        run: make testflight SIGNING=manual TESTFLIGHT_DESTINATION="$TESTFLIGHT_DESTINATION" ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8" ASC_KEY_ID="$ASC_KEY_ID" ASC_ISSUER_ID="$ASC_ISSUER_ID"
       - uses: actions/upload-artifact@v7
         with:
           name: Hush-dmg
           path: build/Hush.dmg
           if-no-files-found: error
+      # Only a tag push uploads and publishes. A manual run, even one
+      # started on a tag, exports the TestFlight builds and stops there.
+      - name: TestFlight (upload on tag pushes, export only on manual runs)
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          TESTFLIGHT_DESTINATION: ${{ github.event_name == 'push' && 'upload' || 'export' }}
+        run: make testflight SIGNING=manual TESTFLIGHT_DESTINATION="$TESTFLIGHT_DESTINATION" ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8" ASC_KEY_ID="$ASC_KEY_ID" ASC_ISSUER_ID="$ASC_ISSUER_ID"
       - name: Publish the release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" build/Hush.dmg --title "Hush $GITHUB_REF_NAME" --generate-notes
@@ -104,4 +121,4 @@ jobs:
         if: always()
         run: |
           security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
-          rm -f "$RUNNER_TEMP/AuthKey.p8"
+          rm -f "$RUNNER_TEMP/AuthKey.p8" "$RUNNER_TEMP/identity.p12" "$RUNNER_TEMP/profile.provisionprofile"
