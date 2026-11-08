@@ -93,14 +93,14 @@ struct ExtensionStatusSection: View {
                     StatusHeader(
                         systemImage: "checkmark.shield.fill",
                         isOn: true,
-                        title: "Hush is answering",
+                        title: "Hush Extra is answering",
                         subtitle: "Cookie banners get your choice: \(model.level.title.lowercased()).",
                         identifier: "extension answering")
                 } else {
                     StatusHeader(
                         systemImage: "eye.slash.fill",
                         isOn: true,
-                        title: "Hush is hiding banners",
+                        title: "Hush Extra is hiding banners",
                         subtitle: "Cookie banners are hidden, never answered.",
                         identifier: "extension hiding")
                 }
@@ -110,8 +110,8 @@ struct ExtensionStatusSection: View {
                 StatusHeader(
                     systemImage: "exclamationmark.shield.fill",
                     isOn: false,
-                    title: "Turn on Hush in Safari",
-                    subtitle: "Hush answers cookie banners once Safari lets it run on every website.",
+                    title: "Turn on Hush Extra in Safari",
+                    subtitle: "Hush Extra answers cookie banners once Safari lets it run on every website.",
                     identifier: "extension off")
                 SetupSteps()
                 if SafariExtension.canOpenSettings {

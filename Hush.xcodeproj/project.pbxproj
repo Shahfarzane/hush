@@ -95,9 +95,9 @@
 		A43F418625975CFD0043E80E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A4D9A0EC258A02B2009D7004 /* HushApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HushApp.swift; sourceTree = "<group>"; };
 		A4D9A0EE258A02B4009D7004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		A4D9A0F3258A02B4009D7004 /* Hush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hush.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A4D9A0F3258A02B4009D7004 /* Hush Extra.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hush Extra.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4D9A0F6258A02B4009D7004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A4D9A0FB258A02B4009D7004 /* Hush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hush.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A4D9A0FB258A02B4009D7004 /* Hush Extra.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hush Extra.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4D9A0FD258A02B4009D7004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A4D9A0FE258A02B4009D7004 /* macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = macOS.entitlements; sourceTree = "<group>"; };
 		A4D9A115258A0340009D7004 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
@@ -207,8 +207,8 @@
 		A4D9A0F4258A02B4009D7004 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A4D9A0F3258A02B4009D7004 /* Hush.app */,
-				A4D9A0FB258A02B4009D7004 /* Hush.app */,
+				A4D9A0F3258A02B4009D7004 /* Hush Extra.app */,
+				A4D9A0FB258A02B4009D7004 /* Hush Extra.app */,
 				CE0D00000000000000000007 /* WebExtension iOS.appex */,
 				CE0D00000000000000000018 /* WebExtension macOS.appex */,
 				A43F418225975CFD0043E80E /* HushUITests.xctest */,
@@ -347,7 +347,7 @@
 			);
 			name = "Hush iOS";
 			productName = "Hush (iOS)";
-			productReference = A4D9A0F3258A02B4009D7004 /* Hush.app */;
+			productReference = A4D9A0F3258A02B4009D7004 /* Hush Extra.app */;
 			productType = "com.apple.product-type.application";
 		};
 		A4D9A0FA258A02B4009D7004 /* Hush macOS */ = {
@@ -366,7 +366,7 @@
 			);
 			name = "Hush macOS";
 			productName = "Hush (macOS)";
-			productReference = A4D9A0FB258A02B4009D7004 /* Hush.app */;
+			productReference = A4D9A0FB258A02B4009D7004 /* Hush Extra.app */;
 			productType = "com.apple.product-type.application";
 		};
 		CE0D0000000000000000000B /* WebExtension iOS */ = {
@@ -874,7 +874,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush;
-				PRODUCT_NAME = Hush;
+				PRODUCT_NAME = "Hush Extra";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -899,7 +899,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush;
-				PRODUCT_NAME = Hush;
+				PRODUCT_NAME = "Hush Extra";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -927,7 +927,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush;
-				PRODUCT_NAME = Hush;
+				PRODUCT_NAME = "Hush Extra";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 			};
@@ -953,7 +953,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ceo.nerd.hush;
-				PRODUCT_NAME = Hush;
+				PRODUCT_NAME = "Hush Extra";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 			};
