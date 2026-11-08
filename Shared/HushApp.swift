@@ -23,7 +23,7 @@ struct HushApp: App {
 
     var body: some Scene {
         #if os(macOS)
-        Window("Hush", id: "main") {
+        Window("Hush Extra", id: "main") {
             ContentView()
                 .environmentObject(appState)
                 .environmentObject(settingsModel)

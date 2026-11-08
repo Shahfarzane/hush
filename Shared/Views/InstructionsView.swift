@@ -20,13 +20,13 @@ struct SetupStep: View {
 struct SetupSteps: View {
     var body: some View {
         #if os(macOS)
-        SetupStep(systemImage: "checkmark.square", text: Text("Turn on ") + Text("Hush").bold())
+        SetupStep(systemImage: "checkmark.square", text: Text("Turn on ") + Text("Hush Extra").bold())
         SetupStep(systemImage: "globe", text: Text("Click ") + Text("Always Allow on Every Website").bold())
         #else
         if !SafariExtension.canOpenSettings {
             SetupStep(systemImage: "gear", text: Text("Open ") + Text("Settings").bold() + Text(", then ") + Text("Apps › Safari › Extensions").bold())
         }
-        SetupStep(systemImage: "switch.2", text: Text("Turn on ") + Text("Hush").bold())
+        SetupStep(systemImage: "switch.2", text: Text("Turn on ") + Text("Hush Extra").bold())
         SetupStep(systemImage: "globe", text: Text("Set ") + Text("All Websites").bold() + Text(" to ") + Text("Allow").bold())
         #endif
     }

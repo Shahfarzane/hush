@@ -37,9 +37,9 @@ enum Page: String, CaseIterable, Identifiable {
     var summary: String {
         switch self {
         case .status: return ""
-        case .level: return "Which cookies Hush allows when it answers a banner for you."
-        case .banners: return "What Hush does when a site asks about cookies."
-        case .paused: return "Hush leaves cookie banners alone on these sites and their subdomains."
+        case .level: return "Which cookies Hush Extra allows when it answers a banner for you."
+        case .banners: return "What Hush Extra does when a site asks about cookies."
+        case .paused: return "Hush Extra leaves cookie banners alone on these sites and their subdomains."
         }
     }
 }
@@ -79,7 +79,7 @@ struct SummarySection: View {
                 Text(model.level.title)
                     .accessibilityIdentifier("current cookie level")
             }
-            LabeledContent("When Hush sees a banner", value: model.settings.mode.title)
+            LabeledContent("When Hush Extra sees a banner", value: model.settings.mode.title)
             LabeledContent("Paused sites", value: model.settings.pausedSites.count.formatted())
         }
     }
@@ -132,7 +132,7 @@ struct ContentView: View {
                 SyncSection()
             }
             .formStyle(.grouped)
-            .navigationTitle("Hush")
+            .navigationTitle("Hush Extra")
         }
     }
 }

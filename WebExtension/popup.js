@@ -14,10 +14,10 @@ const pausedEntry = ({ pausedSites }, host) =>
 
 const statusText = (settings, answer, paused) => {
   if (paused) {
-    return "Paused here. Hush leaves this site's cookie banner alone.";
+    return "Paused here. Hush Extra leaves this site's cookie banner alone.";
   }
   if (settings.mode === "hide") {
-    return "Hush only hides cookie banners. Change this in the Hush app.";
+    return "Hush Extra only hides cookie banners. Change this in the Hush Extra app.";
   }
   if (!answer) return "No cookie banner answered on this page.";
   const { platform, fallback } = describeAnswer(answer.cmp);
@@ -31,7 +31,7 @@ const render = ({ host, settings, answer }) => {
   element("level").textContent = levelTitle(settings);
   if (!host) {
     element("status").textContent =
-      "Open a website to see what Hush did there.";
+      "Open a website to see what Hush Extra did there.";
     return;
   }
   const paused = Boolean(pausedEntry(settings, host));

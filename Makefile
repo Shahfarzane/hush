@@ -56,8 +56,8 @@ testflight_%:
 	# rsync 3.x ("syntax or usage error"), so the system one goes first.
 	PATH="/usr/bin:$$PATH" xcodebuild -exportArchive -archivePath build/Hush-$*.xcarchive -exportOptionsPlist build/ExportOptions-$*.plist -exportPath build/export-$* $(ASC_AUTH)
 
-# A Developer ID signed and notarized build/Hush.dmg, for installing the Mac
-# app without TestFlight. Needs the Developer ID Application certificate in
+# A Developer ID signed and notarized $(DMG) with "Hush Extra.app" in it, for
+# installing the Mac app without TestFlight. Needs the Developer ID Application certificate in
 # the keychain and the two Developer ID provisioning profiles named in
 # ExportOptions-DeveloperID.plist installed (Xcode's API key signing cannot
 # make them without an Admin key). The archive signs with them too, so no
@@ -65,24 +65,26 @@ testflight_%:
 # service takes the same API key variables as testflight.
 DMG_DIR = build/dmg
 NOTARY_AUTH = --key "$(ASC_KEY_PATH)" --key-id "$(ASC_KEY_ID)" --issuer "$(ASC_ISSUER_ID)" --wait
+DMG = build/Hush-Extra.dmg
+APP = Hush Extra.app
 
 dmg:
-	rm -rf $(DMG_DIR) build/Hush.dmg
+	rm -rf $(DMG_DIR) $(DMG)
 	xcodebuild archive -project Hush.xcodeproj -scheme 'Hush macOS' -configuration Release -destination 'generic/platform=macOS' -archivePath $(DMG_DIR)/Hush.xcarchive -derivedDataPath $(DMG_DIR)/DerivedData CURRENT_PROJECT_VERSION=$(BUILD_NUMBER) CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Developer ID Application" 'PROVISIONING_PROFILE_SPECIFIER=Hush Developer ID ($$(PRODUCT_BUNDLE_IDENTIFIER))'
 	PATH="/usr/bin:$$PATH" xcodebuild -exportArchive -archivePath $(DMG_DIR)/Hush.xcarchive -exportOptionsPlist ExportOptions-DeveloperID.plist -exportPath $(DMG_DIR)/export
 	# The app gets its own ticket, so it opens offline after being copied
 	# out of the disk image.
-	ditto -c -k --keepParent $(DMG_DIR)/export/Hush.app $(DMG_DIR)/Hush.zip
+	ditto -c -k --keepParent "$(DMG_DIR)/export/$(APP)" $(DMG_DIR)/Hush.zip
 	xcrun notarytool submit $(DMG_DIR)/Hush.zip $(NOTARY_AUTH)
-	xcrun stapler staple $(DMG_DIR)/export/Hush.app
+	xcrun stapler staple "$(DMG_DIR)/export/$(APP)"
 	mkdir -p $(DMG_DIR)/root
-	ditto $(DMG_DIR)/export/Hush.app $(DMG_DIR)/root/Hush.app
+	ditto "$(DMG_DIR)/export/$(APP)" "$(DMG_DIR)/root/$(APP)"
 	ln -s /Applications $(DMG_DIR)/root/Applications
-	diskutil image create from --format UDZO --volumeName Hush $(DMG_DIR)/root build/Hush.dmg
-	codesign --sign "Developer ID Application" --timestamp build/Hush.dmg
-	xcrun notarytool submit build/Hush.dmg $(NOTARY_AUTH)
-	xcrun stapler staple build/Hush.dmg
-	# Safari lists every Hush.app it finds on disk, so only the image stays.
+	diskutil image create from --format UDZO --volumeName "Hush Extra" $(DMG_DIR)/root $(DMG)
+	codesign --sign "Developer ID Application" --timestamp $(DMG)
+	xcrun notarytool submit $(DMG) $(NOTARY_AUTH)
+	xcrun stapler staple $(DMG)
+	# Safari lists every copy of the app it finds on disk, so only the image stays.
 	rm -rf $(DMG_DIR)
 
 fetch_external:

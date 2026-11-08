@@ -165,7 +165,7 @@ struct BannersSection: View {
 
     var body: some View {
         Section {
-            Picker("When Hush sees a banner", selection: $model.settings.mode) {
+            Picker("When Hush Extra sees a banner", selection: $model.settings.mode) {
                 ForEach([ConsentSettings.Mode.answer, .hide], id: \.self) { mode in
                     Text(mode.title).tag(mode)
                 }
@@ -183,7 +183,7 @@ struct BannersSection: View {
                 .disabled(model.settings.mode == .hide)
         } header: {
             #if os(iOS)
-            Text("When Hush sees a banner")
+            Text("When Hush Extra sees a banner")
             #endif
         } footer: {
             Text("Banners with no way to refuse are hidden, never accepted.")
@@ -223,7 +223,7 @@ struct PausedSitesSection: View {
                 ContentUnavailableView(
                     "No Paused Sites",
                     systemImage: "pause.circle",
-                    description: Text("Hush handles cookie banners on every site."))
+                    description: Text("Hush Extra handles cookie banners on every site."))
             }
             #endif
             ForEach(model.settings.pausedSites, id: \.self) { site in
@@ -259,7 +259,7 @@ struct PausedSitesSection: View {
             } else {
                 // On the Mac the page header says this.
                 #if os(iOS)
-                Text("Hush leaves cookie banners alone on these sites and their subdomains.")
+                Text("Hush Extra leaves cookie banners alone on these sites and their subdomains.")
                 #endif
             }
         }
@@ -276,7 +276,7 @@ struct PausedSitesSection: View {
                 newSite = ""
             }
         } message: {
-            Text("Hush will leave cookie banners alone there.")
+            Text("Hush Extra will leave cookie banners alone there.")
         }
     }
 }

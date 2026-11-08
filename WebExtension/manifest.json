@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Hush",
-  "description": "Answers cookie banners with the cookie level you chose in Hush.",
+  "name": "Hush Extra",
+  "description": "Answers cookie banners with the cookie level you chose in Hush Extra.",
   "icons": {
     "48": "images/icon-48.png",
     "96": "images/icon-96.png",
@@ -34,7 +34,7 @@
     ]
   },
   "action": {
-    "default_title": "Hush",
+    "default_title": "Hush Extra",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "images/toolbar-16.png",
