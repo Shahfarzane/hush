@@ -31,13 +31,27 @@ ASC_AUTH = -allowProvisioningUpdates -authenticationKeyPath "$(ASC_KEY_PATH)" -a
 PLATFORM_ios = iOS
 PLATFORM_macos = macOS
 
+# SIGNING=automatic (the default) signs the archive with this Mac's Apple
+# Development identity and the export with Apple's cloud-managed distribution
+# certificate. A CI runner has neither, so SIGNING=manual signs both with the
+# Apple Distribution identity and the "Hush App Store <platform> (<bundle id>)"
+# profiles, which the release workflow installs.
+# TESTFLIGHT_DESTINATION=export stops before the upload, for a dry run.
+SIGNING ?= automatic
+TESTFLIGHT_DESTINATION ?= upload
+ARCHIVE_SIGNING_manual = CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Apple Distribution" 'PROVISIONING_PROFILE_SPECIFIER=Hush App Store $(PLATFORM_$*) ($$(PRODUCT_BUNDLE_IDENTIFIER))'
+EXPORT_OPTIONS_automatic = ExportOptions.plist
+EXPORT_OPTIONS_manual = ExportOptions-AppStore-$*.plist
+
 testflight: testflight_ios testflight_macos
 
 testflight_%:
-	xcodebuild archive -project Hush.xcodeproj -scheme 'Hush $(PLATFORM_$*)' -configuration Release -destination 'generic/platform=$(PLATFORM_$*)' -archivePath build/Hush-$*.xcarchive CURRENT_PROJECT_VERSION=$(BUILD_NUMBER) $(ASC_AUTH)
+	xcodebuild archive -project Hush.xcodeproj -scheme 'Hush $(PLATFORM_$*)' -configuration Release -destination 'generic/platform=$(PLATFORM_$*)' -archivePath build/Hush-$*.xcarchive CURRENT_PROJECT_VERSION=$(BUILD_NUMBER) $(ARCHIVE_SIGNING_$(SIGNING)) $(ASC_AUTH)
+	plutil -convert xml1 -o build/ExportOptions-$*.plist $(EXPORT_OPTIONS_$(SIGNING))
+	plutil -replace destination -string $(TESTFLIGHT_DESTINATION) build/ExportOptions-$*.plist
 	# The export copies with the first rsync on PATH and fails with Homebrew's
 	# rsync 3.x ("syntax or usage error"), so the system one goes first.
-	PATH="/usr/bin:$$PATH" xcodebuild -exportArchive -archivePath build/Hush-$*.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build/export-$* $(ASC_AUTH)
+	PATH="/usr/bin:$$PATH" xcodebuild -exportArchive -archivePath build/Hush-$*.xcarchive -exportOptionsPlist build/ExportOptions-$*.plist -exportPath build/export-$* $(ASC_AUTH)
 
 # A Developer ID signed and notarized build/Hush.dmg, for installing the Mac
 # app without TestFlight. Needs the Developer ID Application certificate in
