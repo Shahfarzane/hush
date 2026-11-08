@@ -38,6 +38,9 @@ PLATFORM_macos = macOS
 # profiles, which the release workflow installs.
 # TESTFLIGHT_DESTINATION=export stops before the upload, for a dry run.
 SIGNING ?= automatic
+ifeq ($(filter $(SIGNING),automatic manual),)
+$(error SIGNING is "$(SIGNING)"; use automatic or manual)
+endif
 TESTFLIGHT_DESTINATION ?= upload
 ARCHIVE_SIGNING_manual = CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Apple Distribution" 'PROVISIONING_PROFILE_SPECIFIER=Hush App Store $(PLATFORM_$*) ($$(PRODUCT_BUNDLE_IDENTIFIER))'
 EXPORT_OPTIONS_automatic = ExportOptions.plist
@@ -47,7 +50,7 @@ testflight: testflight_ios testflight_macos
 
 testflight_%:
 	xcodebuild archive -project Hush.xcodeproj -scheme 'Hush $(PLATFORM_$*)' -configuration Release -destination 'generic/platform=$(PLATFORM_$*)' -archivePath build/Hush-$*.xcarchive CURRENT_PROJECT_VERSION=$(BUILD_NUMBER) $(ARCHIVE_SIGNING_$(SIGNING)) $(ASC_AUTH)
-	plutil -convert xml1 -o build/ExportOptions-$*.plist $(EXPORT_OPTIONS_$(SIGNING))
+	cp $(EXPORT_OPTIONS_$(SIGNING)) build/ExportOptions-$*.plist
 	plutil -replace destination -string $(TESTFLIGHT_DESTINATION) build/ExportOptions-$*.plist
 	# The export copies with the first rsync on PATH and fails with Homebrew's
 	# rsync 3.x ("syntax or usage error"), so the system one goes first.
