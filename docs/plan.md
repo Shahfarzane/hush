@@ -353,6 +353,11 @@ Each phase ends in a commit that builds and passes its verification.
 - Verified on MBPro16: a manual-signing dry run (`TESTFLIGHT_DESTINATION=export`) from a temporary keychain signed both apps and extensions with Apple Distribution, kept `group.ceo.nerd.hush` (iOS), `89S32876QM.ceo.nerd.hush` (Mac) and the iCloud key-value identifier, and signed the pkg with the installer certificate. v1.0.2 itself went to TestFlight as build 20261108.0855 with automatic signing.
 - The first dry run on the runner stopped at "SecKeychainItemImport: The specified item already exists in the keychain": importing a p12 adds its issuing intermediate to the new keychain, and the intermediate check only searched the search list, which the new keychain is not in yet. The old check by name passed by accident, matching another "Developer ID Certification Authority" in the runner's login keychain. The check now also searches the new keychain; reproduced and fixed on MBPro16, and a diagnostic run on `xcode-27` (macOS 27.0.1) showed the intermediates and a two-identity p12 import cleanly into an empty keychain.
 
+**One name: Hush Extra (Shahin, 2026-11-08)**
+- TestFlight listed the app as "Hush Extra" (the App Store Connect record) while the app said "Hush" everywhere else. Everything a user sees now says Hush Extra: the app's `PRODUCT_NAME` (so the Mac app is `Hush Extra.app` and the iOS home screen label matches), the extension's display name and manifest `name` (Safari's extension list and toolbar), window and screen titles, the setup steps and status texts, the popup, the disk image (`Hush-Extra.dmg`, volume "Hush Extra") and the release title. Bundle IDs, the app group and the extension's module are unchanged, so settings and Safari's permission carry over.
+- A DMG install does not remove a `Hush.app` from 1.0.2 or earlier; that copy has to be deleted, or Safari finds the extension twice. TestFlight replaces it by bundle ID.
+- Verified in the iOS 27.3 Simulator: the home screen label and the main screen title read "Hush Extra", and the built app and extension report it as their display name. The Mac app was checked through its build settings (`Hush Extra.app`, executable "Hush Extra") and not launched, since a local Mac build registers a second extension with Safari.
+
 **Later, only on request**: scheduled rule refresh.
 
 ## Test corpus and verification
