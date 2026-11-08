@@ -56,10 +56,12 @@ jobs:
           import_p12 "$APP_STORE_P12" "$APP_STORE_P12_PASSWORD"
           # codesign needs the intermediates to build the chains: Developer ID
           # (G1) for the DMG, WWDR G3 for Apple Distribution and the installer
-          # certificate. The runner image usually has them already, and
-          # importing one twice fails, so each is matched by its SHA-1.
+          # certificate. Importing a p12 usually adds its issuer to the new
+          # keychain, and importing a certificate the keychain already holds
+          # fails, so each is matched by its SHA-1 there and in the search
+          # list first.
           for ca in DeveloperIDCA:3B166C3B7DC4B751C9FE2AFAB9135641E388E186 AppleWWDRCAG3:06EC06599F4ED0027CC58956B4D3AC1255114F35; do
-            if ! security find-certificate -a -Z | grep -q "SHA-1 hash: ${ca#*:}"; then
+            if ! { security find-certificate -a -Z "$keychain"; security find-certificate -a -Z; } | grep -q "SHA-1 hash: ${ca#*:}"; then
               curl -fsSL "https://www.apple.com/certificateauthority/${ca%%:*}.cer" -o "$RUNNER_TEMP/${ca%%:*}.cer"
               security import "$RUNNER_TEMP/${ca%%:*}.cer" -k "$keychain"
             fi
