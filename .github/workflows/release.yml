@@ -103,8 +103,8 @@ jobs:
         run: make dmg ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8" ASC_KEY_ID="$ASC_KEY_ID" ASC_ISSUER_ID="$ASC_ISSUER_ID"
       - uses: actions/upload-artifact@v7
         with:
-          name: Hush-dmg
-          path: build/Hush.dmg
+          name: Hush-Extra-dmg
+          path: build/Hush-Extra.dmg
           if-no-files-found: error
       # Only a tag push uploads and publishes. A manual run, even one
       # started on a tag, exports the TestFlight builds and stops there.
@@ -118,7 +118,7 @@ jobs:
         if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" build/Hush.dmg --title "Hush $GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" build/Hush-Extra.dmg --title "Hush Extra $GITHUB_REF_NAME" --generate-notes
       - name: Remove the signing keychain and key
         if: always()
         run: |
