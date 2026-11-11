@@ -45,5 +45,7 @@
   {"name": "snap.com", "url": "https://www.snap.com/", "reader": "snap", "answered": true},
   {"name": "uniav.com", "url": "https://www.uniav.com/", "reader": "uniav", "answered": true},
   {"name": "astro-seek.com", "url": "https://www.astro-seek.com/", "reader": "tcf", "answered": true},
-  {"name": "audible.de", "url": "https://www.audible.de/", "reader": "audible", "answered": true}
+  {"name": "audible.de", "url": "https://www.audible.de/", "reader": "audible", "answered": true},
+  {"name": "adidas.se", "url": "https://www.adidas.se/", "reader": "adidas", "noBinding": true},
+  {"name": "brandfetch.com", "url": "https://brandfetch.com/developers", "reader": "brandfetch", "answered": true}
 ]

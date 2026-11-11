@@ -208,5 +208,70 @@
       }
     ],
     "switchState": "checkbox"
+  },
+  {
+    "name": "adidas",
+    "sites": [
+      "adidas.com",
+      "adidas.co.uk",
+      "adidas.ie",
+      "adidas.de",
+      "adidas.at",
+      "adidas.ch",
+      "adidas.fr",
+      "adidas.be",
+      "adidas.nl",
+      "adidas.es",
+      "adidas.pt",
+      "adidas.it",
+      "adidas.gr",
+      "adidas.se",
+      "adidas.dk",
+      "adidas.no",
+      "adidas.fi",
+      "adidas.pl",
+      "adidas.cz",
+      "adidas.sk",
+      "adidas.com.tr"
+    ],
+    "banner": "dialog.cookie-consent-modal[open]",
+    "reject": "#glass-gdpr-default-consent-reject-button-central",
+    "acceptAll": "#glass-gdpr-default-consent-accept-button",
+    "openSettings": "[data-auto-id='glass-gdpr-default-consent-manage-button']",
+    "save": "[data-auto-id='glass-gdpr-consent-options-save-button']",
+    "switches": [
+      {
+        "selector": "[data-auto-id='glass-gdpr-consent-checkbox-group__option-1'] input[type='checkbox']",
+        "categories": ["functional", "performance"]
+      },
+      {
+        "selector": "[data-auto-id='glass-gdpr-consent-checkbox-group__option-2'] input[type='checkbox']",
+        "categories": ["advertising"]
+      }
+    ],
+    "switchState": "checkbox"
+  },
+  {
+    "name": "Brandfetch",
+    "sites": ["brandfetch.com"],
+    "banner": "[role='dialog'][aria-label='Cookie preferences']",
+    "acceptAll": "[role='dialog'][aria-label='Cookie preferences'] button:contains('Accept all')",
+    "openSettings": "[role='dialog'][aria-label='Cookie preferences'] button:contains('Configure')",
+    "save": "[role='dialog'][aria-label='Cookie preferences'] button:contains('Save choices')",
+    "switches": [
+      {
+        "selector": "[role='switch'][aria-label='Personalization']",
+        "categories": ["functional"]
+      },
+      {
+        "selector": "[role='switch'][aria-label='Analytics']",
+        "categories": ["performance"]
+      },
+      {
+        "selector": "[role='switch'][aria-label='Marketing']",
+        "categories": ["advertising"]
+      }
+    ],
+    "switchState": "aria-checked"
   }
 ]

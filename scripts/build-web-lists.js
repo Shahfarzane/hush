@@ -11,6 +11,7 @@ const LISTS = [
 ];
 const IGNORE_LIST = "../data/ignored.txt";
 const ANSWER_MODE_EXCLUSIONS = "../data/answer-mode-exclusions.txt";
+const ANSWER_MODE_ALLOW = "../data/answer-mode-allow.txt";
 
 const [extensionDir, perSitePath] = Deno.args;
 const resolveRelative = (path) => new URL(path, import.meta.url).pathname;
@@ -19,7 +20,11 @@ const read = (path) => Deno.readTextFileSync(resolveRelative(path));
 const ignored = new Set(read(IGNORE_LIST).split("\n"));
 const text = LISTS.map(read).join("\n").split("\n")
   .filter((line) => !ignored.has(line)).join("\n");
-const lists = buildWebLists(text, parseMarkers(read(ANSWER_MODE_EXCLUSIONS)));
+const lists = buildWebLists(
+  text,
+  parseMarkers(read(ANSWER_MODE_EXCLUSIONS)),
+  read(ANSWER_MODE_ALLOW),
+);
 
 Deno.mkdirSync(`${extensionDir}/rules`, { recursive: true });
 Deno.writeTextFileSync(

@@ -402,3 +402,52 @@ Deno.test("Audible's TrustArc lists each category it allows", () => {
   });
   assertEquals(readers.audible({ cookies: [] }), null);
 });
+
+Deno.test("adidas' notice_preferences lists the categories it allows", () => {
+  const stored = (value) => ({
+    cookies: [{ name: "notice_preferences", value }],
+  });
+  assertEquals(readers.adidas(stored("%5B0%5D")), {
+    functional: false,
+    performance: false,
+    advertising: false,
+  });
+  // "Functional" also turns on analytics, so it counts as both.
+  assertEquals(readers.adidas(stored("%5B0%2C1%5D")), {
+    functional: true,
+    performance: true,
+    advertising: false,
+  });
+  assertEquals(readers.adidas(stored("%5B0%2C1%2C2%5D")), {
+    functional: true,
+    performance: true,
+    advertising: true,
+  });
+  // TrustArc's own format is not adidas'.
+  assertEquals(readers.adidas(stored("2:")), null);
+  assertEquals(readers.adidas({ cookies: [] }), null);
+});
+
+Deno.test("Brandfetch's bf_consent has one flag per switch", () => {
+  const stored = (value) => ({ cookies: [{ name: "bf_consent", value }] });
+  assertEquals(readers.brandfetch(stored("1.001.1794378997")), {
+    performance: false,
+    advertising: false,
+    functional: true,
+  });
+  assertEquals(
+    mismatches(readers.brandfetch(stored("1.001.1794378997")), FUNCTIONAL_ONLY),
+    [],
+  );
+  assertEquals(readers.brandfetch(stored("1.110.1794379014")), {
+    performance: true,
+    advertising: true,
+    functional: false,
+  });
+  assertEquals(readers.brandfetch(stored("1.111.1794379042")), {
+    performance: true,
+    advertising: true,
+    functional: true,
+  });
+  assertEquals(readers.brandfetch({ cookies: [] }), null);
+});

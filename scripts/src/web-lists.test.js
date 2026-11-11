@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "jsr:@std/assert@1";
 import { buildWebLists } from "./web-lists.js";
+import { createMatcher } from "./dnr.js";
 import { siteCss } from "../../WebExtension/src/hide-css.js";
 import manifest from "../../WebExtension/manifest.json" with { type: "json" };
 
@@ -78,6 +79,50 @@ Deno.test("Site rules and exceptions apply per site and subdomain", () => {
 Deno.test("Options the extension cannot express are refused", () => {
   assertThrows(() => buildWebLists("||x.example^$popup", []));
   assertThrows(() => buildWebLists("example.com#?#div:has-text(Cookies)", []));
+});
+
+Deno.test("Answer mode lets its allow list through, Only hide it does not", () => {
+  const built = buildWebLists(
+    "/gdpr-consent-\n",
+    [],
+    "! a comment\n@@||cdn.example/consent-mf/*gdpr-consent-$domain=shop.example\n",
+  );
+  const answer = createMatcher(built.rules.answer);
+  const hide = createMatcher([...built.rules.answer, ...built.rules.hideOnly]);
+  const listed = {
+    url: "https://cdn.example/consent-mf/a1/gdpr-consent-modal-view-f1.js",
+    type: "script",
+    initiator: "www.shop.example",
+  };
+  assertEquals(answer(listed), false);
+  assertEquals(hide(listed), true);
+  // Only on the sites the line names.
+  assertEquals(answer({ ...listed, initiator: "other.example" }), true);
+  const other = {
+    url: "https://other.example/js/gdpr-consent-banner.js",
+    type: "script",
+    initiator: "other.example",
+  };
+  assertEquals(answer(other), true);
+  assertEquals(hide(other), true);
+  assertThrows(() => buildWebLists("", [], "||cdn.example^"));
+});
+
+Deno.test("Answer mode lets scripts through only where a site rule answers", async () => {
+  const read = (path) =>
+    Deno.readTextFile(new URL(`../../data/${path}`, import.meta.url));
+  const answered = new Set(
+    JSON.parse(await read("site-rules.json")).flatMap((rule) => rule.sites),
+  );
+  const lines = (await read("answer-mode-allow.txt")).split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("!"));
+  for (const line of lines) {
+    const domains = line.match(/\$(?:.*,)?domain=([^,]+)/)?.[1].split("|") ??
+      [];
+    assertEquals(domains.length > 0, true, `${line} names no sites`);
+    assertEquals(domains.filter((domain) => !answered.has(domain)), [], line);
+  }
 });
 
 Deno.test("The generic stylesheet skips every $generichide site", async () => {

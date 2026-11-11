@@ -427,6 +427,32 @@ const betheme = ({ cookies }) => {
   };
 };
 
+// adidas's own modal keeps the categories it allows in notice_preferences
+// as a JSON list, not TrustArc's "2:": 0 is required, 1 "Functional" (which
+// also turns on Adobe Analytics), 2 marketing.
+const adidas = ({ cookies }) => {
+  const allowed = jsonCookie(cookies, "notice_preferences");
+  if (!Array.isArray(allowed)) return null;
+  return {
+    functional: allowed.includes(1),
+    performance: allowed.includes(1),
+    advertising: allowed.includes(2),
+  };
+};
+
+// Brandfetch's bf_consent is "<version>.<flags>.<time>" with one flag per
+// switch: analytics, marketing, personalization. "1.001.<time>" allows
+// personalization only.
+const brandfetch = ({ cookies }) => {
+  const flags = cookieValue(cookies, "bf_consent")?.split(".")[1];
+  if (!/^[01]{3}$/.test(flags ?? "")) return null;
+  return {
+    performance: flags[0] === "1",
+    advertising: flags[1] === "1",
+    functional: flags[2] === "1",
+  };
+};
+
 export const readers = {
   // Sites whose stored consent Hush cannot decode.
   none: () => null,
@@ -458,6 +484,8 @@ export const readers = {
   snap,
   uniav,
   betheme,
+  adidas,
+  brandfetch,
 };
 
 // Categories the reader reported that differ from the chosen level.
