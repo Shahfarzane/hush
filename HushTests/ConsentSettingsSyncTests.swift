@@ -132,18 +132,60 @@ final class PauseTests: XCTestCase {
         XCTAssertEqual(ConsentSettingsStore.read(local), settings(1_000))
     }
 
-    // Chrome's host has no iCloud: its pause waits in the App Group until the
-    // app or the Safari extension syncs.
-    func testAPauseWithoutICloudGoesUpOnTheNextSync() {
+    // Chrome's host has no iCloud. Its pause shows in the App Group at once,
+    // and the next sync that reaches iCloud lays it over whichever copy won,
+    // without undoing a change another device made.
+    func testAHostPauseLandsOnTopOfTheNewestCopy() {
+        let balanced = ConsentSettings.Categories(functional: true, performance: true, advertising: false, other: false)
+        let cases: [(name: String, local: ConsentSettings, cloud: ConsentSettings?, level: ConsentSettings.Categories)] = [
+            ("a newer level from another device", settings(1_000), {
+                var newer = settings(2_000)
+                newer.categories = balanced
+                return newer
+            }(), balanced),
+            ("the same save on both sides", settings(1_000), settings(1_000), ConsentSettings.Categories()),
+            ("a newer App Group copy", settings(2_000, mode: .hide), settings(1_000), ConsentSettings.Categories()),
+            ("iCloud off on this device", settings(1_000), nil, ConsentSettings.Categories()),
+        ]
+        for testCase in cases {
+            let local = MemoryStorage()
+            let cloud = testCase.cloud.map { copy -> MemoryStorage in
+                let storage = MemoryStorage()
+                ConsentSettingsStore.write(copy, to: storage)
+                return storage
+            }
+            ConsentSettingsStore.write(testCase.local, to: local)
+
+            let seen = ConsentSettingsStore.queuePause("example.com", paused: true, local: local)
+            XCTAssertEqual(seen.pausedSites, ["example.com"], testCase.name)
+            XCTAssertEqual(seen.modifiedAt, testCase.local.modifiedAt, "\(testCase.name): the host stamps nothing")
+            XCTAssertEqual(ConsentSettingsStore.read(local)?.pausedSites, ["example.com"], testCase.name)
+
+            let synced = ConsentSettingsStore.syncApplyingQueue(local: local, cloud: cloud).settings
+            XCTAssertEqual(synced.pausedSites, ["example.com"], testCase.name)
+            XCTAssertEqual(synced.categories, testCase.level, testCase.name)
+            XCTAssertEqual(ConsentSettingsStore.read(local)?.pausedSites, ["example.com"], testCase.name)
+            if let cloud = cloud {
+                XCTAssertEqual(ConsentSettingsStore.read(cloud)?.pausedSites, ["example.com"], testCase.name)
+                XCTAssertEqual(ConsentSettingsStore.read(cloud)?.categories, testCase.level, testCase.name)
+            }
+
+            // The queue is spent: a later change elsewhere is not undone by it.
+            let later = ConsentSettingsStore.syncApplyingQueue(local: local, cloud: cloud)
+            XCTAssertEqual(later.settings.pausedSites, ["example.com"], testCase.name)
+            XCTAssertFalse(later.writeLocal || later.writeCloud, "\(testCase.name): nothing left to write")
+        }
+    }
+
+    func testAHostUnpauseIsQueuedToo() {
         let local = MemoryStorage()
         let cloud = MemoryStorage()
-        ConsentSettingsStore.write(settings(1_000), to: local)
-        ConsentSettingsStore.write(settings(1_000), to: cloud)
+        ConsentSettingsStore.write(settings(1_000, paused: ["example.com"]), to: local)
+        ConsentSettingsStore.write(settings(1_000, paused: ["example.com"]), to: cloud)
 
-        _ = ConsentSettingsStore.setPaused("example.com", paused: true, local: local, cloud: nil)
+        _ = ConsentSettingsStore.queuePause("example.com", paused: false, local: local)
+        _ = ConsentSettingsStore.syncApplyingQueue(local: local, cloud: cloud)
+
         XCTAssertEqual(ConsentSettingsStore.read(cloud)?.pausedSites, [])
-
-        _ = ConsentSettingsStore.sync(local: local, cloud: cloud)
-        XCTAssertEqual(ConsentSettingsStore.read(cloud)?.pausedSites, ["example.com"])
     }
 }

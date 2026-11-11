@@ -144,8 +144,7 @@ enum ConsentSettingsStore {
     }
 
     // iCloud: false is for Chrome's native host, a bare tool that cannot carry
-    // the iCloud entitlement. It works on the App Group alone, and the app and
-    // the Safari extension carry its changes to iCloud on their next sync.
+    // the iCloud entitlement. It works on the App Group alone.
     private static func cloud(iCloud: Bool) -> NSUbiquitousKeyValueStore? {
         iCloud && syncsWithICloud ? NSUbiquitousKeyValueStore.default : nil
     }
@@ -162,32 +161,82 @@ enum ConsentSettingsStore {
         }
     }
 
-    // Brings the App Group and iCloud copies to the newer of the two.
+    // Brings the App Group and iCloud copies to the newer of the two and
+    // applies pauses queued by Chrome's host. Without iCloud (the host) it
+    // reads the App Group as it is and leaves the queue alone.
     @discardableResult
     static func sync(iCloud: Bool = true) -> SettingsSync.Result {
-        let cloud = cloud(iCloud: iCloud)
+        guard iCloud else { return sync(local: groupDefaults, cloud: nil) }
+        let cloud = cloud(iCloud: true)
         cloud?.synchronize()
-        return sync(local: groupDefaults, cloud: cloud)
+        return syncApplyingQueue(local: groupDefaults, cloud: cloud)
     }
 
     // "Pause on this site" from an extension's popup. Returns the settings as
-    // saved; input that is not a site changes nothing.
+    // the extension should now see them; input that is not a site changes
+    // nothing.
     static func setPaused(_ input: String?, paused: Bool, iCloud: Bool) -> ConsentSettings {
-        let cloud = cloud(iCloud: iCloud)
+        guard iCloud else { return queuePause(input, paused: paused, local: groupDefaults) }
+        let cloud = cloud(iCloud: true)
         cloud?.synchronize()
         return setPaused(input, paused: paused, local: groupDefaults, cloud: cloud)
     }
 
     static func setPaused(_ input: String?, paused: Bool, local: SettingsStorage?, cloud: SettingsStorage?) -> ConsentSettings {
-        var settings = sync(local: local, cloud: cloud).settings
+        var settings = syncApplyingQueue(local: local, cloud: cloud).settings
         guard let input = input, let site = PausedSite.normalize(input) else { return settings }
-        settings.pausedSites.removeAll { $0 == site }
-        if paused {
-            settings.pausedSites = (settings.pausedSites + [site]).sorted()
-        }
+        settings.pausedSites = pausing(site, paused, in: settings.pausedSites)
         settings.modifiedAt = Date()
         save(settings, local: local, cloud: cloud)
         return settings
+    }
+
+    // Chrome's host cannot see iCloud, so its App Group copy may be older
+    // than one another device saved. A pause stamped there would win the next
+    // sync and undo that device's change. So the host applies the pause to
+    // the App Group copy without a new modifiedAt, for Chrome to see at once,
+    // and queues it. The next sync that can reach iCloud applies the queue on
+    // top of whichever copy won.
+    private static let queuedPausesKey = "queuedPauses"
+
+    static func queuePause(_ input: String?, paused: Bool, local: SettingsStorage?) -> ConsentSettings {
+        var settings = sync(local: local, cloud: nil).settings
+        guard let input = input, let site = PausedSite.normalize(input) else { return settings }
+        settings.pausedSites = pausing(site, paused, in: settings.pausedSites)
+        write(settings, to: local)
+        var queued = queuedPauses(local)
+        queued[site] = paused
+        writeQueuedPauses(queued, to: local)
+        return settings
+    }
+
+    static func syncApplyingQueue(local: SettingsStorage?, cloud: SettingsStorage?) -> SettingsSync.Result {
+        let result = sync(local: local, cloud: cloud)
+        let queued = queuedPauses(local)
+        guard !queued.isEmpty else { return result }
+        var settings = result.settings
+        for (site, paused) in queued {
+            settings.pausedSites = pausing(site, paused, in: settings.pausedSites)
+        }
+        // Stamped even when the winner already lists the pause: the App Group
+        // copy carries it under the old modifiedAt, which would never be pushed.
+        settings.modifiedAt = Date()
+        save(settings, local: local, cloud: cloud)
+        writeQueuedPauses([:], to: local)
+        return .init(settings: settings, writeLocal: true, writeCloud: cloud != nil)
+    }
+
+    private static func pausing(_ site: String, _ paused: Bool, in sites: [String]) -> [String] {
+        let others = sites.filter { $0 != site }
+        return paused ? (others + [site]).sorted() : others
+    }
+
+    private static func queuedPauses(_ storage: SettingsStorage?) -> [String: Bool] {
+        storage?.data(forKey: queuedPausesKey).flatMap { try? JSONDecoder().decode([String: Bool].self, from: $0) } ?? [:]
+    }
+
+    private static func writeQueuedPauses(_ queued: [String: Bool], to storage: SettingsStorage?) {
+        storage?.set(queued.isEmpty ? nil : try? JSONEncoder().encode(queued), forKey: queuedPausesKey)
     }
 
     static func sync(local: SettingsStorage?, cloud: SettingsStorage?) -> SettingsSync.Result {
