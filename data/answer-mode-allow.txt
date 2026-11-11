@@ -3,3 +3,7 @@
 ! answer mode so a Hush rule can answer the banner and the site stores the
 ! choice. "Only hide it" keeps blocking them. One "@@" line each, and only
 ! for banners a rule in data/site-rules.json answers, proven by the corpus.
+
+! adidas's own consent modal (site rule "adidas"). Fanboy's /gdpr-consent-
+! blocks its gdpr-consent-modal-view-<hash>.js.
+@@||microfrontends.glass.adidas.com/cookie-consent-mf/*gdpr-consent-
