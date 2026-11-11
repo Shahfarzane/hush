@@ -1,9 +1,10 @@
 ! ----- Answer mode allow list -----
 ! Consent scripts a generic block rule in the lists catches, let through in
 ! answer mode so a Hush rule can answer the banner and the site stores the
-! choice. "Only hide it" keeps blocking them. One "@@" line each, and only
-! for banners a rule in data/site-rules.json answers, proven by the corpus.
+! choice. "Only hide it" keeps blocking them. One "@@" line each, limited
+! with $domain= to sites a rule in data/site-rules.json answers (a unit test
+! checks this), so no other site gets a banner nothing answers.
 
 ! adidas's own consent modal (site rule "adidas"). Fanboy's /gdpr-consent-
 ! blocks its gdpr-consent-modal-view-<hash>.js.
-@@||microfrontends.glass.adidas.com/cookie-consent-mf/*gdpr-consent-
+@@||microfrontends.glass.adidas.com/cookie-consent-mf/*gdpr-consent-$domain=adidas.com|adidas.co.uk|adidas.ie|adidas.de|adidas.at|adidas.ch|adidas.fr|adidas.be|adidas.nl|adidas.es|adidas.pt|adidas.it|adidas.gr|adidas.se|adidas.dk|adidas.no|adidas.fi|adidas.pl|adidas.cz|adidas.sk|adidas.com.tr
