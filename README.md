@@ -38,6 +38,15 @@ make dmg ASC_KEY_PATH=AuthKey.p8 ASC_KEY_ID=<key id> ASC_ISSUER_ID=<issuer id>
 
 `make test_corpus` also takes site names and `CORPUS_FLAGS="--mobile --level=balanced"`. Design notes and results per phase are in [docs/plan.md](docs/plan.md).
 
+Chrome and Helium on the Mac run the same extension and share the app's settings (level, mode, paused sites) through a small native messaging host, `hush-chrome-host`, built from the app's own settings code:
+
+```sh
+make chrome        # builds build/ChromeExtension
+make chrome_host   # builds and signs the host, installs it in ~/Library/Application Support/Hush Extra, registers it with Chrome and Helium
+```
+
+Then in each browser open `chrome://extensions`, turn on Developer mode, choose Load unpacked and pick `build/ChromeExtension`. After the next `make chrome`, press the reload button on the extension's card. The key in `WebExtension/manifest.chrome.json` fixes the extension ID (`peklpnngkdekjbeheogkeabpllgmnefj`), the one origin the host lets in. The host has no iCloud, so a site paused in Chrome reaches your other devices the next time the app or Safari's extension runs. `make chrome_host` needs the Developer ID Application certificate, and needs running again when `Shared/Models/ConsentSettings.swift` changes. `make test_corpus_chrome` runs the corpus against the Chrome build in Chrome for Testing (`CHROMIUM_PATH=<binary>`, since branded Chrome ignores `--load-extension`). Notes in [docs/chrome-plan.md](docs/chrome-plan.md).
+
 The download links below are for the original Hush by Joel Arvidsson.
 
 >I’d recommend Hush to anyone who uses Safari

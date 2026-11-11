@@ -1,0 +1,38 @@
+// The Chrome and Helium build: Safari's manifest with the keys in
+// WebExtension/manifest.chrome.json laid over it, and the native messaging
+// host manifests through which it reaches the app's settings.
+
+// Whole top-level keys: Chrome's background is a service worker, not
+// Safari's background page, so nothing of Safari's may remain in it.
+export const chromeManifest = (manifest, overlay) => ({
+  ...manifest,
+  ...overlay,
+});
+
+// Chrome derives an extension's ID from its public key: the first 16 bytes
+// of the key's SHA-256, each hex digit written as a letter from a to p.
+export const extensionId = async (key) => {
+  const der = Uint8Array.from(atob(key), (char) => char.charCodeAt(0));
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", der));
+  return [...digest.slice(0, 16)]
+    .map((byte) => String.fromCharCode(97 + (byte >> 4), 97 + (byte & 15)))
+    .join("");
+};
+
+// background.js sends to this name, the same one Safari routes to the app.
+export const HOST_NAME = "ceo.nerd.hush";
+
+export const hostManifest = (path, id) => ({
+  name: HOST_NAME,
+  description: "Hush Extra settings",
+  path,
+  type: "stdio",
+  allowed_origins: [`chrome-extension://${id}/`],
+});
+
+// Each browser's user data folder under ~/Library/Application Support; it
+// looks for host manifests in NativeMessagingHosts inside it.
+export const BROWSERS = [
+  ["Google Chrome", "Google/Chrome"],
+  ["Helium", "net.imput.helium"],
+];

@@ -15,6 +15,12 @@ test_unit:
 test_corpus: extension
 	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js $(CORPUS_FLAGS) $(SITES)
 
+# The same sites in Chrome for Testing with the real build/ChromeExtension
+# loaded. CHROMIUM_PATH picks the browser binary; branded Chrome ignores
+# --load-extension.
+test_corpus_chrome: chrome
+	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js --browser=chromium $(CORPUS_FLAGS) $(SITES)
+
 test_swift:
 	xcodebuild test -project Hush.xcodeproj -scheme 'Hush macOS' -destination 'platform=macOS' -only-testing:HushTests -allowProvisioningUpdates
 
@@ -111,6 +117,29 @@ extension:
 	cp WebExtension/manifest.json WebExtension/content.css WebExtension/popup.html WebExtension/popup.css "$(EXTENSION_OUT)/"
 	mkdir -p "$(EXTENSION_OUT)/images"
 	cp WebExtension/images/*.png "$(EXTENSION_OUT)/images/"
+
+CHROME_OUT ?= build/ChromeExtension
+
+# Chrome and Helium run the same bundles as Safari, with the keys in
+# WebExtension/manifest.chrome.json laid over Safari's manifest. Load
+# $(CHROME_OUT) unpacked from chrome://extensions.
+chrome:
+	$(MAKE) extension --silent EXTENSION_OUT="$(CHROME_OUT)"
+	deno run --allow-read=./WebExtension --allow-write="$(CHROME_OUT)" scripts/build-chrome.js "$(CHROME_OUT)"
+
+# The native messaging host Chrome and Helium start to read and write the
+# app's settings, built from the app's own settings code. It opens the
+# team's App Group, so it is signed with the team's Developer ID identity.
+# Registered for the extension ID that manifest.chrome.json's key gives.
+CHROME_HOST_DIR ?= $(HOME)/Library/Application Support/Hush Extra
+CHROME_HOST_IDENTITY ?= Developer ID Application
+
+chrome_host:
+	mkdir -p build/chrome-host "$(CHROME_HOST_DIR)"
+	swiftc -O -o build/chrome-host/hush-chrome-host macOS/ChromeHost/main.swift Shared/Models/ConsentSettings.swift -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist -Xlinker macOS/ChromeHost/Info.plist
+	codesign --force --options runtime --timestamp --sign "$(CHROME_HOST_IDENTITY)" --identifier ceo.nerd.hush.chrome-host --entitlements macOS/ChromeHost/ChromeHost.entitlements build/chrome-host/hush-chrome-host
+	ditto build/chrome-host/hush-chrome-host "$(CHROME_HOST_DIR)/hush-chrome-host"
+	deno run --allow-read --allow-write="$(HOME)/Library/Application Support" --allow-env=HOME scripts/chrome-host.js "$(CHROME_HOST_DIR)/hush-chrome-host"
 
 xcode_extension:
 ifeq ("$(CONFIGURATION_BUILD_DIR)","")

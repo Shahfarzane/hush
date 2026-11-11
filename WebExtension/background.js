@@ -2,14 +2,21 @@ import { evalSnippets } from "./vendor/autoconsent/autoconsent.esm.js";
 import { normalizeSettings, siteKey } from "./src/settings.js";
 import { siteCss } from "./src/hide-css.js";
 import { rulesetUpdate } from "./src/rulesets.js";
+import { singleFlight } from "./src/single-flight.js";
 import perSite from "../build/web-lists/per-site.json" with { type: "json" };
 
 const NATIVE_APP = "ceo.nerd.hush";
-// The app cannot push changes into Safari, so re-read settings from the
+// The app cannot push changes into the browser, so re-read settings from the
 // native side at most this often.
 const SETTINGS_TTL_MS = 5000;
+// Safari hands native messages to the app's extension in process; Chrome and
+// Helium start the native host (macOS/ChromeHost) anew for every message.
+const SAFARI = browser.runtime.getURL("").startsWith("safari-web-extension:");
 
 let cache = null;
+// False after the native side failed to answer: no app, or in Chrome no
+// registered host. The popup says so instead of offering a pause it cannot save.
+let appReachable = true;
 
 // What was answered in each tab, with the page URL it was answered on. The
 // popup shows it, and the fallback stays out of answered tabs so autoconsent
@@ -38,18 +45,19 @@ const answerFor = async (tabId) => {
   return stored?.[`answer-${tabId}`] ?? null;
 };
 
-const readSettings = async () => {
-  if (cache && Date.now() - cache.readAt < SETTINGS_TTL_MS) {
-    return cache.settings;
-  }
+// Every frame asks as it starts, so a page with iframes asks many times
+// before the first answer; they share one native read.
+const readNativeSettings = singleFlight(async () => {
   let settings;
   try {
     const response = await browser.runtime.sendNativeMessage(NATIVE_APP, {
       type: "getSettings",
     });
     settings = normalizeSettings(response?.settings);
+    appReachable = true;
     await browser.storage.local.set({ settings });
   } catch (error) {
+    appReachable = false;
     console.error("Hush: reading settings from the app failed", error);
     const stored = await browser.storage.local.get("settings");
     settings = normalizeSettings(stored.settings);
@@ -57,12 +65,22 @@ const readSettings = async () => {
   cache = { settings, readAt: Date.now() };
   syncRulesets(settings.mode);
   return settings;
-};
+});
 
-// Logged by the native handler in debug builds only.
+const readSettings = () =>
+  cache && Date.now() - cache.readAt < SETTINGS_TTL_MS
+    ? Promise.resolve(cache.settings)
+    : readNativeSettings();
+
+// Logged by Safari's native handler in debug builds only. Several come per
+// page, too many to start Chrome's host for, so Chrome logs them here.
 const debugReport = (fields) =>
-  browser.runtime.sendNativeMessage(NATIVE_APP, { type: "report", ...fields })
-    .catch(() => {});
+  SAFARI
+    ? browser.runtime.sendNativeMessage(NATIVE_APP, {
+      type: "report",
+      ...fields,
+    }).catch(() => {})
+    : console.debug(`HUSH-REPORT ${JSON.stringify(fields)}`);
 
 // "Only hide it" blocks the consent platforms answer mode leaves for the
 // engines to answer. Safari's getEnabledRulesets kept reporting the ruleset
@@ -146,14 +164,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         ([injection]) => ({ result: injection?.result ?? false }),
         (error) => ({ result: false, error: String(error) }),
       ).then(({ result, error }) => {
-        // Logged by the native handler in debug builds only.
-        browser.runtime.sendNativeMessage(NATIVE_APP, {
-          type: "report",
+        debugReport({
           outcome: "eval",
           snippetId: message.snippetId,
           result: String(result),
           error,
-        }).catch(() => {});
+        });
         return result;
       });
     case "popupState":
@@ -162,15 +178,21 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       ) => ({
         settings,
         answer: answer && sameSite(answer.url, message.url) ? answer : null,
+        appReachable,
       }));
-    // Pausing writes to the app's settings through the native handler, so
-    // the app and every other tab see it.
+    // Pausing writes to the app's settings through the native side, so the
+    // app, every other tab and the other browsers see it.
     case "setPaused":
       return browser.runtime.sendNativeMessage(NATIVE_APP, message).then(
         (response) => {
           const settings = normalizeSettings(response?.settings);
           cache = { settings, readAt: Date.now() };
+          appReachable = true;
           return settings;
+        },
+        (error) => {
+          appReachable = false;
+          throw error;
         },
       );
     case "report":
@@ -180,7 +202,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           cmp: message.cmp,
         });
       }
-      return browser.runtime.sendNativeMessage(NATIVE_APP, message)
-        .catch(() => {});
+      return debugReport(message);
   }
 });
