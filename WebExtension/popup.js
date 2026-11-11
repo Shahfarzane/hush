@@ -27,8 +27,9 @@ const statusText = (settings, answer, paused) => {
     : `Refused everything on the ${platform} banner.`;
 };
 
-const render = ({ host, settings, answer }) => {
+const render = ({ host, settings, answer, appReachable }) => {
   element("level").textContent = levelTitle(settings);
+  element("unreachable").hidden = appReachable;
   if (!host) {
     element("status").textContent =
       "Open a website to see what Hush Extra did there.";
@@ -38,7 +39,8 @@ const render = ({ host, settings, answer }) => {
   element("site").textContent = siteFor(host);
   element("status").textContent = statusText(settings, answer, paused);
   element("pause").checked = paused;
-  element("pause-row").hidden = false;
+  // A pause could not be saved without the app.
+  element("pause-row").hidden = !appReachable;
 };
 
 const run = async () => {
@@ -51,20 +53,27 @@ const run = async () => {
     url,
   });
   let settings = normalizeSettings(state?.settings);
-  render({ host, settings, answer: state?.answer });
+  const answer = state?.answer;
+  render({ host, settings, answer, appReachable: state?.appReachable ?? true });
 
   element("pause").addEventListener("change", async (event) => {
     const site = event.target.checked
       ? siteFor(host)
       : pausedEntry(settings, host);
-    settings = normalizeSettings(
-      await browser.runtime.sendMessage({
-        type: "setPaused",
-        site,
-        paused: event.target.checked,
-      }),
-    );
-    render({ host, settings, answer: state?.answer });
+    try {
+      settings = normalizeSettings(
+        await browser.runtime.sendMessage({
+          type: "setPaused",
+          site,
+          paused: event.target.checked,
+        }),
+      );
+    } catch (error) {
+      console.error("Hush: pausing failed", error);
+      render({ host, settings, answer, appReachable: false });
+      return;
+    }
+    render({ host, settings, answer, appReachable: true });
     element("note").hidden = false;
   });
 };

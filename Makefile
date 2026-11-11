@@ -112,6 +112,15 @@ extension:
 	mkdir -p "$(EXTENSION_OUT)/images"
 	cp WebExtension/images/*.png "$(EXTENSION_OUT)/images/"
 
+CHROME_OUT ?= build/ChromeExtension
+
+# Chrome and Helium run the same bundles as Safari, with the keys in
+# WebExtension/manifest.chrome.json laid over Safari's manifest. Load
+# $(CHROME_OUT) unpacked from chrome://extensions.
+chrome:
+	$(MAKE) extension --silent EXTENSION_OUT="$(CHROME_OUT)"
+	deno run --allow-read=./WebExtension --allow-write="$(CHROME_OUT)" scripts/build-chrome.js "$(CHROME_OUT)"
+
 xcode_extension:
 ifeq ("$(CONFIGURATION_BUILD_DIR)","")
 	$(error CONFIGURATION_BUILD_DIR env is not set, make this command is run from Xcode)
