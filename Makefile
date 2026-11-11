@@ -15,6 +15,12 @@ test_unit:
 test_corpus: extension
 	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js $(CORPUS_FLAGS) $(SITES)
 
+# The same sites in Chrome for Testing with the real build/ChromeExtension
+# loaded. CHROMIUM_PATH picks the browser binary; branded Chrome ignores
+# --load-extension.
+test_corpus_chrome: chrome
+	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js --browser=chromium $(CORPUS_FLAGS) $(SITES)
+
 test_swift:
 	xcodebuild test -project Hush.xcodeproj -scheme 'Hush macOS' -destination 'platform=macOS' -only-testing:HushTests -allowProvisioningUpdates
 
