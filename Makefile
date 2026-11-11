@@ -121,6 +121,20 @@ chrome:
 	$(MAKE) extension --silent EXTENSION_OUT="$(CHROME_OUT)"
 	deno run --allow-read=./WebExtension --allow-write="$(CHROME_OUT)" scripts/build-chrome.js "$(CHROME_OUT)"
 
+# The native messaging host Chrome and Helium start to read and write the
+# app's settings, built from the app's own settings code. It opens the
+# team's App Group, so it is signed with the team's Developer ID identity.
+# Registered for the extension ID that manifest.chrome.json's key gives.
+CHROME_HOST_DIR ?= $(HOME)/Library/Application Support/Hush Extra
+CHROME_HOST_IDENTITY ?= Developer ID Application
+
+chrome_host:
+	mkdir -p build/chrome-host "$(CHROME_HOST_DIR)"
+	swiftc -O -o build/chrome-host/hush-chrome-host macOS/ChromeHost/main.swift Shared/Models/ConsentSettings.swift -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist -Xlinker macOS/ChromeHost/Info.plist
+	codesign --force --options runtime --timestamp --sign "$(CHROME_HOST_IDENTITY)" --identifier ceo.nerd.hush.chrome-host --entitlements macOS/ChromeHost/ChromeHost.entitlements build/chrome-host/hush-chrome-host
+	ditto build/chrome-host/hush-chrome-host "$(CHROME_HOST_DIR)/hush-chrome-host"
+	deno run --allow-read --allow-write="$(HOME)/Library/Application Support" --allow-env=HOME scripts/chrome-host.js "$(CHROME_HOST_DIR)/hush-chrome-host"
+
 xcode_extension:
 ifeq ("$(CONFIGURATION_BUILD_DIR)","")
 	$(error CONFIGURATION_BUILD_DIR env is not set, make this command is run from Xcode)
