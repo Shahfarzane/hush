@@ -1,6 +1,7 @@
 import { evalSnippets } from "./vendor/autoconsent/autoconsent.esm.js";
 import { normalizeSettings, siteKey } from "./src/settings.js";
 import { siteCss } from "./src/hide-css.js";
+import { rulesetUpdate } from "./src/rulesets.js";
 import perSite from "../build/web-lists/per-site.json" with { type: "json" };
 
 const NATIVE_APP = "ceo.nerd.hush";
@@ -73,9 +74,7 @@ const syncRulesets = async (mode) => {
   appliedMode = mode;
   try {
     await browser.declarativeNetRequest.updateEnabledRulesets(
-      mode === "hide"
-        ? { enableRulesetIds: ["block_hide_only"] }
-        : { disableRulesetIds: ["block_hide_only"] },
+      rulesetUpdate(mode),
     );
     debugReport({ outcome: "rulesets", mode });
   } catch (error) {

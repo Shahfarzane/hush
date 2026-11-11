@@ -1,6 +1,6 @@
 # Consent levels for Hush: plan
 
-Status: Phases 0 to 6 done 2026-10-31, Phase 7 started and Phase 8 done 2026-11-01, third round of site checks and the Didomi save fix done 2026-11-02, Quantcast and TrustArc fixes 2026-11-05 (see their results sections).
+Status: Phases 0 to 6 done 2026-10-31, Phase 7 started and Phase 8 done 2026-11-01, third round of site checks and the Didomi save fix done 2026-11-02, Quantcast and TrustArc fixes 2026-11-05, block rules kept on after a Safari relaunch and the adidas and Brandfetch rules 2026-11-11 (see their results sections).
 
 ## Goal
 
@@ -358,6 +358,11 @@ Each phase ends in a commit that builds and passes its verification.
 - A DMG install does not remove a `Hush.app` from 1.0.2 or earlier; that copy has to be deleted, or Safari finds the extension twice. TestFlight replaces it by bundle ID.
 - Verified in the iOS 27.3 Simulator: the home screen label and the main screen title read "Hush Extra", and the built app and extension report it as their display name. The Mac app was checked through its build settings (`Hush Extra.app`, executable "Hush Extra") and not launched, since a local Mac build registers a second extension with Safari.
 
+**Block rules off after a Safari relaunch (2026-11-11)**
+- Seen on MBPro16: Safari's Default profile had Hush's ruleset state saved as `{"block_hide_only":false}` and no compiled rule list, so none of Hush's block rules ran there. adidas.se's consent modal, which a block rule otherwise keeps from loading, showed up in Safari because of it.
+- Cause, read from WebKit's `WebExtensionContextAPIDeclarativeNetRequestCocoa.mm`: `updateEnabledRulesets` saves only the ruleset IDs it is given, and on launch an empty saved state means the manifest's defaults while a non-empty one turns on only its entries that are true. `syncRulesets` named only `block_hide_only`, so `block_answer` was never saved and was off from the second launch on. With nothing enabled, the next `updateEnabledRulesets({disableRulesetIds: ["block_hide_only"]})` failed WebKit's limit check (`0 - 1` wraps around), which is the "Only 50 rulesets can be enabled at once" line in the log.
+- Fix: `rulesetUpdate(mode)` in `WebExtension/src/rulesets.js` names every ruleset in each call; a unit test checks it against the manifest's `rule_resources`.
+- Verified in the iOS 27.3 Simulator with a probe page that loads a script matching `/gdpr-consent-`: master's build blocked it in the first session, saved `{"block_hide_only":false}`, and after a Safari relaunch had no compiled rule list, let the script load and logged the limit error. Installed over that state, the fixed build saved `{"block_answer":true,"block_hide_only":false}` and kept blocking the script through two more relaunches. Mac Safari was not run; it has the same WebKit code.
 **adidas and Brandfetch (Shahin, 2026-11-11)**
 - Seen in Safari: adidas.se and brandfetch.com kept their banners. Neither engine has a rule for either site, autoconsent 18.3.0 (2026-11-11) included.
 - adidas runs its own modal (`dialog.cookie-consent-modal` from its "glass" micro-frontend): Reject all on the first layer, and behind "Anpassa din upplevelse" two boxes, Functional (which also turns on Adobe Analytics) and Marketing. It stores `notice_preferences` as a JSON list: `[0]` refused, `1` Functional, `2` Marketing. Fanboy's generic `/gdpr-consent-` blocks the modal's `gdpr-consent-modal-view-<hash>.js`, so with Hush's lists in WebKit the modal never loaded and adidas never got an answer.
