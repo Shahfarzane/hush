@@ -358,6 +358,14 @@ Each phase ends in a commit that builds and passes its verification.
 - A DMG install does not remove a `Hush.app` from 1.0.2 or earlier; that copy has to be deleted, or Safari finds the extension twice. TestFlight replaces it by bundle ID.
 - Verified in the iOS 27.3 Simulator: the home screen label and the main screen title read "Hush Extra", and the built app and extension report it as their display name. The Mac app was checked through its build settings (`Hush Extra.app`, executable "Hush Extra") and not launched, since a local Mac build registers a second extension with Safari.
 
+**adidas and Brandfetch (Shahin, 2026-11-11)**
+- Seen in Safari: adidas.se and brandfetch.com kept their banners. Neither engine has a rule for either site, autoconsent 18.3.0 (2026-11-11) included.
+- adidas runs its own modal (`dialog.cookie-consent-modal` from its "glass" micro-frontend): Reject all on the first layer, and behind "Anpassa din upplevelse" two boxes, Functional (which also turns on Adobe Analytics) and Marketing. It stores `notice_preferences` as a JSON list: `[0]` refused, `1` Functional, `2` Marketing. Fanboy's generic `/gdpr-consent-` blocks the modal's `gdpr-consent-modal-view-<hash>.js`, so with Hush's lists in WebKit the modal never loaded and adidas never got an answer.
+- New `data/answer-mode-allow.txt`: "@@" lines answer mode lets through for a Hush rule to answer. Each becomes an allow rule (priority 2) in `block_answer` and a block at priority 3 in `block_hide_only`, so "Only hide it" keeps blocking it. adidas's line covers only the modal's `gdpr-consent-` script under `microfrontends.glass.adidas.com/cookie-consent-mf/`. Upstream's list files stay untouched.
+- Site rules: adidas (its EU, UK and Turkish domains) refuses with Reject all; a mixed level sets the two boxes and saves, so "functional only" stores `[0]` (stricter, since Functional also means analytics) and "balanced" `[0,1]`. Brandfetch's dialog has Configure and Accept all; Configure shows Analytics, Marketing and Personalization switches with Reject all and Save choices. Personalization (suggested brands and recommendations) counts as functional, as Osano's PERSONALIZATION does. Brandfetch stores `bf_consent=1.<analytics><marketing><personalization>.<time>`.
+- Brand pages on brandfetch.com sit behind a Cloudflare check that stops WebKit and Chrome for Testing alike, so the corpus loads `/developers`, which shows the same dialog.
+- Verified: brandfetch.com passes at "functional only" (`1.001`, 3 clicks), "balanced" (`1.101`), as an iPhone and with the full hide lists. In the iOS 27.3 Simulator's Safari, a throwaway allow line for a local probe let its script through in answer mode and blocked it again after switching to "Only hide it", so WebKit honours the priority-3 block across the two rulesets.
+
 **Later, only on request**: scheduled rule refresh.
 
 ## Test corpus and verification
