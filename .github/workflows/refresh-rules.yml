@@ -22,9 +22,11 @@ permissions:
   pull-requests: write
   actions: write
 
+# A pipeline pull request runs in its own group, so its dry run never
+# cancels a publishing run; publishing runs queue behind each other.
 concurrency:
-  group: rule-refresh
-  cancel-in-progress: true
+  group: rule-refresh-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'publish' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   BRANCH: rules/refresh
@@ -35,6 +37,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
@@ -42,13 +46,17 @@ jobs:
         run: deno run -A npm:playwright install --with-deps webkit
 
       # The corpus exits 1 when a site stores consent it should not or stops
-      # being answered; both runs go to the comparison instead.
+      # being answered; both runs go to the comparison instead. Each run starts
+      # without a results file, so one that writes none fails the copy.
       - name: Corpus with the current rules
         run: |
+          rm -f build/corpus-results.json
           make test_corpus || true
           cp build/corpus-results.json "$RUNNER_TEMP/corpus-before.json"
 
       - name: Fetch the newest rules
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: make refresh_rules
 
       - name: Look for changes
@@ -70,6 +78,7 @@ jobs:
       - name: Corpus with the new rules
         if: steps.changes.outputs.changed == 'true'
         run: |
+          rm -f build/corpus-results.json
           make test_corpus || true
           cp build/corpus-results.json "$RUNNER_TEMP/corpus-after.json"
           deno run --allow-read scripts/corpus-diff.js "$RUNNER_TEMP/corpus-before.json" "$RUNNER_TEMP/corpus-after.json" > "$RUNNER_TEMP/corpus.md"
@@ -91,6 +100,15 @@ jobs:
             echo
             echo "Sites behind a bot wall fail the same way in both runs. Merge, then tag a release to ship the rules."
           } > "$RUNNER_TEMP/body.md"
+          # Commits someone pushed to the open refresh PR would be lost to the
+          # force-push below, so stop and say so instead.
+          if git fetch --no-tags origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH" 2>/dev/null; then
+            authors=$(git log --format=%an "origin/master..origin/$BRANCH" | grep -vx 'github-actions\[bot\]' | sort -u | paste -sd, - || true)
+            if [ -n "$authors" ]; then
+              echo "$BRANCH has commits by $authors; not overwriting it. Merge or close its pull request, then run this workflow again." >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
           git switch -C "$BRANCH"

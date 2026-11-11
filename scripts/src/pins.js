@@ -14,8 +14,15 @@ export const writePin = async (name, value) => {
   await Deno.writeTextFile(PINS, JSON.stringify(pins, null, 2) + "\n");
 };
 
+// GitHub's API allows 60 anonymous requests an hour per IP, which runners
+// share, so a GITHUB_TOKEN in the environment goes along when there is one.
 export const fetchJson = async (url) => {
-  const response = await fetch(url);
+  const token = url.startsWith("https://api.github.com/") &&
+    Deno.env.get("GITHUB_TOKEN");
+  const response = await fetch(
+    url,
+    token ? { headers: { Authorization: `Bearer ${token}` } } : {},
+  );
   if (!response.ok) {
     throw new Error(`Fetching ${url} failed with status ${response.status}`);
   }

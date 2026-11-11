@@ -93,7 +93,7 @@ fetch_external:
 	deno run --allow-write=./data --allow-net scripts/fetch-external.js
 
 fetch_consent_o_matic:
-	deno run --allow-read=./data/vendor --allow-write=./data/vendor,./WebExtension/vendor --allow-net=raw.githubusercontent.com,api.github.com scripts/fetch-consent-o-matic.js $(FETCH_FLAGS)
+	deno run --allow-read=./data/vendor --allow-write=./data/vendor,./WebExtension/vendor --allow-net=raw.githubusercontent.com,api.github.com --allow-env=GITHUB_TOKEN scripts/fetch-consent-o-matic.js $(FETCH_FLAGS)
 
 fetch_autoconsent:
 	deno run --allow-read=./data/vendor --allow-write=./data/vendor,./WebExtension/vendor --allow-net=cdn.jsdelivr.net,registry.npmjs.org scripts/fetch-autoconsent.js $(FETCH_FLAGS)
