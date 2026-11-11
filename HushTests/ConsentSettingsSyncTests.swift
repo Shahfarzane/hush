@@ -98,3 +98,52 @@ final class StoreSyncTests: XCTestCase {
         XCTAssertEqual(ConsentSettingsStore.read(storage)?.modifiedAt, Date(timeIntervalSince1970: 0))
     }
 }
+
+// "Pause on this site" from Safari's handler and from Chrome's native host.
+final class PauseTests: XCTestCase {
+    func testPausingAddsTheSiteInOrder() {
+        let local = MemoryStorage()
+        ConsentSettingsStore.write(settings(1_000, paused: ["zeta.com"]), to: local)
+
+        let result = ConsentSettingsStore.setPaused("https://www.Example.com/path", paused: true, local: local, cloud: nil)
+
+        XCTAssertEqual(result.pausedSites, ["example.com", "zeta.com"])
+        XCTAssertEqual(ConsentSettingsStore.read(local)?.pausedSites, ["example.com", "zeta.com"])
+        XCTAssertGreaterThan(result.modifiedAt, Date(timeIntervalSince1970: 1_000))
+    }
+
+    func testUnpausingRemovesTheSite() {
+        let local = MemoryStorage()
+        ConsentSettingsStore.write(settings(1_000, paused: ["example.com", "zeta.com"]), to: local)
+
+        let result = ConsentSettingsStore.setPaused("example.com", paused: false, local: local, cloud: nil)
+
+        XCTAssertEqual(result.pausedSites, ["zeta.com"])
+        XCTAssertEqual(ConsentSettingsStore.read(local)?.pausedSites, ["zeta.com"])
+    }
+
+    func testInputThatIsNotASiteChangesNothing() {
+        let local = MemoryStorage()
+        ConsentSettingsStore.write(settings(1_000), to: local)
+
+        let result = ConsentSettingsStore.setPaused("not a site", paused: true, local: local, cloud: nil)
+
+        XCTAssertEqual(result, settings(1_000))
+        XCTAssertEqual(ConsentSettingsStore.read(local), settings(1_000))
+    }
+
+    // Chrome's host has no iCloud: its pause waits in the App Group until the
+    // app or the Safari extension syncs.
+    func testAPauseWithoutICloudGoesUpOnTheNextSync() {
+        let local = MemoryStorage()
+        let cloud = MemoryStorage()
+        ConsentSettingsStore.write(settings(1_000), to: local)
+        ConsentSettingsStore.write(settings(1_000), to: cloud)
+
+        _ = ConsentSettingsStore.setPaused("example.com", paused: true, local: local, cloud: nil)
+        XCTAssertEqual(ConsentSettingsStore.read(cloud)?.pausedSites, [])
+
+        _ = ConsentSettingsStore.sync(local: local, cloud: cloud)
+        XCTAssertEqual(ConsentSettingsStore.read(cloud)?.pausedSites, ["example.com"])
+    }
+}

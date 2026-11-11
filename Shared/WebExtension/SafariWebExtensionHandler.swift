@@ -16,16 +16,8 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             logger.notice("getSettings iCloud=\(ConsentSettingsStore.syncsWithICloud ? "on" : "off", privacy: .public) pulled=\(sync.writeLocal, privacy: .public) pushed=\(sync.writeCloud, privacy: .public)")
             response.userInfo = [SFExtensionMessageKey: ["settings": ConsentSettingsStore.jsonObject(sync.settings) ?? [:]]]
         case "setPaused":
-            var settings = ConsentSettingsStore.sync().settings
-            if let input = message?["site"] as? String, let site = PausedSite.normalize(input) {
-                let paused = message?["paused"] as? Bool ?? true
-                settings.pausedSites.removeAll { $0 == site }
-                if paused {
-                    settings.pausedSites = (settings.pausedSites + [site]).sorted()
-                }
-                settings.modifiedAt = Date()
-                ConsentSettingsStore.save(settings)
-            }
+            let settings = ConsentSettingsStore.setPaused(
+                message?["site"] as? String, paused: message?["paused"] as? Bool ?? true, iCloud: true)
             response.userInfo = [SFExtensionMessageKey: ["settings": ConsentSettingsStore.jsonObject(settings) ?? [:]]]
         case "report":
             #if DEBUG

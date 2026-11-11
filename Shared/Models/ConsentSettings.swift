@@ -143,24 +143,51 @@ enum ConsentSettingsStore {
         set { groupDefaults?.set(newValue, forKey: iCloudSyncKey) }
     }
 
-    private static var cloud: NSUbiquitousKeyValueStore? {
-        syncsWithICloud ? NSUbiquitousKeyValueStore.default : nil
+    // iCloud: false is for Chrome's native host, a bare tool that cannot carry
+    // the iCloud entitlement. It works on the App Group alone, and the app and
+    // the Safari extension carry its changes to iCloud on their next sync.
+    private static func cloud(iCloud: Bool) -> NSUbiquitousKeyValueStore? {
+        iCloud && syncsWithICloud ? NSUbiquitousKeyValueStore.default : nil
     }
 
     static func save(_ settings: ConsentSettings) {
-        write(settings, to: groupDefaults)
+        save(settings, local: groupDefaults, cloud: cloud(iCloud: true))
+    }
+
+    static func save(_ settings: ConsentSettings, local: SettingsStorage?, cloud: SettingsStorage?) {
+        write(settings, to: local)
         if let cloud = cloud {
             write(settings, to: cloud)
-            cloud.synchronize()
+            (cloud as? NSUbiquitousKeyValueStore)?.synchronize()
         }
     }
 
     // Brings the App Group and iCloud copies to the newer of the two.
     @discardableResult
-    static func sync() -> SettingsSync.Result {
-        let cloud = Self.cloud
+    static func sync(iCloud: Bool = true) -> SettingsSync.Result {
+        let cloud = cloud(iCloud: iCloud)
         cloud?.synchronize()
         return sync(local: groupDefaults, cloud: cloud)
+    }
+
+    // "Pause on this site" from an extension's popup. Returns the settings as
+    // saved; input that is not a site changes nothing.
+    static func setPaused(_ input: String?, paused: Bool, iCloud: Bool) -> ConsentSettings {
+        let cloud = cloud(iCloud: iCloud)
+        cloud?.synchronize()
+        return setPaused(input, paused: paused, local: groupDefaults, cloud: cloud)
+    }
+
+    static func setPaused(_ input: String?, paused: Bool, local: SettingsStorage?, cloud: SettingsStorage?) -> ConsentSettings {
+        var settings = sync(local: local, cloud: cloud).settings
+        guard let input = input, let site = PausedSite.normalize(input) else { return settings }
+        settings.pausedSites.removeAll { $0 == site }
+        if paused {
+            settings.pausedSites = (settings.pausedSites + [site]).sorted()
+        }
+        settings.modifiedAt = Date()
+        save(settings, local: local, cloud: cloud)
+        return settings
     }
 
     static func sync(local: SettingsStorage?, cloud: SettingsStorage?) -> SettingsSync.Result {
