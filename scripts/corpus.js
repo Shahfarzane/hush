@@ -126,7 +126,7 @@ const inScope = (script) =>
     if (message === "GetTabUrl") return topUrl;
     if (message?.type === "getSettings") return settings;
     if (["fallback", "autoconsentEval", "hideCss"].includes(message?.type)) {
-      return window.__hushBackground(message);
+      return window.__hushBackground?.(message);
     }
     if (message?.type === "report") console.log("HUSH-REPORT " + JSON.stringify(message));
   };
@@ -308,10 +308,15 @@ const visit = async (browser, site) => {
           : route.continue();
       });
     }
-    await context.exposeBinding(
-      "__hushBackground",
-      (source, message) => background(source, message, reports),
-    );
+    // "noBinding" sites wall any page Playwright's exposeBinding touched
+    // (adidas's bot check). Without it there is no autoconsent fallback and
+    // no per-site CSS, which a site answered by a Hush rule does not need.
+    if (!site.noBinding) {
+      await context.exposeBinding(
+        "__hushBackground",
+        (source, message) => background(source, message, reports),
+      );
+    }
     await context.addInitScript(injected);
     const page = await context.newPage();
     page.on("console", (message) => {
