@@ -91,10 +91,17 @@ fetch_external:
 	deno run --allow-write=./data --allow-net scripts/fetch-external.js
 
 fetch_consent_o_matic:
-	deno run --allow-write=./data/vendor,./WebExtension/vendor --allow-net=raw.githubusercontent.com scripts/fetch-consent-o-matic.js
+	deno run --allow-read=./data/vendor --allow-write=./data/vendor,./WebExtension/vendor --allow-net=raw.githubusercontent.com,api.github.com scripts/fetch-consent-o-matic.js $(FETCH_FLAGS)
 
 fetch_autoconsent:
-	deno run --allow-write=./data/vendor,./WebExtension/vendor --allow-net=cdn.jsdelivr.net scripts/fetch-autoconsent.js
+	deno run --allow-read=./data/vendor --allow-write=./data/vendor,./WebExtension/vendor --allow-net=cdn.jsdelivr.net,registry.npmjs.org scripts/fetch-autoconsent.js $(FETCH_FLAGS)
+
+# Every rule source at its newest version: the Fanboy list, and both engines
+# with their pins in data/vendor/pins.json moved to the latest release.
+refresh_rules:
+	make fetch_external
+	make fetch_consent_o_matic FETCH_FLAGS=--latest
+	make fetch_autoconsent FETCH_FLAGS=--latest
 
 EXTENSION_OUT ?= build/WebExtension
 
