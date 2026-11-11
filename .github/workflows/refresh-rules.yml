@@ -1,0 +1,107 @@
+name: Rule refresh
+
+# Every Monday: fetch the Fanboy list and both consent engines at their
+# newest versions, run the unit tests and the corpus before and after, and
+# open (or update) one pull request with the result. Merging it and tagging a
+# release ships the new rules. A pull request that changes this pipeline runs
+# it without pushing anything.
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/refresh-rules.yml
+      - scripts/corpus-diff.js
+      - scripts/fetch-*.js
+      - scripts/src/pins.js
+      - data/vendor/pins.json
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: rule-refresh
+  cancel-in-progress: true
+
+env:
+  BRANCH: rules/refresh
+
+jobs:
+  refresh:
+    name: Refresh rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Install WebKit for the corpus
+        run: deno run -A npm:playwright install --with-deps webkit
+
+      # The corpus exits 1 when a site stores consent it should not or stops
+      # being answered; both runs go to the comparison instead.
+      - name: Corpus with the current rules
+        run: |
+          make test_corpus || true
+          cp build/corpus-results.json "$RUNNER_TEMP/corpus-before.json"
+
+      - name: Fetch the newest rules
+        run: make refresh_rules
+
+      - name: Look for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Every rule source is already at its newest version." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Unit tests and formatting
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          make test_unit
+          make check_format
+
+      - name: Corpus with the new rules
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          make test_corpus || true
+          cp build/corpus-results.json "$RUNNER_TEMP/corpus-after.json"
+          deno run --allow-read scripts/corpus-diff.js "$RUNNER_TEMP/corpus-before.json" "$RUNNER_TEMP/corpus-after.json" > "$RUNNER_TEMP/corpus.md"
+          cat "$RUNNER_TEMP/corpus.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open or update the pull request
+        if: steps.changes.outputs.changed == 'true' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pins=$(jq -r '"autoconsent \(.autoconsent), Consent-O-Matic \(.["consent-o-matic"][0:7])"' data/vendor/pins.json)
+          fanboy=$(grep -m1 '^! Last modified:' data/vendor/fanboy-cookiemonster.txt | sed 's/^! Last modified: //')
+          {
+            echo "Weekly rule refresh: $pins, Fanboy list of $fanboy."
+            echo
+            echo "Unit tests and formatting passed. The corpus ran on this runner before and after the refresh:"
+            echo
+            cat "$RUNNER_TEMP/corpus.md"
+            echo
+            echo "Sites behind a bot wall fail the same way in both runs. Merge, then tag a release to ship the rules."
+          } > "$RUNNER_TEMP/body.md"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$BRANCH"
+          git add data/vendor WebExtension/vendor
+          git commit -m "chore: refresh rules ($pins)"
+          git push --force origin "$BRANCH"
+          if gh pr view "$BRANCH" --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit "$BRANCH" --body-file "$RUNNER_TEMP/body.md"
+          else
+            gh pr create --base master --head "$BRANCH" --title "chore: refresh rules" --body-file "$RUNNER_TEMP/body.md"
+          fi
+          # Pull requests opened with this token start no workflows, so the
+          # tests run on the branch by hand.
+          gh workflow run tests.yml --ref "$BRANCH"

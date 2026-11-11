@@ -364,7 +364,13 @@ Each phase ends in a commit that builds and passes its verification.
 - Fix: `rulesetUpdate(mode)` in `WebExtension/src/rulesets.js` names every ruleset in each call; a unit test checks it against the manifest's `rule_resources`.
 - Verified in the iOS 27.3 Simulator with a probe page that loads a script matching `/gdpr-consent-`: master's build blocked it in the first session, saved `{"block_hide_only":false}`, and after a Safari relaunch had no compiled rule list, let the script load and logged the limit error. Installed over that state, the fixed build saved `{"block_answer":true,"block_hide_only":false}` and kept blocking the script through two more relaunches. Mac Safari was not run; it has the same WebKit code.
 
-**Later, only on request**: scheduled rule refresh.
+**Weekly rule refresh (Shahin, 2026-11-11)**
+- Rules ship frozen in each build. On 2026-11-11 the Fanboy list here dated from 2026-07-26 (Fanboy's own was from 2026-11-10) and autoconsent was pinned at 17.2.0 with 18.3.0 out; Consent-O-Matic's pin was still its newest commit. Shahin chose a weekly pull request over refreshing by hand.
+- Engine pins moved to `data/vendor/pins.json`. `--latest` on `fetch-autoconsent.js` (npm's latest tag) and `fetch-consent-o-matic.js` (newest commit) moves a pin before fetching, and `make refresh_rules` fetches all three sources. A pinned fetch reproduces the committed files exactly.
+- `.github/workflows/refresh-rules.yml` runs Mondays at 05:00 UTC and by hand: corpus on the current rules, `make refresh_rules`, unit tests and formatting, corpus again, and `scripts/corpus-diff.js` for the counts and every site whose result changed. It force-pushes `rules/refresh` and opens or updates one pull request. A pull request opened with the workflow's token starts no other workflow, so it dispatches `tests.yml` on the branch. Pull requests that touch the pipeline run it without pushing.
+- Checked locally: with autoconsent 18.3.0 and the 2026-11-10 Fanboy list, `make test_unit` passed and eight corpus sites gave the same results as before (Termly still answered through the autoconsent fallback).
+
+
 
 ## Test corpus and verification
 
