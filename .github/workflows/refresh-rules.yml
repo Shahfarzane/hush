@@ -101,8 +101,10 @@ jobs:
             echo "Sites behind a bot wall fail the same way in both runs. Merge, then tag a release to ship the rules."
           } > "$RUNNER_TEMP/body.md"
           # Commits someone pushed to the open refresh PR would be lost to the
-          # force-push below, so stop and say so instead.
-          if git fetch --no-tags origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH" 2>/dev/null; then
+          # force-push below, so stop and say so instead. Once that PR is
+          # merged or closed, its branch is fair to overwrite.
+          if gh pr view "$BRANCH" --json state --jq .state 2>/dev/null | grep -q OPEN &&
+            git fetch --no-tags origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH" 2>/dev/null; then
             authors=$(git log --format=%an "origin/master..origin/$BRANCH" | grep -vx 'github-actions\[bot\]' | sort -u | paste -sd, - || true)
             if [ -n "$authors" ]; then
               echo "$BRANCH has commits by $authors; not overwriting it. Merge or close its pull request, then run this workflow again." >> "$GITHUB_STEP_SUMMARY"
