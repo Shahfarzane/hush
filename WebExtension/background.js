@@ -2,6 +2,7 @@ import { evalSnippets } from "./vendor/autoconsent/autoconsent.esm.js";
 import { normalizeSettings, siteKey } from "./src/settings.js";
 import { siteCss } from "./src/hide-css.js";
 import { rulesetUpdate } from "./src/rulesets.js";
+import { singleFlight } from "./src/single-flight.js";
 import perSite from "../build/web-lists/per-site.json" with { type: "json" };
 
 const NATIVE_APP = "ceo.nerd.hush";
@@ -44,10 +45,9 @@ const answerFor = async (tabId) => {
   return stored?.[`answer-${tabId}`] ?? null;
 };
 
-const readSettings = async () => {
-  if (cache && Date.now() - cache.readAt < SETTINGS_TTL_MS) {
-    return cache.settings;
-  }
+// Every frame asks as it starts, so a page with iframes asks many times
+// before the first answer; they share one native read.
+const readNativeSettings = singleFlight(async () => {
   let settings;
   try {
     const response = await browser.runtime.sendNativeMessage(NATIVE_APP, {
@@ -65,7 +65,12 @@ const readSettings = async () => {
   cache = { settings, readAt: Date.now() };
   syncRulesets(settings.mode);
   return settings;
-};
+});
+
+const readSettings = () =>
+  cache && Date.now() - cache.readAt < SETTINGS_TTL_MS
+    ? Promise.resolve(cache.settings)
+    : readNativeSettings();
 
 // Logged by Safari's native handler in debug builds only. Several come per
 // page, too many to start Chrome's host for, so Chrome logs them here.
