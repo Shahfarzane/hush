@@ -2,7 +2,8 @@ import { siteKey } from "../../WebExtension/src/settings.js";
 
 // Approximates how Safari applies Hush's declarativeNetRequest rules, so the
 // corpus blocks what the extension would: the highest-priority rule that
-// matches wins, and allow (priority 2) beats block (priority 1).
+// matches wins, and allow (priority 2) beats block (priority 1). The
+// hide-only list blocks answer mode's allow list again at priority 3.
 
 const ANY_SCHEME_AND_SUBDOMAIN = "^[a-z][a-z0-9+.-]*://([^/?#]*\\.)?";
 const SEPARATOR = "(?:[^a-zA-Z0-9_.%-]|$)";

@@ -85,7 +85,34 @@ const genericHideDomain = (line) =>
 export const stylesheet = (selectors) =>
   selectors.map((selector) => `${selector}{display:none!important}\n`).join("");
 
-export const buildWebLists = (text, answerMarkers) => {
+// data/answer-mode-allow.txt: "@@" lines answer mode lets through, where a
+// generic block line would keep a banner Hush answers from loading. "Only
+// hide it" blocks them again above every allow rule.
+const HIDE_ONLY_BLOCK_PRIORITY = 3;
+
+const answerModeAllowRules = (text) =>
+  text.split("\n").map((line) => line.trim()).filter((line) => !isComment(line))
+    .flatMap((line) => {
+      if (!line.startsWith("@@")) {
+        throw new Error(
+          `Answer mode allow lines start with "@@", got "${line}"`,
+        );
+      }
+      const allow = blockRule(line);
+      return [
+        { rule: allow, hideOnly: false },
+        {
+          rule: {
+            ...allow,
+            priority: HIDE_ONLY_BLOCK_PRIORITY,
+            action: { type: "block" },
+          },
+          hideOnly: true,
+        },
+      ];
+    });
+
+export const buildWebLists = (text, answerMarkers, answerAllow = "") => {
   const blocks = [];
   const genericHideOff = [];
   const generic = new Map(); // selector -> hideOnly
@@ -133,6 +160,7 @@ export const buildWebLists = (text, answerMarkers) => {
       blocks.push({ rule: blockRule(line), hideOnly });
     }
   }
+  blocks.push(...answerModeAllowRules(answerAllow));
 
   const withIds = (rules) =>
     rules.map((rule, index) => ({ id: index + 1, ...rule }));

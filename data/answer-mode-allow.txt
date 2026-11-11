@@ -1,0 +1,5 @@
+! ----- Answer mode allow list -----
+! Consent scripts a generic block rule in the lists catches, let through in
+! answer mode so a Hush rule can answer the banner and the site stores the
+! choice. "Only hide it" keeps blocking them. One "@@" line each, and only
+! for banners a rule in data/site-rules.json answers, proven by the corpus.
