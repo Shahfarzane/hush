@@ -12,8 +12,10 @@ test:
 test_unit:
 	deno test --allow-read=./data
 
+# Full permissions: on Linux, Playwright reads /proc/sys/fs/binfmt_misc to
+# detect WSL, which Deno only allows with --allow-all.
 test_corpus: extension
-	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js $(CORPUS_FLAGS) $(SITES)
+	deno run --allow-all scripts/corpus.js $(CORPUS_FLAGS) $(SITES)
 
 test_swift:
 	xcodebuild test -project Hush.xcodeproj -scheme 'Hush macOS' -destination 'platform=macOS' -only-testing:HushTests -allowProvisioningUpdates
