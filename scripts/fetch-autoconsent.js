@@ -1,7 +1,17 @@
 // Vendors DuckDuckGo's autoconsent (MPL-2.0) at one pinned release, unmodified:
-// the library bundle, its licence and its rules.
+// the library bundle, its licence and its rules. `--latest` first moves the
+// pin to npm's latest release.
+import { fetchJson, readPin, wantsLatest, writePin } from "./src/pins.js";
+
 const PACKAGE = "@duckduckgo/autoconsent";
-const VERSION = "17.2.0";
+
+if (wantsLatest(Deno.args)) {
+  const { "dist-tags": tags } = await fetchJson(
+    `https://registry.npmjs.org/${PACKAGE}`,
+  );
+  await writePin("autoconsent", tags.latest);
+}
+const VERSION = await readPin("autoconsent");
 
 const resolveRelative = (path) => new URL(path, import.meta.url).pathname;
 

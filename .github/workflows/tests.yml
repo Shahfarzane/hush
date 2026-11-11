@@ -4,6 +4,8 @@ on:
   push:
     branches: [master]
   pull_request:
+  # The weekly rule refresh starts it on its branch.
+  workflow_dispatch:
 
 permissions:
   contents: read

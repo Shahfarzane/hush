@@ -30,13 +30,14 @@ Build and test:
 make test_unit      # Deno unit tests
 make test_swift     # settings sync tests (macOS)
 make test_corpus    # loads real consent pages in WebKit and reads back what each site stored
+make refresh_rules  # fetches the Fanboy list and both consent engines at their newest versions
 make testflight ASC_KEY_PATH=AuthKey.p8 ASC_KEY_ID=<key id> ASC_ISSUER_ID=<issuer id>
 make dmg ASC_KEY_PATH=AuthKey.p8 ASC_KEY_ID=<key id> ASC_ISSUER_ID=<issuer id>
 ```
 
 `make dmg` builds `build/Hush-Extra.dmg`, a notarized Mac disk image, signed with Developer ID, with `Hush Extra.app` in it, for installing without TestFlight. It needs the Developer ID Application certificate in the keychain and the Developer ID provisioning profiles named in `ExportOptions-DeveloperID.plist`. It installs the same app as TestFlight (same bundle ID), so it replaces a TestFlight copy. Versions up to 1.0.2 were called `Hush.app`; delete that copy after installing, or Safari finds the extension twice. On GitHub, pushing a version tag (`v1.2.0`) runs the release workflow on a macOS runner: it builds the disk image, uploads both apps to TestFlight with the same build number (`make testflight SIGNING=manual`, signed with the Apple Distribution certificate and App Store profiles instead of this Mac's development identity), and then attaches the disk image to a GitHub Release. Run by hand from the Actions tab, it is a dry run that keeps the disk image with the run and uploads nothing. Pull requests build both apps and run the Swift tests on a macOS runner.
 
-`make test_corpus` also takes site names and `CORPUS_FLAGS="--mobile --level=balanced"`. Design notes and results per phase are in [docs/plan.md](docs/plan.md).
+`make test_corpus` also takes site names and `CORPUS_FLAGS="--mobile --level=balanced"`. Rules ship frozen in each build; engine versions are pinned in `data/vendor/pins.json`. Every Monday the "Rule refresh" workflow runs `make refresh_rules`, runs the unit tests and the corpus before and after, and opens or updates one pull request (`rules/refresh`) with the difference. Merging it and tagging a release ships the new rules. Design notes and results per phase are in [docs/plan.md](docs/plan.md).
 
 Chrome and Helium on the Mac run the same extension and share the app's settings (level, mode, paused sites) through a small native messaging host, `hush-chrome-host`, built from the app's own settings code:
 

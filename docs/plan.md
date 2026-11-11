@@ -373,7 +373,14 @@ Each phase ends in a commit that builds and passes its verification.
 - Verified live on adidas.se: "functional only" stored `[0]` in 2 clicks (desktop and iPhone), "balanced" stored `[0,1]` in 3 clicks (iPhone), and the dialog closed each time. With Hush's built lists applied, the modal loads in answer mode.
 - Verified: brandfetch.com passes at "functional only" (`1.001`, 3 clicks), "balanced" (`1.101`), as an iPhone and with the full hide lists. In the iOS 27.3 Simulator's Safari, a throwaway allow line for a local probe let its script through in answer mode and blocked it again after switching to "Only hide it", so WebKit honours the priority-3 block across the two rulesets.
 
-**Later, only on request**: scheduled rule refresh.
+**Weekly rule refresh (Shahin, 2026-11-11)**
+- Rules ship frozen in each build. On 2026-11-11 the Fanboy list here dated from 2026-07-26 (Fanboy's own was from 2026-11-10) and autoconsent was pinned at 17.2.0 with 18.3.0 out; Consent-O-Matic's pin was still its newest commit. Shahin chose a weekly pull request over refreshing by hand.
+- Engine pins moved to `data/vendor/pins.json`. `--latest` on `fetch-autoconsent.js` (npm's latest tag) and `fetch-consent-o-matic.js` (newest commit) moves a pin before fetching, and `make refresh_rules` fetches all three sources. A pinned fetch reproduces the committed files exactly.
+- `.github/workflows/refresh-rules.yml` runs Mondays at 05:00 UTC and by hand: corpus on the current rules, `make refresh_rules`, unit tests and formatting, corpus again, and `scripts/corpus-diff.js` for the counts and every site whose result changed. It force-pushes `rules/refresh` and opens or updates one pull request. A pull request opened with the workflow's token starts no other workflow, so it dispatches `tests.yml` on the branch. Pull requests that touch the pipeline run it without pushing, in their own concurrency group so they never cancel a publishing run. Each corpus run starts without a results file, so a run that writes none fails the job instead of reporting the previous run. The Consent-O-Matic lookup sends the workflow token, since runners share the 60-an-hour anonymous API limit. While a refresh PR is open, the workflow stops without pushing when `rules/refresh` has commits from anyone but the bot, so a fix pushed to that PR is never overwritten; once the PR is merged or closed, the branch is rebuilt as usual.
+- First dry run on the PR (GitHub runner, 23 minutes): every step passed and the push was skipped as designed. The corpus read 17 pass and 16 regressed on the current rules, 16 pass and 15 regressed on the new ones. GitHub's runners sit in US data centres, where many corpus sites show no EU banner or a bot wall, so the weekly comparison effectively covers the other 33 sites; a local `make test_corpus` stays the full check before a release.
+- Checked locally: with autoconsent 18.3.0 and the 2026-11-10 Fanboy list, `make test_unit` passed and eight corpus sites gave the same results as before (Termly still answered through the autoconsent fallback).
+
+
 
 ## Test corpus and verification
 

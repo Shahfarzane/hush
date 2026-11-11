@@ -1,7 +1,17 @@
 // Vendors the Consent-O-Matic engine and rules at one pinned commit, so the
-// engine code and the rules it interprets always match.
+// engine code and the rules it interprets always match. `--latest` first
+// moves the pin to the newest commit on its default branch.
+import { fetchJson, readPin, wantsLatest, writePin } from "./src/pins.js";
+
 const REPO = "cavi-au/Consent-O-Matic";
-const REF = "8ca8500d26434c586039e126ad091e1bfccd205d";
+
+if (wantsLatest(Deno.args)) {
+  const [latest] = await fetchJson(
+    `https://api.github.com/repos/${REPO}/commits?per_page=1`,
+  );
+  await writePin("consent-o-matic", latest.sha);
+}
+const REF = await readPin("consent-o-matic");
 
 const ENGINE_FILES = [
   "Action.js",

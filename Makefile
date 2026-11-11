@@ -12,8 +12,10 @@ test:
 test_unit:
 	deno test --allow-read=./data
 
+# Full permissions: on Linux, Playwright reads /proc/sys/fs/binfmt_misc to
+# detect WSL, which Deno only allows with --allow-all.
 test_corpus: extension
-	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js $(CORPUS_FLAGS) $(SITES)
+	deno run --allow-all scripts/corpus.js $(CORPUS_FLAGS) $(SITES)
 
 # The same sites in Chrome for Testing with the real build/ChromeExtension
 # loaded. CHROMIUM_PATH picks the browser binary; branded Chrome ignores
@@ -97,10 +99,17 @@ fetch_external:
 	deno run --allow-write=./data --allow-net scripts/fetch-external.js
 
 fetch_consent_o_matic:
-	deno run --allow-write=./data/vendor,./WebExtension/vendor --allow-net=raw.githubusercontent.com scripts/fetch-consent-o-matic.js
+	deno run --allow-read=./data/vendor --allow-write=./data/vendor,./WebExtension/vendor --allow-net=raw.githubusercontent.com,api.github.com --allow-env=GITHUB_TOKEN scripts/fetch-consent-o-matic.js $(FETCH_FLAGS)
 
 fetch_autoconsent:
-	deno run --allow-write=./data/vendor,./WebExtension/vendor --allow-net=cdn.jsdelivr.net scripts/fetch-autoconsent.js
+	deno run --allow-read=./data/vendor --allow-write=./data/vendor,./WebExtension/vendor --allow-net=cdn.jsdelivr.net,registry.npmjs.org scripts/fetch-autoconsent.js $(FETCH_FLAGS)
+
+# Every rule source at its newest version: the Fanboy list, and both engines
+# with their pins in data/vendor/pins.json moved to the latest release.
+refresh_rules:
+	make fetch_external
+	make fetch_consent_o_matic FETCH_FLAGS=--latest
+	make fetch_autoconsent FETCH_FLAGS=--latest
 
 EXTENSION_OUT ?= build/WebExtension
 
