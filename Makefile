@@ -23,8 +23,15 @@ test_corpus: extension
 test_corpus_chrome: chrome
 	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js --browser=chromium $(CORPUS_FLAGS) $(SITES)
 
+# Xcode registers the Debug app it builds with LaunchServices. Safari then
+# lists Hush Extra twice and may run that copy instead of the installed one,
+# so the run unregisters it again, pass or fail.
+LSREGISTER = /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+TEST_DERIVED_DATA = build/DerivedData
+
 test_swift:
-	xcodebuild test -project Hush.xcodeproj -scheme 'Hush macOS' -destination 'platform=macOS' -only-testing:HushTests -allowProvisioningUpdates
+	xcodebuild test -project Hush.xcodeproj -scheme 'Hush macOS' -destination 'platform=macOS' -only-testing:HushTests -allowProvisioningUpdates -derivedDataPath $(TEST_DERIVED_DATA); \
+	status=$$?; $(LSREGISTER) -u "$(TEST_DERIVED_DATA)/Build/Products/Debug/Hush Extra.app"; exit $$status
 
 test_ui:
 	xcodebuild test -project Hush.xcodeproj -scheme 'Hush iOS' -destination 'platform=iOS Simulator,name=iPhone 17'
