@@ -82,6 +82,7 @@ struct StatusHeader: View {
 struct ExtensionStatusSection: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var model: ConsentSettingsModel
+    @Environment(\.appearsActive) private var appearsActive
 
     var body: some View {
         switch appState.webExtensionEnabledState {
@@ -123,7 +124,9 @@ struct ExtensionStatusSection: View {
                     }
                     .buttonStyle(.glassProminent)
                     .tint(.brandYellow)
-                    .foregroundStyle(.black)
+                    // Black reads on the yellow, but an inactive Mac window
+                    // draws the button gray, where black all but disappears.
+                    .foregroundStyle(appearsActive ? Color.black : Color.secondary)
                     .controlSize(.large)
                     .accessibilityIdentifier("open safari settings")
                 }
