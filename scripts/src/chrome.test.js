@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert@1";
+import { assertEquals, assertThrows } from "jsr:@std/assert@1";
 import {
   chromeManifest,
   extensionId,
@@ -58,4 +58,20 @@ Deno.test("The store upload carries no key and keeps the rest", () => {
   assertEquals("key" in store, false);
   assertEquals(store.background, manifest.background);
   assertEquals(store.permissions, safari.permissions);
+});
+
+Deno.test("The store upload's version appends the build number", () => {
+  const store = storeManifest({ version: "1.0", key: "MIIB" }, 265);
+  assertEquals(store.version, "1.0.265");
+  assertEquals("key" in store, false);
+});
+
+Deno.test("A missing or bad build number stops the store build", () => {
+  for (const build of [Number(undefined), 0, 1.5, 65536]) {
+    assertThrows(
+      () => storeManifest({ version: "1.0" }, build),
+      Error,
+      "build number must be",
+    );
+  }
 });

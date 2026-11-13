@@ -146,15 +146,36 @@ chrome:
 	deno run --allow-read=./WebExtension --allow-write="$(CHROME_OUT)" scripts/build-chrome.js "$(CHROME_OUT)"
 
 # The Chrome Web Store upload: the Chrome build without its `key`, zipped
-# into build/hush-extra-chrome-<version>.zip. The store item has an ID of its
-# own, which the host also lets in (STORE_EXTENSION_ID in scripts/src/chrome.js).
+# into build/hush-extra-chrome-<version>.zip, versioned <Safari version>.<commits
+# on HEAD> so every commit uploads higher. The store item has an ID of its own,
+# which the host also lets in (STORE_EXTENSION_ID in scripts/src/chrome.js).
 chrome_store:
 	rm -rf build/ChromeStore
 	$(MAKE) chrome --silent CHROME_OUT=build/ChromeStore
-	version=$$(deno run --allow-read=build/ChromeStore --allow-write=build/ChromeStore scripts/chrome-store.js build/ChromeStore) && \
+	version=$$(deno run --allow-read=build/ChromeStore --allow-write=build/ChromeStore scripts/chrome-store.js build/ChromeStore "$$(git rev-list --count HEAD)") && \
 	rm -f "build/hush-extra-chrome-$$version.zip" && \
 	(cd build/ChromeStore && zip -qrX "../hush-extra-chrome-$$version.zip" . -x '.*') && \
 	echo "build/hush-extra-chrome-$$version.zip"
+
+# The store item through the Chrome Web Store API, with the service account's
+# JSON key: the 1Password DEV document "Chrome Web Store API service account",
+# read with op-agents into a temp folder that is removed on exit.
+# chrome_store_status: its live and submitted revisions.
+# chrome_publish: builds chrome_store, uploads it and submits it for review;
+# it goes live by itself after review.
+CWS_KEY_ITEM = Chrome Web Store API service account
+CWS_DENO = deno run --allow-read --allow-env=CWS_SERVICE_ACCOUNT_KEY --allow-net=oauth2.googleapis.com,chromewebstore.googleapis.com scripts/chrome-publish.js
+
+chrome_store_status:
+	@dir=$$(mktemp -d) && trap 'rm -rf "$${dir:?}"' EXIT && \
+	op-agents document get "$(CWS_KEY_ITEM)" --vault DEV --out-file "$$dir/key.json" --force >/dev/null && \
+	CWS_SERVICE_ACCOUNT_KEY="$$dir/key.json" $(CWS_DENO) status
+
+chrome_publish:
+	out=$$($(MAKE) --silent chrome_store) && zip=$$(printf '%s\n' "$$out" | tail -1) && \
+	dir=$$(mktemp -d) && trap 'rm -rf "$${dir:?}"' EXIT && \
+	op-agents document get "$(CWS_KEY_ITEM)" --vault DEV --out-file "$$dir/key.json" --force >/dev/null && \
+	CWS_SERVICE_ACCOUNT_KEY="$$dir/key.json" $(CWS_DENO) publish "$$zip"
 
 # The native messaging host Chrome and Helium start to read and write the
 # app's settings, built from the app's own settings code. It opens the
