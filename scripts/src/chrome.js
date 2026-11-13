@@ -9,6 +9,10 @@ export const chromeManifest = (manifest, overlay) => ({
   ...overlay,
 });
 
+// The Chrome Web Store upload: the store rejects a manifest that carries
+// `key`, and gives the item an ID of its own.
+export const storeManifest = ({ key: _key, ...manifest }) => manifest;
+
 // Chrome derives an extension's ID from its public key: the first 16 bytes
 // of the key's SHA-256, each hex digit written as a letter from a to p.
 export const extensionId = async (key) => {
