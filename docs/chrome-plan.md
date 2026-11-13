@@ -89,3 +89,5 @@ What is Safari-specific is the settings path: `background.js` reads and writes s
 1. Chrome and Helium share the app's settings through a native host (Option B).
 2. Installed unpacked, for personal use; no Chrome Web Store for now.
 3. Build it now.
+
+Decision 2 superseded (Shahin, 2026-11-13): Hush Extra goes to the Chrome Web Store as an Unlisted item, so Chrome and Helium update it themselves. Upload, listing and permission answers: [chrome-web-store.md](chrome-web-store.md). Load unpacked stays for development.
