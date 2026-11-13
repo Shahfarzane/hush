@@ -8,7 +8,7 @@ Hush Extra for Chrome and Helium ships as an Unlisted item: installable from its
 make chrome_store   # build/hush-extra-chrome-<version>.zip
 ```
 
-It is `make chrome` into `build/ChromeStore` with the manifest's `key` removed: the store rejects a `key`, and the private half of this one was never saved. The store item gets an ID of its own, which `hush-chrome-host` lets in next to the unpacked build's `peklpnngkdekjbeheogkeabpllgmnefj` (`scripts/src/chrome.js`). The version is Safari's (`WebExtension/manifest.json`); each upload needs a higher one.
+It is `make chrome` into `build/ChromeStore` with the manifest's `key` removed: the store rejects a `key`, and the private half of this one was never saved. The store item has an ID of its own, `megbdpijbohdgindboffkkklekhhnamp` (given by the dashboard on the first upload, 2026-11-13). `make chrome_host` registers the host for it next to the unpacked build's `peklpnngkdekjbeheogkeabpllgmnefj` (`STORE_EXTENSION_ID` in `scripts/src/chrome.js`); run it again on each Mac after this change. The version is Safari's (`WebExtension/manifest.json`); each upload needs a higher one.
 
 ## Listing
 

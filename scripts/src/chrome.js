@@ -26,12 +26,16 @@ export const extensionId = async (key) => {
 // background.js sends to this name, the same one Safari routes to the app.
 export const HOST_NAME = "ceo.nerd.hush";
 
-export const hostManifest = (path, id) => ({
+// The Chrome Web Store item's ID, which the dashboard gave it on the first
+// upload. The unpacked build keeps the ID from manifest.chrome.json's key.
+export const STORE_EXTENSION_ID = "megbdpijbohdgindboffkkklekhhnamp";
+
+export const hostManifest = (path, ids) => ({
   name: HOST_NAME,
   description: "Hush Extra settings",
   path,
   type: "stdio",
-  allowed_origins: [`chrome-extension://${id}/`],
+  allowed_origins: ids.map((id) => `chrome-extension://${id}/`),
 });
 
 // Each browser's user data folder under ~/Library/Application Support; it

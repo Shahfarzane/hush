@@ -30,18 +30,21 @@ Deno.test("The extension ID comes from the key", async () => {
   assertEquals(await extensionId(key), "peklpnngkdekjbeheogkeabpllgmnefj");
 });
 
-Deno.test("The host manifest lets only this extension in", () => {
+Deno.test("The host manifest lets in only the IDs it is given", () => {
   assertEquals(
-    hostManifest(
-      "/Users/me/hush-chrome-host",
+    hostManifest("/Users/me/hush-chrome-host", [
       "peklpnngkdekjbeheogkeabpllgmnefj",
-    ),
+      "megbdpijbohdgindboffkkklekhhnamp",
+    ]),
     {
       name: "ceo.nerd.hush",
       description: "Hush Extra settings",
       path: "/Users/me/hush-chrome-host",
       type: "stdio",
-      allowed_origins: ["chrome-extension://peklpnngkdekjbeheogkeabpllgmnefj/"],
+      allowed_origins: [
+        "chrome-extension://peklpnngkdekjbeheogkeabpllgmnefj/",
+        "chrome-extension://megbdpijbohdgindboffkkklekhhnamp/",
+      ],
     },
   );
 });

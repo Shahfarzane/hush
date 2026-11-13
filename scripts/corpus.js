@@ -454,7 +454,7 @@ const chromiumProfile = async () => {
   await Deno.mkdir(`${dir}/profile/NativeMessagingHosts`, { recursive: true });
   await Deno.writeTextFile(
     `${dir}/profile/NativeMessagingHosts/${HOST_NAME}.json`,
-    JSON.stringify(hostManifest(host, await CHROME_EXTENSION_ID)),
+    JSON.stringify(hostManifest(host, [await CHROME_EXTENSION_ID])),
   );
   return dir;
 };
