@@ -10,6 +10,15 @@ make chrome_store   # build/hush-extra-chrome-<version>.zip
 
 It is `make chrome` into `build/ChromeStore` with the manifest's `key` removed: the store rejects a `key`, and the private half of this one was never saved. The store item has an ID of its own, `megbdpijbohdgindboffkkklekhhnamp` (given by the dashboard on the first upload, 2026-11-13). `make chrome_host` registers the host for it next to the unpacked build's `peklpnngkdekjbeheogkeabpllgmnefj` (`STORE_EXTENSION_ID` in `scripts/src/chrome.js`); run it again on each Mac after this change. The version is Safari's (`WebExtension/manifest.json`); each upload needs a higher one.
 
+## Publishing a version
+
+```sh
+make chrome_store_status  # live and submitted revisions, from the API
+make chrome_publish       # make chrome_store, upload, submit for review
+```
+
+The store build's version is `<Safari version>.<commits on HEAD>` (1.0 was the first upload; the next is 1.0.<commits>), so each commit uploads higher. `scripts/chrome-publish.js` calls the Chrome Web Store API v2 (`scripts/src/web-store.js`) with a service account that is linked to the publisher in the dashboard (Settings > Service account) and has no Cloud roles. Its JSON key is the 1Password DEV document "Chrome Web Store API service account", read with `op-agents` into a temp folder removed on exit. An upload the store rejects stops before submitting. A submitted version is reviewed and then goes live by itself, Unlisted.
+
 ## Listing
 
 Name (from the manifest): Hush Extra

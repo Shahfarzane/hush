@@ -45,6 +45,7 @@ Chrome and Helium on the Mac run the same extension and share the app's settings
 make chrome        # builds build/ChromeExtension
 make chrome_host   # builds and signs the host, installs it in ~/Library/Application Support/Hush Extra, registers it with Chrome and Helium
 make chrome_store  # builds build/hush-extra-chrome-<version>.zip, the Chrome Web Store upload
+make chrome_publish  # builds it, uploads it and submits it for review through the Chrome Web Store API
 ```
 
 The extension is moving to the Chrome Web Store as an Unlisted item; the listing and permission answers are in [docs/chrome-web-store.md](docs/chrome-web-store.md).

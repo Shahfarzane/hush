@@ -59,3 +59,9 @@ Deno.test("The store upload carries no key and keeps the rest", () => {
   assertEquals(store.background, manifest.background);
   assertEquals(store.permissions, safari.permissions);
 });
+
+Deno.test("The store upload's version appends the build number", () => {
+  const store = storeManifest({ version: "1.0", key: "MIIB" }, 265);
+  assertEquals(store.version, "1.0.265");
+  assertEquals("key" in store, false);
+});
