@@ -5,6 +5,7 @@ import {
   extensionId,
   HOST_NAME,
   hostManifest,
+  STORE_EXTENSION_ID,
 } from "./src/chrome.js";
 
 const [hostPath] = Deno.args;
@@ -29,8 +30,10 @@ for (const [name, folder] of BROWSERS) {
   const path = `${hostsDir}/${HOST_NAME}.json`;
   Deno.writeTextFileSync(
     path,
-    `${JSON.stringify(hostManifest(hostPath, id), null, 2)}\n`,
+    `${
+      JSON.stringify(hostManifest(hostPath, [id, STORE_EXTENSION_ID]), null, 2)
+    }\n`,
   );
   console.error(`${name}: ${path}`);
 }
-console.error(`Extension ID: ${id}`);
+console.error(`Extension IDs: ${id} (unpacked), ${STORE_EXTENSION_ID} (store)`);

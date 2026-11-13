@@ -145,10 +145,22 @@ chrome:
 	$(MAKE) extension --silent EXTENSION_OUT="$(CHROME_OUT)"
 	deno run --allow-read=./WebExtension --allow-write="$(CHROME_OUT)" scripts/build-chrome.js "$(CHROME_OUT)"
 
+# The Chrome Web Store upload: the Chrome build without its `key`, zipped
+# into build/hush-extra-chrome-<version>.zip. The store item has an ID of its
+# own, which the host also lets in (STORE_EXTENSION_ID in scripts/src/chrome.js).
+chrome_store:
+	rm -rf build/ChromeStore
+	$(MAKE) chrome --silent CHROME_OUT=build/ChromeStore
+	version=$$(deno run --allow-read=build/ChromeStore --allow-write=build/ChromeStore scripts/chrome-store.js build/ChromeStore) && \
+	rm -f "build/hush-extra-chrome-$$version.zip" && \
+	(cd build/ChromeStore && zip -qrX "../hush-extra-chrome-$$version.zip" . -x '.*') && \
+	echo "build/hush-extra-chrome-$$version.zip"
+
 # The native messaging host Chrome and Helium start to read and write the
 # app's settings, built from the app's own settings code. It opens the
 # team's App Group, so it is signed with the team's Developer ID identity.
-# Registered for the extension ID that manifest.chrome.json's key gives.
+# Registered for the extension ID that manifest.chrome.json's key gives and
+# for the Chrome Web Store item's ID.
 CHROME_HOST_DIR ?= $(HOME)/Library/Application Support/Hush Extra
 CHROME_HOST_IDENTITY ?= Developer ID Application
 

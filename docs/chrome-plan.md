@@ -54,7 +54,7 @@ What is Safari-specific is the settings path: `background.js` reads and writes s
 ## Distribution
 
 1. **Load unpacked (chosen).** `chrome://extensions` (the same page in Helium), Developer mode, Load unpacked, pick `build/ChromeExtension`. It does not auto-update: after `make chrome`, press reload on the card. Branded Chrome 137 and later ignore the `--load-extension` flag, so the UI is the way in for Chrome itself; Chrome for Testing and Chromium still take the flag, which the corpus uses.
-2. **Chrome Web Store.** $5 one-time registration, a privacy policy at a public URL (this repo is private), review that `<all_urls>` plus `scripting` can lengthen ([review process](https://developer.chrome.com/docs/webstore/review-process)). A store item gets its own ID unless the key's private half is uploaded; the private half of the current key was never saved, so a store ID would be added to `allowed_origins` next to this one.
+2. **Chrome Web Store.** $5 one-time registration, a privacy policy at a public URL (the repo was private then; it is public now), review that `<all_urls>` plus `scripting` can lengthen ([review process](https://developer.chrome.com/docs/webstore/review-process)). A store item gets its own ID unless the key's private half is uploaded; the private half of the current key was never saved, so a store ID would be added to `allowed_origins` next to this one.
 3. **Self-hosted `.crx`.** Chrome on macOS refuses off-store installs without enterprise policy.
 
 ## What was built
@@ -89,3 +89,5 @@ What is Safari-specific is the settings path: `background.js` reads and writes s
 1. Chrome and Helium share the app's settings through a native host (Option B).
 2. Installed unpacked, for personal use; no Chrome Web Store for now.
 3. Build it now.
+
+Decision 2 superseded (Shahin, 2026-11-13): Hush Extra goes to the Chrome Web Store as an Unlisted item, so Chrome and Helium update it themselves. Upload, listing and permission answers: [chrome-web-store.md](chrome-web-store.md). Load unpacked stays for development.

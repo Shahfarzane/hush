@@ -1,5 +1,10 @@
 import { assertEquals } from "jsr:@std/assert@1";
-import { chromeManifest, extensionId, hostManifest } from "./chrome.js";
+import {
+  chromeManifest,
+  extensionId,
+  hostManifest,
+  storeManifest,
+} from "./chrome.js";
 
 const safari = {
   manifest_version: 3,
@@ -25,18 +30,32 @@ Deno.test("The extension ID comes from the key", async () => {
   assertEquals(await extensionId(key), "peklpnngkdekjbeheogkeabpllgmnefj");
 });
 
-Deno.test("The host manifest lets only this extension in", () => {
+Deno.test("The host manifest lets in only the IDs it is given", () => {
   assertEquals(
-    hostManifest(
-      "/Users/me/hush-chrome-host",
+    hostManifest("/Users/me/hush-chrome-host", [
       "peklpnngkdekjbeheogkeabpllgmnefj",
-    ),
+      "megbdpijbohdgindboffkkklekhhnamp",
+    ]),
     {
       name: "ceo.nerd.hush",
       description: "Hush Extra settings",
       path: "/Users/me/hush-chrome-host",
       type: "stdio",
-      allowed_origins: ["chrome-extension://peklpnngkdekjbeheogkeabpllgmnefj/"],
+      allowed_origins: [
+        "chrome-extension://peklpnngkdekjbeheogkeabpllgmnefj/",
+        "chrome-extension://megbdpijbohdgindboffkkklekhhnamp/",
+      ],
     },
   );
+});
+
+Deno.test("The store upload carries no key and keeps the rest", () => {
+  const manifest = chromeManifest(safari, {
+    key: "MIIB",
+    background: { service_worker: "background.js" },
+  });
+  const store = storeManifest(manifest);
+  assertEquals("key" in store, false);
+  assertEquals(store.background, manifest.background);
+  assertEquals(store.permissions, safari.permissions);
 });

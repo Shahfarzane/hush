@@ -9,6 +9,10 @@ export const chromeManifest = (manifest, overlay) => ({
   ...overlay,
 });
 
+// The Chrome Web Store upload: the store rejects a manifest that carries
+// `key`, and gives the item an ID of its own.
+export const storeManifest = ({ key: _key, ...manifest }) => manifest;
+
 // Chrome derives an extension's ID from its public key: the first 16 bytes
 // of the key's SHA-256, each hex digit written as a letter from a to p.
 export const extensionId = async (key) => {
@@ -22,12 +26,16 @@ export const extensionId = async (key) => {
 // background.js sends to this name, the same one Safari routes to the app.
 export const HOST_NAME = "ceo.nerd.hush";
 
-export const hostManifest = (path, id) => ({
+// The Chrome Web Store item's ID, which the dashboard gave it on the first
+// upload. The unpacked build keeps the ID from manifest.chrome.json's key.
+export const STORE_EXTENSION_ID = "megbdpijbohdgindboffkkklekhhnamp";
+
+export const hostManifest = (path, ids) => ({
   name: HOST_NAME,
   description: "Hush Extra settings",
   path,
   type: "stdio",
-  allowed_origins: [`chrome-extension://${id}/`],
+  allowed_origins: ids.map((id) => `chrome-extension://${id}/`),
 });
 
 // Each browser's user data folder under ~/Library/Application Support; it
