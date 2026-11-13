@@ -172,7 +172,7 @@ chrome_store_status:
 	CWS_SERVICE_ACCOUNT_KEY="$$dir/key.json" $(CWS_DENO) status
 
 chrome_publish:
-	zip=$$($(MAKE) --silent chrome_store | tail -1) && \
+	out=$$($(MAKE) --silent chrome_store) && zip=$$(printf '%s\n' "$$out" | tail -1) && \
 	dir=$$(mktemp -d) && trap 'rm -rf "$${dir:?}"' EXIT && \
 	op-agents document get "$(CWS_KEY_ITEM)" --vault DEV --out-file "$$dir/key.json" --force >/dev/null && \
 	CWS_SERVICE_ACCOUNT_KEY="$$dir/key.json" $(CWS_DENO) publish "$$zip"

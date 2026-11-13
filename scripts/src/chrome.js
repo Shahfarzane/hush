@@ -13,10 +13,13 @@ export const chromeManifest = (manifest, overlay) => ({
 // `key`, and gives the item an ID of its own. Each upload needs a higher
 // version than the last, so the store build appends a build number (commits
 // on HEAD) to Safari's version: 1.0 becomes 1.0.<build>.
-export const storeManifest = ({ key: _key, ...manifest }, build) => ({
-  ...manifest,
-  ...(build === undefined ? {} : { version: `${manifest.version}.${build}` }),
-});
+export const storeManifest = ({ key: _key, ...manifest }, build) => {
+  if (build === undefined) return manifest;
+  if (!Number.isInteger(build) || build < 1 || build > 65535) {
+    throw new Error(`build number must be 1 to 65535, got ${build}`);
+  }
+  return { ...manifest, version: `${manifest.version}.${build}` };
+};
 
 // Chrome derives an extension's ID from its public key: the first 16 bytes
 // of the key's SHA-256, each hex digit written as a letter from a to p.
