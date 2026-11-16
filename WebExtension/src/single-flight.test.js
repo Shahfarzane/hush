@@ -1,7 +1,8 @@
-import { assertEquals } from "jsr:@std/assert@1";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import { singleFlight } from "./single-flight.js";
 
-Deno.test("Overlapping calls share one run, later calls start another", async () => {
+test("Overlapping calls share one run, later calls start another", async () => {
   let runs = 0;
   let finish;
   const read = singleFlight(() => {
@@ -11,16 +12,16 @@ Deno.test("Overlapping calls share one run, later calls start another", async ()
 
   const overlapping = Array.from({ length: 5 }, () => read());
   finish("settings");
-  assertEquals(await Promise.all(overlapping), Array(5).fill("settings"));
-  assertEquals(runs, 1);
+  assert.deepEqual(await Promise.all(overlapping), Array(5).fill("settings"));
+  assert.deepEqual(runs, 1);
 
   const later = read();
   finish("newer");
-  assertEquals(await later, "newer");
-  assertEquals(runs, 2);
+  assert.deepEqual(await later, "newer");
+  assert.deepEqual(runs, 2);
 });
 
-Deno.test("A failed run lets the next call try again", async () => {
+test("A failed run lets the next call try again", async () => {
   let runs = 0;
   const read = singleFlight(() => {
     runs += 1;
@@ -30,6 +31,6 @@ Deno.test("A failed run lets the next call try again", async () => {
   });
 
   await read().catch(() => {});
-  assertEquals(await read(), "settings");
-  assertEquals(runs, 2);
+  assert.deepEqual(await read(), "settings");
+  assert.deepEqual(runs, 2);
 });

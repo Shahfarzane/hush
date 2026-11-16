@@ -2,8 +2,10 @@
 // rule refresh) and prints Markdown for the refresh pull request: the count
 // per status and every site whose result changed. Both runs come from the
 // same machine, so sites a bot wall stops show up the same way in both.
-const [beforePath, afterPath] = Deno.args;
-const read = async (path) => JSON.parse(await Deno.readTextFile(path));
+import { readFile } from "node:fs/promises";
+
+const [beforePath, afterPath] = process.argv.slice(2);
+const read = async (path) => JSON.parse(await readFile(path, "utf8"));
 const before = await read(beforePath);
 const after = await read(afterPath);
 

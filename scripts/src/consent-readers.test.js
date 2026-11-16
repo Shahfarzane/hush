@@ -1,4 +1,5 @@
-import { assertEquals } from "jsr:@std/assert@1";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import { mismatches, readers } from "./consent-readers.js";
 
 const FUNCTIONAL_ONLY = {
@@ -11,20 +12,20 @@ const FUNCTIONAL_ONLY = {
 const jar = (entries) =>
   Object.entries(entries).map(([name, value]) => ({ name, value }));
 
-Deno.test("Cookiebot preferences count as functional", () => {
+test("Cookiebot preferences count as functional", () => {
   const cookies = jar({
     CookieConsent:
       "{stamp:%27x%27%2Cnecessary:true%2Cpreferences:true%2Cstatistics:false%2Cmarketing:false%2Cmethod:%27explicit%27}",
   });
-  assertEquals(readers.cookiebot({ cookies }), {
+  assert.deepEqual(readers.cookiebot({ cookies }), {
     functional: true,
     performance: false,
     advertising: false,
   });
 });
 
-Deno.test("OneTrust groups map with and without the C000 prefix", () => {
-  assertEquals(
+test("OneTrust groups map with and without the C000 prefix", () => {
+  assert.deepEqual(
     readers.onetrust({
       cookies: jar({
         OptanonConsent:
@@ -33,7 +34,7 @@ Deno.test("OneTrust groups map with and without the C000 prefix", () => {
     }),
     { performance: false, functional: true, advertising: true },
   );
-  assertEquals(
+  assert.deepEqual(
     readers.onetrust({
       cookies: jar({ OptanonConsent: "groups=1%3A1%2C2%3A0%2C3%3A1%2C4%3A0" }),
     }),
@@ -41,14 +42,14 @@ Deno.test("OneTrust groups map with and without the C000 prefix", () => {
   );
 });
 
-Deno.test("OneTrust classifies renamed groups by name and skips always active", () => {
+test("OneTrust classifies renamed groups by name and skips always active", () => {
   const onetrustGroups = [
     { id: "f00", name: "First Party Functional Cookies", status: "inactive" },
     { id: "m00", name: "First Party Performance Cookies", status: "inactive" },
     { id: "t00", name: " First Party Targeting Cookies", status: "inactive" },
     { id: "m03", name: "Match and combine data", status: "always active" },
   ];
-  assertEquals(
+  assert.deepEqual(
     readers.onetrust({
       cookies: jar({
         OptanonConsent:
@@ -60,8 +61,8 @@ Deno.test("OneTrust classifies renamed groups by name and skips always active", 
   );
 });
 
-Deno.test("Didomi and Cookie Information read their purpose lists", () => {
-  assertEquals(
+test("Didomi and Cookie Information read their purpose lists", () => {
+  assert.deepEqual(
     readers.didomi({
       didomi: {
         enabled: ["functional_cookies"],
@@ -70,7 +71,7 @@ Deno.test("Didomi and Cookie Information read their purpose lists", () => {
     }),
     { functional: true, advertising: false, performance: false },
   );
-  assertEquals(
+  assert.deepEqual(
     readers.cookieinformation({
       cookies: jar({
         CookieInformationConsent: encodeURIComponent(JSON.stringify({
@@ -88,8 +89,8 @@ Deno.test("Didomi and Cookie Information read their purpose lists", () => {
   );
 });
 
-Deno.test("Usercentrics categories classify by name", () => {
-  assertEquals(
+test("Usercentrics categories classify by name", () => {
+  assert.deepEqual(
     readers.usercentrics({
       usercentrics: [
         { category: "Functional", status: true },
@@ -99,7 +100,7 @@ Deno.test("Usercentrics categories classify by name", () => {
     }),
     { functional: true, advertising: false, performance: false },
   );
-  assertEquals(
+  assert.deepEqual(
     readers.usercentrics({
       usercentrics: [
         { category: "Funktional", status: true },
@@ -110,15 +111,15 @@ Deno.test("Usercentrics categories classify by name", () => {
   );
 });
 
-Deno.test("TCF purposes split into advertising, performance and other", () => {
-  assertEquals(
+test("TCF purposes split into advertising, performance and other", () => {
+  assert.deepEqual(
     readers.tcf({ tcData: { purposes: { 1: false, 7: true, 9: false } } }),
     { advertising: true, performance: false, other: false },
   );
 });
 
-Deno.test("CookieYes, Complianz and TrustArc use their own field names", () => {
-  assertEquals(
+test("CookieYes, Complianz and TrustArc use their own field names", () => {
+  assert.deepEqual(
     readers.cookieyes({
       cookies: jar({
         "cookieyes-consent":
@@ -127,7 +128,7 @@ Deno.test("CookieYes, Complianz and TrustArc use their own field names", () => {
     }),
     { functional: true, performance: false, advertising: false },
   );
-  assertEquals(
+  assert.deepEqual(
     readers.complianz({
       cookies: jar({
         cmplz_preferences: "allow",
@@ -137,15 +138,15 @@ Deno.test("CookieYes, Complianz and TrustArc use their own field names", () => {
     }),
     { functional: true, performance: false, advertising: false },
   );
-  assertEquals(
+  assert.deepEqual(
     readers.trustarc({ cookies: jar({ notice_preferences: "1:" }) }),
     { functional: true, advertising: false },
   );
 });
 
-Deno.test("Nothing stored reads as null", () => {
+test("Nothing stored reads as null", () => {
   for (const read of Object.values(readers)) {
-    assertEquals(
+    assert.deepEqual(
       read({
         cookies: [],
         tcData: null,
@@ -161,16 +162,16 @@ Deno.test("Nothing stored reads as null", () => {
   }
 });
 
-Deno.test("Mismatches list only categories that differ from the level", () => {
-  assertEquals(
+test("Mismatches list only categories that differ from the level", () => {
+  assert.deepEqual(
     mismatches({ functional: true, advertising: true }, FUNCTIONAL_ONLY),
     ["advertising=true"],
   );
-  assertEquals(mismatches({ other: false }, FUNCTIONAL_ONLY), []);
+  assert.deepEqual(mismatches({ other: false }, FUNCTIONAL_ONLY), []);
 });
 
-Deno.test("Fallback platforms read their own consent records", () => {
-  assertEquals(
+test("Fallback platforms read their own consent records", () => {
+  assert.deepEqual(
     readers.cookiefirst({
       cookies: jar({
         "cookiefirst-consent": encodeURIComponent(
@@ -180,7 +181,7 @@ Deno.test("Fallback platforms read their own consent records", () => {
     }),
     { functional: false, performance: false, advertising: false },
   );
-  assertEquals(
+  assert.deepEqual(
     readers.osano({
       osano: {
         ANALYTICS: "DENY",
@@ -190,13 +191,13 @@ Deno.test("Fallback platforms read their own consent records", () => {
     }),
     { performance: false, advertising: false, functional: true },
   );
-  assertEquals(
+  assert.deepEqual(
     readers.ketch({
       ketch: { analytics: false, targeted_advertising: false, essential: true },
     }),
     { performance: false, advertising: false },
   );
-  assertEquals(
+  assert.deepEqual(
     readers.axeptio({
       cookies: jar({
         axeptio_cookies: encodeURIComponent(
@@ -208,35 +209,35 @@ Deno.test("Fallback platforms read their own consent records", () => {
   );
 });
 
-Deno.test("Yahoo's EuConsent string reads as a full refusal", () => {
+test("Yahoo's EuConsent string reads as a full refusal", () => {
   // Stored by consent.yahoo.com after "Reject all": no purpose consented.
   const refused = "CQs89sAQs89sAAOACKSVC1FgAAAAAAAAACiQAAAAAAAA.IMytB9G7";
-  assertEquals(readers.yahoo({ cookies: jar({ EuConsent: refused }) }), {
+  assert.deepEqual(readers.yahoo({ cookies: jar({ EuConsent: refused }) }), {
     advertising: false,
     performance: false,
     other: false,
   });
-  assertEquals(readers.yahoo({ cookies: [] }), null);
+  assert.deepEqual(readers.yahoo({ cookies: [] }), null);
 });
 
-Deno.test("Bing's BCP cookie maps analytics and social media", () => {
-  assertEquals(
+test("Bing's BCP cookie maps analytics and social media", () => {
+  assert.deepEqual(
     readers.bing({ cookies: jar({ BCP: "AD=0&AL=1&SM=0" }) }),
     { performance: true, advertising: false },
   );
-  assertEquals(
+  assert.deepEqual(
     readers.bing({ cookies: jar({ BCP: "AD=0&AL=0&SM=1" }) }),
     { performance: false, advertising: true },
   );
-  assertEquals(readers.bing({ cookies: [] }), null);
+  assert.deepEqual(readers.bing({ cookies: [] }), null);
 });
 
-Deno.test("MediaMarkt's pwaconsent maps comfort and marketing", () => {
+test("MediaMarkt's pwaconsent maps comfort and marketing", () => {
   const cookie = (comfort, marketing) =>
     encodeURIComponent(
       `v:1.1&id:789f3a&createdMs:1793517599174~required:1&clf:1,gtm:1|comfort:${comfort}&aic:0,aid:0|marketing:${marketing}&fb:0`,
     );
-  assertEquals(
+  assert.deepEqual(
     readers.mediamarkt({ cookies: jar({ pwaconsent: cookie(0, 0) }) }),
     {
       functional: false,
@@ -244,18 +245,18 @@ Deno.test("MediaMarkt's pwaconsent maps comfort and marketing", () => {
       advertising: false,
     },
   );
-  assertEquals(
+  assert.deepEqual(
     readers.mediamarkt({ cookies: jar({ pwaconsent: cookie(1, 0) }) }),
     { functional: true, performance: true, advertising: false },
   );
-  assertEquals(readers.mediamarkt({ cookies: [] }), null);
+  assert.deepEqual(readers.mediamarkt({ cookies: [] }), null);
 });
 
-Deno.test("Revolut's rev_cookie_consent maps its three categories", () => {
+test("Revolut's rev_cookie_consent maps its three categories", () => {
   const cookie = encodeURIComponent(
     '{"preferences":true,"analytics":false,"advertising":false}',
   );
-  assertEquals(
+  assert.deepEqual(
     readers.revolut({ cookies: jar({ rev_cookie_consent: cookie }) }),
     {
       functional: true,
@@ -263,43 +264,46 @@ Deno.test("Revolut's rev_cookie_consent maps its three categories", () => {
       advertising: false,
     },
   );
-  assertEquals(readers.revolut({ cookies: [] }), null);
+  assert.deepEqual(readers.revolut({ cookies: [] }), null);
 });
 
-Deno.test("X's d_prefs tells Accept all from Refuse non-essential", () => {
+test("X's d_prefs tells Accept all from Refuse non-essential", () => {
   const refused = "MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw";
   const accepted = "MToxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw";
-  assertEquals(readers.x({ cookies: jar({ d_prefs: refused }) }), {
+  assert.deepEqual(readers.x({ cookies: jar({ d_prefs: refused }) }), {
     performance: false,
     advertising: false,
   });
-  assertEquals(readers.x({ cookies: jar({ d_prefs: accepted }) }), {
+  assert.deepEqual(readers.x({ cookies: jar({ d_prefs: accepted }) }), {
     performance: true,
     advertising: true,
   });
 });
 
-Deno.test("iubenda's purposes map to Hush categories", () => {
+test("iubenda's purposes map to Hush categories", () => {
   const rejected = encodeURIComponent(
     '{"version":"1.109.0","purposes":{"1":true,"2":false,"3":false,"4":false,"5":false},"id":252372}',
   );
-  assertEquals(readers.iubenda({ cookies: jar({ "_iub_cs-s1": rejected }) }), {
-    functional: false,
-    other: false,
-    performance: false,
-    advertising: false,
-  });
+  assert.deepEqual(
+    readers.iubenda({ cookies: jar({ "_iub_cs-s1": rejected }) }),
+    {
+      functional: false,
+      other: false,
+      performance: false,
+      advertising: false,
+    },
+  );
   const functional = encodeURIComponent(
     '{"purposes":{"1":true,"2":true,"3":false,"4":false,"5":false}}',
   );
-  assertEquals(
+  assert.deepEqual(
     readers.iubenda({ cookies: jar({ "_iub_cs-123": functional }) }).functional,
     true,
   );
   const flagOnly = encodeURIComponent(
     '{"version":"1.109.0","consent":false,"id":82108305}',
   );
-  assertEquals(
+  assert.deepEqual(
     readers.iubenda({
       cookies: jar({
         "_iub_cs-s1-granular": '{"gac":"Mn5"}',
@@ -308,10 +312,10 @@ Deno.test("iubenda's purposes map to Hush categories", () => {
     }),
     { functional: false, other: false, performance: false, advertising: false },
   );
-  assertEquals(readers.iubenda({ cookies: [] }), null);
+  assert.deepEqual(readers.iubenda({ cookies: [] }), null);
 });
 
-Deno.test("GetTerms' getterms_cookie_consent maps its categories", () => {
+test("GetTerms' getterms_cookie_consent maps its categories", () => {
   const cookie = encodeURIComponent(JSON.stringify({
     widget_preferences_set: true,
     cookie_preferences: {
@@ -322,26 +326,26 @@ Deno.test("GetTerms' getterms_cookie_consent maps its categories", () => {
       Unclassified: false,
     },
   }));
-  assertEquals(
+  assert.deepEqual(
     readers.getterms({ cookies: jar({ getterms_cookie_consent: cookie }) }),
     { functional: true, performance: false, advertising: false, other: false },
   );
-  assertEquals(readers.getterms({ cookies: [] }), null);
+  assert.deepEqual(readers.getterms({ cookies: [] }), null);
 });
 
-Deno.test("Nordiblinds' cookie_prefs_new maps its categories", () => {
+test("Nordiblinds' cookie_prefs_new maps its categories", () => {
   const cookie = encodeURIComponent(
     '{"essential":true,"functional":true,"analytics":false,"marketing":false}',
   );
-  assertEquals(
+  assert.deepEqual(
     readers.nordiblinds({ cookies: jar({ cookie_prefs_new: cookie }) }),
     { functional: true, performance: false, advertising: false },
   );
-  assertEquals(readers.nordiblinds({ cookies: [] }), null);
+  assert.deepEqual(readers.nordiblinds({ cookies: [] }), null);
 });
 
-Deno.test("Snap keeps one cookie per category", () => {
-  assertEquals(
+test("Snap keeps one cookie per category", () => {
+  assert.deepEqual(
     readers.snap({
       cookies: jar({
         "sc-cookies-accepted": "true",
@@ -352,102 +356,102 @@ Deno.test("Snap keeps one cookie per category", () => {
     }),
     { functional: true, performance: false, advertising: false },
   );
-  assertEquals(readers.snap({ cookies: [] }), null);
+  assert.deepEqual(readers.snap({ cookies: [] }), null);
 });
 
-Deno.test("Universal AV's CookieConsent groups say granted or denied", () => {
+test("Universal AV's CookieConsent groups say granted or denied", () => {
   const cookie = encodeURIComponent(JSON.stringify({
     accepted: true,
     groups: { necessary: "granted", analytics: "denied", marketing: "denied" },
   }));
-  assertEquals(
+  assert.deepEqual(
     readers.uniav({ cookies: jar({ CookieConsent: cookie }) }),
     { performance: false, advertising: false },
   );
-  assertEquals(readers.uniav({ cookies: [] }), null);
+  assert.deepEqual(readers.uniav({ cookies: [] }), null);
 });
 
-Deno.test("BeTheme's mfnConsent holds Google consent mode values", () => {
+test("BeTheme's mfnConsent holds Google consent mode values", () => {
   const cookie = encodeURIComponent(JSON.stringify({
     ad_storage: "denied",
     ad_user_data: "denied",
     ad_personalization: "denied",
     analytics_storage: "denied",
   }));
-  assertEquals(
+  assert.deepEqual(
     readers.betheme({ cookies: jar({ mfnConsent: cookie }) }),
     { performance: false, advertising: false },
   );
-  assertEquals(readers.betheme({ cookies: [] }), null);
+  assert.deepEqual(readers.betheme({ cookies: [] }), null);
 });
 
-Deno.test("Audible's TrustArc lists each category it allows", () => {
+test("Audible's TrustArc lists each category it allows", () => {
   const stored = (value) => ({
     cookies: [{ name: "notice_gdpr_prefs", value }],
   });
-  assertEquals(readers.audible(stored("0%7C2%3A")), {
+  assert.deepEqual(readers.audible(stored("0%7C2%3A")), {
     performance: false,
     functional: true,
     advertising: false,
   });
-  assertEquals(readers.audible(stored("0:")), {
+  assert.deepEqual(readers.audible(stored("0:")), {
     performance: false,
     functional: false,
     advertising: false,
   });
-  assertEquals(readers.audible(stored("0|1|2|3:")), {
+  assert.deepEqual(readers.audible(stored("0|1|2|3:")), {
     performance: true,
     functional: true,
     advertising: true,
   });
-  assertEquals(readers.audible({ cookies: [] }), null);
+  assert.deepEqual(readers.audible({ cookies: [] }), null);
 });
 
-Deno.test("adidas' notice_preferences lists the categories it allows", () => {
+test("adidas' notice_preferences lists the categories it allows", () => {
   const stored = (value) => ({
     cookies: [{ name: "notice_preferences", value }],
   });
-  assertEquals(readers.adidas(stored("%5B0%5D")), {
+  assert.deepEqual(readers.adidas(stored("%5B0%5D")), {
     functional: false,
     performance: false,
     advertising: false,
   });
   // "Functional" also turns on analytics, so it counts as both.
-  assertEquals(readers.adidas(stored("%5B0%2C1%5D")), {
+  assert.deepEqual(readers.adidas(stored("%5B0%2C1%5D")), {
     functional: true,
     performance: true,
     advertising: false,
   });
-  assertEquals(readers.adidas(stored("%5B0%2C1%2C2%5D")), {
+  assert.deepEqual(readers.adidas(stored("%5B0%2C1%2C2%5D")), {
     functional: true,
     performance: true,
     advertising: true,
   });
   // TrustArc's own format is not adidas'.
-  assertEquals(readers.adidas(stored("2:")), null);
-  assertEquals(readers.adidas({ cookies: [] }), null);
+  assert.deepEqual(readers.adidas(stored("2:")), null);
+  assert.deepEqual(readers.adidas({ cookies: [] }), null);
 });
 
-Deno.test("Brandfetch's bf_consent has one flag per switch", () => {
+test("Brandfetch's bf_consent has one flag per switch", () => {
   const stored = (value) => ({ cookies: [{ name: "bf_consent", value }] });
-  assertEquals(readers.brandfetch(stored("1.001.1794378997")), {
+  assert.deepEqual(readers.brandfetch(stored("1.001.1794378997")), {
     performance: false,
     advertising: false,
     functional: true,
   });
-  assertEquals(
+  assert.deepEqual(
     mismatches(readers.brandfetch(stored("1.001.1794378997")), FUNCTIONAL_ONLY),
     [],
   );
-  assertEquals(readers.brandfetch(stored("1.110.1794379014")), {
+  assert.deepEqual(readers.brandfetch(stored("1.110.1794379014")), {
     performance: true,
     advertising: true,
     functional: false,
   });
-  assertEquals(readers.brandfetch(stored("1.111.1794379042")), {
+  assert.deepEqual(readers.brandfetch(stored("1.111.1794379042")), {
     performance: true,
     advertising: true,
     functional: true,
   });
-  assertEquals(readers.brandfetch({ cookies: [] }), null);
+  assert.deepEqual(readers.brandfetch({ cookies: [] }), null);
 });

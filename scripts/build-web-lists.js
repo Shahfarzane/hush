@@ -1,5 +1,6 @@
 // Writes the lists the Safari web extension loads in place of a content
 // blocker: build-web-lists.js <extension dir> <per-site JSON path>.
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { buildWebLists } from "./src/web-lists.js";
 import { parseMarkers } from "./src/answer-mode.js";
 
@@ -13,9 +14,8 @@ const IGNORE_LIST = "../data/ignored.txt";
 const ANSWER_MODE_EXCLUSIONS = "../data/answer-mode-exclusions.txt";
 const ANSWER_MODE_ALLOW = "../data/answer-mode-allow.txt";
 
-const [extensionDir, perSitePath] = Deno.args;
-const resolveRelative = (path) => new URL(path, import.meta.url).pathname;
-const read = (path) => Deno.readTextFileSync(resolveRelative(path));
+const [extensionDir, perSitePath] = process.argv.slice(2);
+const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 const ignored = new Set(read(IGNORE_LIST).split("\n"));
 const text = LISTS.map(read).join("\n").split("\n")
@@ -26,17 +26,17 @@ const lists = buildWebLists(
   read(ANSWER_MODE_ALLOW),
 );
 
-Deno.mkdirSync(`${extensionDir}/rules`, { recursive: true });
-Deno.writeTextFileSync(
+mkdirSync(`${extensionDir}/rules`, { recursive: true });
+writeFileSync(
   `${extensionDir}/rules/block-answer.json`,
   JSON.stringify(lists.rules.answer),
 );
-Deno.writeTextFileSync(
+writeFileSync(
   `${extensionDir}/rules/block-hide-only.json`,
   JSON.stringify(lists.rules.hideOnly),
 );
-Deno.writeTextFileSync(`${extensionDir}/hide.css`, lists.css);
-Deno.writeTextFileSync(perSitePath, JSON.stringify(lists.perSite));
+writeFileSync(`${extensionDir}/hide.css`, lists.css);
+writeFileSync(perSitePath, JSON.stringify(lists.perSite));
 console.error(
   `rules: ${lists.rules.answer.length} + ${lists.rules.hideOnly.length} hide-only, ` +
     `generic CSS: ${lists.css.length} bytes, per-site: ${

@@ -16,9 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: denoland/setup-deno@v2
+      - uses: actions/setup-node@v7
         with:
-          deno-version: v2.x
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
       - run: make test_unit
       - run: make check_format
 
@@ -27,10 +29,13 @@ jobs:
     runs-on: xcode-27
     steps:
       - uses: actions/checkout@v7
-      # The Xcode build runs `make xcode_extension`, which needs Deno.
-      - uses: denoland/setup-deno@v2
+      # The Xcode build runs `make xcode_extension`, which needs Node and the
+      # packages in package-lock.json.
+      - uses: actions/setup-node@v7
         with:
-          deno-version: v2.x
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
       - name: Use Xcode 27.2
         run: sudo xcode-select --switch /Applications/Xcode_27.2.app
       - name: Build the iOS app

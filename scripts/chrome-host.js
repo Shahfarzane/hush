@@ -1,5 +1,6 @@
 // Registers the native messaging host with each browser in BROWSERS that has
 // run on this Mac: chrome-host.js <host path>.
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import {
   BROWSERS,
   extensionId,
@@ -8,27 +9,26 @@ import {
   STORE_EXTENSION_ID,
 } from "./src/chrome.js";
 
-const [hostPath] = Deno.args;
+const [hostPath] = process.argv.slice(2);
 const { key } = JSON.parse(
-  Deno.readTextFileSync(
+  readFileSync(
     new URL("../WebExtension/manifest.chrome.json", import.meta.url),
+    "utf8",
   ),
 );
 const id = await extensionId(key);
-const support = `${Deno.env.get("HOME")}/Library/Application Support`;
+const support = `${process.env.HOME}/Library/Application Support`;
 
 for (const [name, folder] of BROWSERS) {
   const dataDir = `${support}/${folder}`;
-  try {
-    Deno.statSync(dataDir);
-  } catch {
+  if (!existsSync(dataDir)) {
     console.error(`${name}: not on this Mac, skipped`);
     continue;
   }
   const hostsDir = `${dataDir}/NativeMessagingHosts`;
-  Deno.mkdirSync(hostsDir, { recursive: true });
+  mkdirSync(hostsDir, { recursive: true });
   const path = `${hostsDir}/${HOST_NAME}.json`;
-  Deno.writeTextFileSync(
+  writeFileSync(
     path,
     `${
       JSON.stringify(hostManifest(hostPath, [id, STORE_EXTENSION_ID]), null, 2)

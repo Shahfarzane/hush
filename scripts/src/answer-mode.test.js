@@ -1,4 +1,6 @@
-import { assertEquals } from "jsr:@std/assert@1";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { test } from "node:test";
 import {
   isAnswerModeExcluded,
   parseMarkers,
@@ -6,12 +8,13 @@ import {
 } from "./answer-mode.js";
 
 const markers = parseMarkers(
-  await Deno.readTextFile(
+  await readFile(
     new URL("../../data/answer-mode-exclusions.txt", import.meta.url),
+    "utf8",
   ),
 );
 
-Deno.test("Hide and block rules of answered platforms are dropped", () => {
+test("Hide and block rules of answered platforms are dropped", () => {
   for (
     const line of [
       "###onetrust-consent-sdk",
@@ -30,11 +33,11 @@ Deno.test("Hide and block rules of answered platforms are dropped", () => {
       "ConsentManager$script,third-party",
     ]
   ) {
-    assertEquals(isAnswerModeExcluded(line, markers), true, line);
+    assert.deepEqual(isAnswerModeExcluded(line, markers), true, line);
   }
 });
 
-Deno.test("Look-alikes, exceptions and unlisted platforms stay", () => {
+test("Look-alikes, exceptions and unlisted platforms stay", () => {
   for (
     const line of [
       "###cookiebottombar",
@@ -48,12 +51,12 @@ Deno.test("Look-alikes, exceptions and unlisted platforms stay", () => {
       "! OneTrust comment",
     ]
   ) {
-    assertEquals(isAnswerModeExcluded(line, markers), false, line);
+    assert.deepEqual(isAnswerModeExcluded(line, markers), false, line);
   }
 });
 
-Deno.test("Stripping keeps every other line in order", () => {
-  assertEquals(
+test("Stripping keeps every other line in order", () => {
+  assert.deepEqual(
     stripAnswerModeExclusions(
       "###a\n###onetrust-banner-sdk\n@@||onetrust.com^\n###b",
       markers,

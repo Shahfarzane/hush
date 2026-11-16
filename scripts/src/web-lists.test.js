@@ -1,4 +1,6 @@
-import { assertEquals, assertThrows } from "jsr:@std/assert@1";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { test } from "node:test";
 import { buildWebLists } from "./web-lists.js";
 import { createMatcher } from "./dnr.js";
 import { siteCss } from "../../WebExtension/src/hide-css.js";
@@ -18,8 +20,8 @@ shop.example#@#.shared-popup
 
 const lists = buildWebLists(LISTS, ["cmp"]);
 
-Deno.test("Block lines become declarativeNetRequest rules", () => {
-  assertEquals(lists.rules.answer, [
+test("Block lines become declarativeNetRequest rules", () => {
+  assert.deepEqual(lists.rules.answer, [
     {
       id: 1,
       priority: 1,
@@ -38,7 +40,7 @@ Deno.test("Block lines become declarativeNetRequest rules", () => {
     },
   ]);
   // Answer mode leaves the "cmp" platform for the engines to answer.
-  assertEquals(lists.rules.hideOnly, [
+  assert.deepEqual(lists.rules.hideOnly, [
     {
       id: 1,
       priority: 1,
@@ -52,36 +54,39 @@ Deno.test("Block lines become declarativeNetRequest rules", () => {
   ]);
 });
 
-Deno.test("Generic selectors no site exempts go in the stylesheet", () => {
-  assertEquals(lists.css, ".cookie-banner{display:none!important}\n");
-  assertEquals(lists.perSite.hideOnly, [".cmp-wall"]);
-  assertEquals(lists.genericHideOff, ["generichide.example"]);
+test("Generic selectors no site exempts go in the stylesheet", () => {
+  assert.deepEqual(lists.css, ".cookie-banner{display:none!important}\n");
+  assert.deepEqual(lists.perSite.hideOnly, [".cmp-wall"]);
+  assert.deepEqual(lists.genericHideOff, ["generichide.example"]);
 });
 
-Deno.test("Site rules and exceptions apply per site and subdomain", () => {
+test("Site rules and exceptions apply per site and subdomain", () => {
   const css = (host, mode = "answer") => siteCss(lists.perSite, host, mode);
-  assertEquals(
+  assert.deepEqual(
     css("news.example"),
     ".local-notice{display:none!important}\n.shared-popup{display:none!important}\n",
   );
   // shop.example exempts .shared-popup but keeps its own rule.
-  assertEquals(
+  assert.deepEqual(
     css("www.shop.example"),
     ".local-notice{display:none!important}\n",
   );
-  assertEquals(css("other.example"), ".shared-popup{display:none!important}\n");
-  assertEquals(
+  assert.deepEqual(
+    css("other.example"),
+    ".shared-popup{display:none!important}\n",
+  );
+  assert.deepEqual(
     css("other.example", "hide"),
     ".shared-popup{display:none!important}\n.cmp-wall{display:none!important}\n",
   );
 });
 
-Deno.test("Options the extension cannot express are refused", () => {
-  assertThrows(() => buildWebLists("||x.example^$popup", []));
-  assertThrows(() => buildWebLists("example.com#?#div:has-text(Cookies)", []));
+test("Options the extension cannot express are refused", () => {
+  assert.throws(() => buildWebLists("||x.example^$popup", []));
+  assert.throws(() => buildWebLists("example.com#?#div:has-text(Cookies)", []));
 });
 
-Deno.test("Answer mode lets its allow list through, Only hide it does not", () => {
+test("Answer mode lets its allow list through, Only hide it does not", () => {
   const built = buildWebLists(
     "/gdpr-consent-\n",
     [],
@@ -94,23 +99,23 @@ Deno.test("Answer mode lets its allow list through, Only hide it does not", () =
     type: "script",
     initiator: "www.shop.example",
   };
-  assertEquals(answer(listed), false);
-  assertEquals(hide(listed), true);
+  assert.deepEqual(answer(listed), false);
+  assert.deepEqual(hide(listed), true);
   // Only on the sites the line names.
-  assertEquals(answer({ ...listed, initiator: "other.example" }), true);
+  assert.deepEqual(answer({ ...listed, initiator: "other.example" }), true);
   const other = {
     url: "https://other.example/js/gdpr-consent-banner.js",
     type: "script",
     initiator: "other.example",
   };
-  assertEquals(answer(other), true);
-  assertEquals(hide(other), true);
-  assertThrows(() => buildWebLists("", [], "||cdn.example^"));
+  assert.deepEqual(answer(other), true);
+  assert.deepEqual(hide(other), true);
+  assert.throws(() => buildWebLists("", [], "||cdn.example^"));
 });
 
-Deno.test("Answer mode lets scripts through only where a site rule answers", async () => {
+test("Answer mode lets scripts through only where a site rule answers", async () => {
   const read = (path) =>
-    Deno.readTextFile(new URL(`../../data/${path}`, import.meta.url));
+    readFile(new URL(`../../data/${path}`, import.meta.url), "utf8");
   const answered = new Set(
     JSON.parse(await read("site-rules.json")).flatMap((rule) => rule.sites),
   );
@@ -120,14 +125,18 @@ Deno.test("Answer mode lets scripts through only where a site rule answers", asy
   for (const line of lines) {
     const domains = line.match(/\$(?:.*,)?domain=([^,]+)/)?.[1].split("|") ??
       [];
-    assertEquals(domains.length > 0, true, `${line} names no sites`);
-    assertEquals(domains.filter((domain) => !answered.has(domain)), [], line);
+    assert.deepEqual(domains.length > 0, true, `${line} names no sites`);
+    assert.deepEqual(
+      domains.filter((domain) => !answered.has(domain)),
+      [],
+      line,
+    );
   }
 });
 
-Deno.test("The generic stylesheet skips every $generichide site", async () => {
+test("The generic stylesheet skips every $generichide site", async () => {
   const read = (path) =>
-    Deno.readTextFile(new URL(`../../data/${path}`, import.meta.url));
+    readFile(new URL(`../../data/${path}`, import.meta.url), "utf8");
   const ignored = new Set((await read("ignored.txt")).split("\n"));
   const text = (await read("vendor/fanboy-cookiemonster.txt")).split("\n")
     .filter((line) => !ignored.has(line)).join("\n");
@@ -135,7 +144,7 @@ Deno.test("The generic stylesheet skips every $generichide site", async () => {
   const entry = manifest.content_scripts.find((script) =>
     script.css?.includes("hide.css")
   );
-  assertEquals(
+  assert.deepEqual(
     [...entry.exclude_matches].sort(),
     genericHideOff.flatMap((domain) => [`*://${domain}/*`, `*://*.${domain}/*`])
       .sort(),

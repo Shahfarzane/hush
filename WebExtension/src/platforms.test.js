@@ -1,24 +1,25 @@
-import { assertEquals } from "jsr:@std/assert@1";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import { describeAnswer } from "./platforms.js";
 
-Deno.test("Rule names become platform names", () => {
-  assertEquals(describeAnswer("onetrust_pctab"), {
+test("Rule names become platform names", () => {
+  assert.deepEqual(describeAnswer("onetrust_pctab"), {
     platform: "OneTrust",
     fallback: false,
   });
-  assertEquals(describeAnswer("autoconsent:TrustArc-top"), {
+  assert.deepEqual(describeAnswer("autoconsent:TrustArc-top"), {
     platform: "TrustArc",
     fallback: true,
   });
-  assertEquals(describeAnswer("site:MediaMarkt"), {
+  assert.deepEqual(describeAnswer("site:MediaMarkt"), {
     platform: "MediaMarkt",
     fallback: false,
   });
-  assertEquals(describeAnswer("site-refuse:someshop.example"), {
+  assert.deepEqual(describeAnswer("site-refuse:someshop.example"), {
     platform: "someshop.example",
     fallback: true,
   });
-  assertEquals(describeAnswer("someshop.example"), {
+  assert.deepEqual(describeAnswer("someshop.example"), {
     platform: "someshop.example",
     fallback: false,
   });

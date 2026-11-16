@@ -1,22 +1,23 @@
-import { assertEquals } from "jsr:@std/assert@1";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import { createMatcher, urlFilterRegExp } from "./dnr.js";
 
-Deno.test("urlFilter anchors and separators become a RegExp", () => {
+test("urlFilter anchors and separators become a RegExp", () => {
   const domain = urlFilterRegExp("||consent.example^");
-  assertEquals(domain.test("https://consent.example/x.js"), true);
-  assertEquals(domain.test("https://cdn.consent.example/x.js"), true);
-  assertEquals(domain.test("https://consent.example.org/x.js"), false);
-  assertEquals(
+  assert.deepEqual(domain.test("https://consent.example/x.js"), true);
+  assert.deepEqual(domain.test("https://cdn.consent.example/x.js"), true);
+  assert.deepEqual(domain.test("https://consent.example.org/x.js"), false);
+  assert.deepEqual(
     urlFilterRegExp("-cookie-consent.js").test(
       "https://a.b/x-cookie-consent.js?v=1",
     ),
     true,
   );
-  assertEquals(
+  assert.deepEqual(
     urlFilterRegExp("/didomi.js|").test("https://a.b/didomi.js?v=1"),
     false,
   );
-  assertEquals(
+  assert.deepEqual(
     urlFilterRegExp("/js/onetrust/*").test("https://a.b/js/onetrust/otSDK.js"),
     true,
   );
@@ -29,7 +30,7 @@ const block = (id, urlFilter, extra = {}) => ({
   condition: { urlFilter, ...extra },
 });
 
-Deno.test("Conditions and exceptions decide what is blocked", () => {
+test("Conditions and exceptions decide what is blocked", () => {
   const blocks = createMatcher([
     block(1, "||consent.example^", {
       domainType: "thirdParty",
@@ -48,14 +49,14 @@ Deno.test("Conditions and exceptions decide what is blocked", () => {
     type,
     initiator,
   });
-  assertEquals(blocks(request("https://consent.example/cmp.js")), true);
-  assertEquals(blocks(request("https://consent.example/ok.js")), false);
-  assertEquals(
+  assert.deepEqual(blocks(request("https://consent.example/cmp.js")), true);
+  assert.deepEqual(blocks(request("https://consent.example/ok.js")), false);
+  assert.deepEqual(
     blocks(request("https://consent.example/cmp.css", "stylesheet")),
     false,
   );
   // First-party on the platform's own site.
-  assertEquals(
+  assert.deepEqual(
     blocks(
       request(
         "https://consent.example/cmp.js",
@@ -65,13 +66,13 @@ Deno.test("Conditions and exceptions decide what is blocked", () => {
     ),
     false,
   );
-  assertEquals(
+  assert.deepEqual(
     blocks(request("https://cdn.x/banner.js", "script", "m.news.example")),
     true,
   );
-  assertEquals(blocks(request("https://cdn.x/banner.js")), false);
+  assert.deepEqual(blocks(request("https://cdn.x/banner.js")), false);
   // No resourceTypes: everything but the page itself.
-  assertEquals(
+  assert.deepEqual(
     createMatcher([block(1, "/x")])(request("https://a.b/x", "main_frame")),
     false,
   );

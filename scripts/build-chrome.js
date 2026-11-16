@@ -1,12 +1,13 @@
 // Writes Chrome's manifest into an extension built by `make extension`:
 // build-chrome.js <extension dir>.
+import { readFileSync, writeFileSync } from "node:fs";
 import { chromeManifest } from "./src/chrome.js";
 
-const [extensionDir] = Deno.args;
+const [extensionDir] = process.argv.slice(2);
 const read = (path) =>
-  JSON.parse(Deno.readTextFileSync(new URL(path, import.meta.url)));
+  JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
 
-Deno.writeTextFileSync(
+writeFileSync(
   `${extensionDir}/manifest.json`,
   JSON.stringify(
     chromeManifest(
