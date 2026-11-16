@@ -1,7 +1,8 @@
 // Vendors DuckDuckGo's autoconsent (MPL-2.0) at one pinned release, unmodified:
 // the library bundle, its licence and its rules. `--latest` first moves the
 // pin to npm's latest release.
-import { fetchJson, readPin, wantsLatest, writePin } from "./src/pins.js";
+import { fetchJson, fetchText } from "./src/fetch.js";
+import { readPin, wantsLatest, writePin } from "./src/pins.js";
 
 const PACKAGE = "@duckduckgo/autoconsent";
 
@@ -28,13 +29,9 @@ await Deno.mkdir(resolveRelative("../WebExtension/vendor/autoconsent"), {
 await Promise.all(
   Object.entries(FILES).map(async ([path, destination]) => {
     const url = `https://cdn.jsdelivr.net/npm/${PACKAGE}@${VERSION}/${path}`;
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Fetching ${url} failed with status ${response.status}`);
-    }
     await Deno.writeTextFile(
       resolveRelative(destination),
-      await response.text(),
+      await fetchText(url),
     );
     console.info(`Saved ${url} to ${resolveRelative(destination)}`);
   }),

@@ -1,3 +1,4 @@
+import { fetchText } from "./src/fetch.js";
 import { hasUnsupportedSelectors } from "./src/validation.js";
 
 const resolveRelative = (path) => new URL(path, import.meta.url).pathname;
@@ -10,11 +11,7 @@ const SOURCES = {
 
 await Promise.all(
   Object.entries(SOURCES).map(async ([name, url]) => {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Fetching ${url} failed with status ${response.status}`);
-    }
-    const data = (await response.text())
+    const data = (await fetchText(url))
       .split("\n")
       .filter((line) => !hasUnsupportedSelectors(line))
       .join("\n");
