@@ -17,22 +17,30 @@ const headersFor = (url) => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-const fetchOk = async (url, { fetchImpl = fetch, sleep = wait } = {}) => {
+// The body is read inside the loop, so a connection that drops partway
+// through a download is retried too.
+const fetchAndRead = async (
+  url,
+  read,
+  { fetchImpl = fetch, sleep = wait } = {},
+) => {
   for (let attempt = 0;; attempt++) {
     const last = attempt === RETRIES;
-    let response, problem;
+    let status, problem;
     try {
-      response = await fetchImpl(url, { headers: headersFor(url) });
+      const response = await fetchImpl(url, { headers: headersFor(url) });
+      if (response.ok) return await read(response);
+      status = response.status;
+      await response.body?.cancel();
     } catch (error) {
-      // fetch rejects with a TypeError when the request got no answer.
+      // fetch rejects with a TypeError when the connection fails, before the
+      // headers arrive or while the body streams in.
       if (last || !(error instanceof TypeError)) throw error;
       problem = `a network error (${error.message})`;
     }
-    if (response) {
-      if (response.ok) return response;
-      await response.body?.cancel();
-      problem = `status ${response.status}`;
-      if (last || !isTransient(response.status)) {
+    if (status) {
+      problem = `status ${status}`;
+      if (last || !isTransient(status)) {
         throw new Error(`Fetching ${url} failed with ${problem}`);
       }
     }
@@ -44,8 +52,8 @@ const fetchOk = async (url, { fetchImpl = fetch, sleep = wait } = {}) => {
   }
 };
 
-export const fetchText = async (url, options) =>
-  (await fetchOk(url, options)).text();
+export const fetchText = (url, options) =>
+  fetchAndRead(url, (response) => response.text(), options);
 
-export const fetchJson = async (url, options) =>
-  (await fetchOk(url, options)).json();
+export const fetchJson = (url, options) =>
+  fetchAndRead(url, (response) => response.json(), options);

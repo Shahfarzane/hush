@@ -3,8 +3,12 @@ import { fetchJson, fetchText } from "./fetch.js";
 
 const SOURCE = "https://cdn.example/rules.json";
 
-// Answers each request with the next reply: a status, or an Error to throw
-// the way fetch does on a network failure. Pauses are recorded, not slept.
+// A 200 whose connection drops after the headers, partway through the body.
+const BODY_RESET = "body reset";
+
+// Answers each request with the next reply: a status, BODY_RESET, or an Error
+// to throw the way fetch does on a network failure. Pauses are recorded, not
+// slept.
 const fakeServer = (replies) => {
   const requests = [];
   const pauses = [];
@@ -12,6 +16,15 @@ const fakeServer = (replies) => {
     requests.push(url);
     const reply = replies.shift();
     if (reply instanceof Error) return Promise.reject(reply);
+    if (reply === BODY_RESET) {
+      const body = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"ok":'));
+          controller.error(new TypeError("connection reset"));
+        },
+      });
+      return Promise.resolve(new Response(body, { status: 200 }));
+    }
     return Promise.resolve(
       new Response(reply === 200 ? '{"ok":true}' : "busy", { status: reply }),
     );
@@ -34,6 +47,14 @@ Deno.test("A network error is retried like a 5xx", async () => {
   const server = fakeServer([new TypeError("connection reset"), 200]);
   assertEquals(await fetchText(SOURCE, server.options), '{"ok":true}');
   assertEquals(server.requests.length, 2);
+});
+
+Deno.test("A connection reset while the body downloads is retried", async () => {
+  for (const read of [fetchText, fetchJson]) {
+    const server = fakeServer([BODY_RESET, 200]);
+    await read(SOURCE, server.options);
+    assertEquals(server.requests.length, 2);
+  }
 });
 
 Deno.test("A 404 fails at once", async () => {
