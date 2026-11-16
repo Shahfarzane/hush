@@ -1,7 +1,8 @@
 // Vendors the Consent-O-Matic engine and rules at one pinned commit, so the
 // engine code and the rules it interprets always match. `--latest` first
 // moves the pin to the newest commit on its default branch.
-import { fetchJson, readPin, wantsLatest, writePin } from "./src/pins.js";
+import { fetchJson, fetchText } from "./src/fetch.js";
+import { readPin, wantsLatest, writePin } from "./src/pins.js";
 
 const REPO = "cavi-au/Consent-O-Matic";
 
@@ -32,14 +33,6 @@ const RULES_DESTINATION = resolveRelative(
 
 const raw = (path) =>
   `https://raw.githubusercontent.com/${REPO}/${REF}/${path}`;
-
-const fetchText = async (url) => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Fetching ${url} failed with status ${response.status}`);
-  }
-  return response.text();
-};
 
 await Deno.mkdir(ENGINE_DIR, { recursive: true });
 await Promise.all(

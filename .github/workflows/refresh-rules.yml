@@ -14,6 +14,7 @@ on:
       - .github/workflows/refresh-rules.yml
       - scripts/corpus-diff.js
       - scripts/fetch-*.js
+      - scripts/src/fetch.js
       - scripts/src/pins.js
       - data/vendor/pins.json
 
