@@ -153,7 +153,10 @@ chrome:
 # into build/hush-extra-chrome-<version>.zip, versioned <Safari version>.<commits
 # on HEAD> so every commit uploads higher. The store item has an ID of its own,
 # which the host also lets in (STORE_EXTENSION_ID in scripts/src/chrome.js).
+# A shallow clone counts too few commits and would number the upload below
+# the live version, so it stops before building.
 chrome_store:
+	@test "$$(git rev-parse --is-shallow-repository)" = false || { echo "chrome_store numbers the version by commit count and needs the full history (fetch-depth: 0)" >&2; exit 1; }
 	rm -rf build/ChromeStore
 	$(MAKE) chrome --silent CHROME_OUT=build/ChromeStore
 	version=$$(node scripts/chrome-store.js build/ChromeStore "$$(git rev-list --count HEAD)") && \

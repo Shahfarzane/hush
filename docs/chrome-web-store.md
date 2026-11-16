@@ -19,6 +19,8 @@ make chrome_publish       # make chrome_store, upload, submit for review
 
 The store build's version is `<Safari version>.<commits on HEAD>` (1.0 was the first upload; the next is 1.0.<commits>), so each commit uploads higher. `scripts/chrome-publish.js` calls the Chrome Web Store API v2 (`scripts/src/web-store.js`) with a service account that is linked to the publisher in the dashboard (Settings > Service account) and has no Cloud roles. Its JSON key is the 1Password DEV document "Chrome Web Store API service account", read with `op-agents` into a temp folder removed on exit. An upload the store rejects stops before submitting. A submitted version is reviewed and then goes live by itself, Unlisted.
 
+A version tag does this in CI: the Release workflow's "Chrome Web Store" job runs after the DMG and TestFlight job succeeds, builds the zip on a full clone (`make chrome_store` refuses a shallow one, which would count too few commits), and submits it with the same key, stored as the `CWS_SERVICE_ACCOUNT_KEY` secret of the `release` environment. A manual run of the workflow builds the zip and reads the status only. Uploading while an earlier version is still in review can be refused; then re-run only that job after the review ends. Use `make chrome_publish` for a version outside a release.
+
 ## Listing
 
 Name (from the manifest): Hush Extra

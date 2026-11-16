@@ -2,9 +2,11 @@ name: Release
 
 # Pushing a version tag (v1.2.0) builds the notarized DMG, uploads both apps
 # to TestFlight with the same build number, and only then publishes the DMG
-# as a GitHub Release, so every release reaches both. A manual run, on any
-# ref, is a dry run: it keeps the DMG with the run and exports the TestFlight
-# builds without uploading them.
+# as a GitHub Release, so every release reaches both. Once that succeeds, the
+# Chrome build goes to the Chrome Web Store for review. A manual run, on any
+# ref, is a dry run: it keeps the DMG and the Chrome zip with the run,
+# exports the TestFlight builds without uploading them, and only reads the
+# store item's status.
 on:
   push:
     tags: ["v*"]
@@ -126,3 +128,52 @@ jobs:
         run: |
           security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
           rm -f "$RUNNER_TEMP/AuthKey.p8" "$RUNNER_TEMP/identity.p12" "$RUNNER_TEMP/profile.provisionprofile"
+
+  # A job of its own, so a store refusal (a version still in review, say)
+  # can be re-run alone without uploading to TestFlight again.
+  chrome:
+    name: Chrome Web Store
+    needs: release
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      # The store version is <Safari version>.<commit count>, which needs the
+      # whole history; make chrome_store stops in a shallow clone.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - name: Build the store zip
+        run: |
+          zip="$(make --silent chrome_store | tail -1)"
+          test -f "$zip"
+          echo "ZIP=$zip" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Hush-Extra-chrome
+          path: ${{ env.ZIP }}
+          if-no-files-found: error
+      # A tag push uploads the zip and submits it; Google reviews it and then
+      # publishes it by itself. A manual run reads the item's status instead,
+      # which proves the key still works.
+      - name: Chrome Web Store (submit on tag pushes, status only on manual runs)
+        env:
+          CWS_KEY_JSON: ${{ secrets.CWS_SERVICE_ACCOUNT_KEY }}
+        run: |
+          umask 077
+          printf '%s' "$CWS_KEY_JSON" > "$RUNNER_TEMP/cws-key.json"
+          export CWS_SERVICE_ACCOUNT_KEY="$RUNNER_TEMP/cws-key.json"
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            node scripts/chrome-publish.js publish "$ZIP"
+          else
+            node scripts/chrome-publish.js status
+          fi
+      - name: Remove the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cws-key.json"
