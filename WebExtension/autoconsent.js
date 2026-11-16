@@ -5,8 +5,9 @@ import rules from "../data/vendor/autoconsent-rules.json" with {
 import { report, reportAnswered } from "./src/report.js";
 import { autoActionFor } from "./src/settings.js";
 
-// Injected by the background into a frame where Consent-O-Matic found no
-// banner it knows. autoconsent can only accept or refuse everything.
+// Injected by the background into a frame where Consent-O-Matic answered no
+// banner: it knows none there, its rule pressed nothing, or a banner it
+// detected never showed. autoconsent can only accept or refuse everything.
 const run = async () => {
   if (globalThis.hushAutoconsentStarted) return;
   globalThis.hushAutoconsentStarted = true;

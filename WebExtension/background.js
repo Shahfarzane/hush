@@ -141,7 +141,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return injectSiteCss(sender);
     case "getSettings":
       return readSettings();
-    // Consent-O-Matic found no banner in this frame; try autoconsent there.
+    // Consent-O-Matic answered no banner in this frame; try autoconsent there.
     case "fallback":
       return answerFor(sender.tab.id).then((answer) => {
         if (answer?.url === sender.tab.url) return false;

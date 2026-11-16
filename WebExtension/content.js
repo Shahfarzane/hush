@@ -7,12 +7,8 @@ import overrides from "../data/consent-o-matic-overrides.json" with {
 };
 import hushRules from "../data/consent-rules.json" with { type: "json" };
 import { buildRules } from "./src/rules.js";
-import {
-  isAnswered,
-  report,
-  reportAnswered,
-  stillAnswering,
-} from "./src/report.js";
+import { report, reportAnswered } from "./src/report.js";
+import { startConsentOMatic } from "./src/consent-o-matic.js";
 import { consentTypesFor, shouldAnswer } from "./src/settings.js";
 import siteRules from "../data/site-rules.json" with { type: "json" };
 import { answerWithSiteRule, siteRuleFor } from "./src/site-rules/answer.js";
@@ -91,25 +87,14 @@ const run = async () => {
   ConsentEngine.debugValues = { skipHideMethod: !settings.hideWhileAnswering };
   ConsentEngine.generalSettings = { hideInsteadOfPIP: true };
   ConsentEngine.topFrameUrl = topHost;
-  ConsentEngine.singleton = new ConsentEngine(
-    rules,
-    consentTypesFor(settings),
-    (event) => {
-      if (stillAnswering(event, ConsentEngine.singleton)) {
-        ConsentEngine.singleton.startStopTimeout();
-        return;
-      }
-      if (isAnswered(event)) {
-        reportAnswered(event.cmpName, event.clicks);
-        return;
-      }
-      if (event.error) report({ outcome: "error" });
-      if (event.handled) report({ outcome: "no-clicks", cmp: event.cmpName });
-      // Consent-O-Matic left any banner here unanswered; the background
-      // injects the autoconsent fallback into this frame.
+  startConsentOMatic(rules, consentTypesFor(settings), {
+    answered: reportAnswered,
+    failed: report,
+    // The background injects the autoconsent fallback into this frame.
+    unanswered: () => {
       if (mayHoldBanner()) sendMessage({ type: "fallback" }).catch(() => {});
     },
-  );
+  });
 };
 
 run().catch((error) => console.error("Hush:", error));
