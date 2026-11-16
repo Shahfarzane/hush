@@ -1,4 +1,5 @@
-import punycode from "https://deno.land/x/punycode/punycode.js";
+// The package name alone would load Node's deprecated built-in punycode.
+import punycode from "punycode/punycode.es6.js";
 import { hasUnsupportedSelectors } from "./validation.js";
 import { isAnswerModeExcluded } from "./answer-mode.js";
 

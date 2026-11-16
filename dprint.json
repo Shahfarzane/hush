@@ -1,0 +1,22 @@
+{
+  // The scripts keep the style they were first formatted in.
+  "includes": ["scripts/**/*.js"],
+  "typescript": {
+    "lineWidth": 80,
+    "indentWidth": 2,
+    "newLineKind": "lf",
+    "quoteStyle": "preferDouble",
+    "nextControlFlowPosition": "sameLine",
+    "bracePosition": "sameLine",
+    "binaryExpression.operatorPosition": "sameLine",
+    "conditionalExpression.operatorPosition": "nextLine",
+    "conditionalExpression.preferSingleLine": true,
+    "commentLine.forceSpaceAfterSlashes": false,
+    "arrowFunction.useParentheses": "force",
+    "functionExpression.spaceAfterFunctionKeyword": true,
+    "taggedTemplate.spaceBeforeLiteral": false,
+    "module.sortImportDeclarations": "maintain",
+    "module.sortExportDeclarations": "maintain"
+  },
+  "plugins": ["./node_modules/@dprint/typescript/plugin.wasm"]
+}

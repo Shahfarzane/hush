@@ -1,27 +1,34 @@
-format:
-	deno fmt scripts
+# esbuild, dprint and Playwright come from package-lock.json. npm ci runs
+# again whenever package.json or the lock is newer than the last install,
+# Xcode's build phase included.
+BIN = node_modules/.bin
+DEPS = node_modules/.package-lock.json
 
-check_format:
-	deno fmt --check scripts
+$(DEPS): package.json package-lock.json
+	npm ci
+
+format: $(DEPS)
+	$(BIN)/dprint fmt
+
+check_format: $(DEPS)
+	$(BIN)/dprint check
 
 test:
 	make test_unit
 	make test_swift
 	make test_ui
 
-test_unit:
-	deno test --allow-read=./data
+test_unit: $(DEPS)
+	node --test 'scripts/**/*.test.js' 'WebExtension/**/*.test.js'
 
-# Full permissions: on Linux, Playwright reads /proc/sys/fs/binfmt_misc to
-# detect WSL, which Deno only allows with --allow-all.
 test_corpus: extension
-	deno run --allow-all scripts/corpus.js $(CORPUS_FLAGS) $(SITES)
+	node scripts/corpus.js $(CORPUS_FLAGS) $(SITES)
 
 # The same sites in Chrome for Testing with the real build/ChromeExtension
 # loaded. CHROMIUM_PATH picks the browser binary; branded Chrome ignores
 # --load-extension.
 test_corpus_chrome: chrome
-	deno run --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys scripts/corpus.js --browser=chromium $(CORPUS_FLAGS) $(SITES)
+	node scripts/corpus.js --browser=chromium $(CORPUS_FLAGS) $(SITES)
 
 # Xcode registers the Debug app it builds with LaunchServices. Safari then
 # lists Hush Extra twice and may run that copy instead of the installed one,
@@ -105,13 +112,13 @@ dmg:
 	rm -rf $(DMG_DIR)
 
 fetch_external:
-	deno run --allow-write=./data --allow-net scripts/fetch-external.js
+	node scripts/fetch-external.js
 
 fetch_consent_o_matic:
-	deno run --allow-read=./data/vendor --allow-write=./data/vendor,./WebExtension/vendor --allow-net=raw.githubusercontent.com,api.github.com --allow-env=GITHUB_TOKEN scripts/fetch-consent-o-matic.js $(FETCH_FLAGS)
+	node scripts/fetch-consent-o-matic.js $(FETCH_FLAGS)
 
 fetch_autoconsent:
-	deno run --allow-read=./data/vendor --allow-write=./data/vendor,./WebExtension/vendor --allow-net=cdn.jsdelivr.net,registry.npmjs.org scripts/fetch-autoconsent.js $(FETCH_FLAGS)
+	node scripts/fetch-autoconsent.js $(FETCH_FLAGS)
 
 # Every rule source at its newest version: the Fanboy list, and both engines
 # with their pins in data/vendor/pins.json moved to the latest release.
@@ -125,13 +132,10 @@ EXTENSION_OUT ?= build/WebExtension
 # Each bundle is an IIFE: Safari runs content.js and the autoconsent.js it
 # injects as classic scripts in one global scope, where two minified bundles'
 # top-level names would overwrite each other.
-extension:
+extension: $(DEPS)
 	mkdir -p "$(EXTENSION_OUT)" build/web-lists
-	deno run --allow-read=./data --allow-write="$(EXTENSION_OUT)",./build scripts/build-web-lists.js "$(EXTENSION_OUT)" build/web-lists/per-site.json
-	deno bundle --quiet --platform browser --minify --format iife -o "$(EXTENSION_OUT)/content.js" WebExtension/content.js
-	deno bundle --quiet --platform browser --minify --format iife -o "$(EXTENSION_OUT)/background.js" WebExtension/background.js
-	deno bundle --quiet --platform browser --minify --format iife -o "$(EXTENSION_OUT)/autoconsent.js" WebExtension/autoconsent.js
-	deno bundle --quiet --platform browser --minify --format iife -o "$(EXTENSION_OUT)/popup.js" WebExtension/popup.js
+	node scripts/build-web-lists.js "$(EXTENSION_OUT)" build/web-lists/per-site.json
+	$(BIN)/esbuild --bundle --platform=browser --minify --format=iife --log-level=warning --outdir="$(EXTENSION_OUT)" WebExtension/content.js WebExtension/background.js WebExtension/autoconsent.js WebExtension/popup.js
 	cp WebExtension/manifest.json WebExtension/content.css WebExtension/popup.html WebExtension/popup.css "$(EXTENSION_OUT)/"
 	mkdir -p "$(EXTENSION_OUT)/images"
 	cp WebExtension/images/*.png "$(EXTENSION_OUT)/images/"
@@ -143,7 +147,7 @@ CHROME_OUT ?= build/ChromeExtension
 # $(CHROME_OUT) unpacked from chrome://extensions.
 chrome:
 	$(MAKE) extension --silent EXTENSION_OUT="$(CHROME_OUT)"
-	deno run --allow-read=./WebExtension --allow-write="$(CHROME_OUT)" scripts/build-chrome.js "$(CHROME_OUT)"
+	node scripts/build-chrome.js "$(CHROME_OUT)"
 
 # The Chrome Web Store upload: the Chrome build without its `key`, zipped
 # into build/hush-extra-chrome-<version>.zip, versioned <Safari version>.<commits
@@ -152,7 +156,7 @@ chrome:
 chrome_store:
 	rm -rf build/ChromeStore
 	$(MAKE) chrome --silent CHROME_OUT=build/ChromeStore
-	version=$$(deno run --allow-read=build/ChromeStore --allow-write=build/ChromeStore scripts/chrome-store.js build/ChromeStore "$$(git rev-list --count HEAD)") && \
+	version=$$(node scripts/chrome-store.js build/ChromeStore "$$(git rev-list --count HEAD)") && \
 	rm -f "build/hush-extra-chrome-$$version.zip" && \
 	(cd build/ChromeStore && zip -qrX "../hush-extra-chrome-$$version.zip" . -x '.*') && \
 	echo "build/hush-extra-chrome-$$version.zip"
@@ -164,18 +168,18 @@ chrome_store:
 # chrome_publish: builds chrome_store, uploads it and submits it for review;
 # it goes live by itself after review.
 CWS_KEY_ITEM = Chrome Web Store API service account
-CWS_DENO = deno run --allow-read --allow-env=CWS_SERVICE_ACCOUNT_KEY --allow-net=oauth2.googleapis.com,chromewebstore.googleapis.com scripts/chrome-publish.js
+CWS_PUBLISH = node scripts/chrome-publish.js
 
 chrome_store_status:
 	@dir=$$(mktemp -d) && trap 'rm -rf "$${dir:?}"' EXIT && \
 	op-agents document get "$(CWS_KEY_ITEM)" --vault DEV --out-file "$$dir/key.json" --force >/dev/null && \
-	CWS_SERVICE_ACCOUNT_KEY="$$dir/key.json" $(CWS_DENO) status
+	CWS_SERVICE_ACCOUNT_KEY="$$dir/key.json" $(CWS_PUBLISH) status
 
 chrome_publish:
 	out=$$($(MAKE) --silent chrome_store) && zip=$$(printf '%s\n' "$$out" | tail -1) && \
 	dir=$$(mktemp -d) && trap 'rm -rf "$${dir:?}"' EXIT && \
 	op-agents document get "$(CWS_KEY_ITEM)" --vault DEV --out-file "$$dir/key.json" --force >/dev/null && \
-	CWS_SERVICE_ACCOUNT_KEY="$$dir/key.json" $(CWS_DENO) publish "$$zip"
+	CWS_SERVICE_ACCOUNT_KEY="$$dir/key.json" $(CWS_PUBLISH) publish "$$zip"
 
 # The native messaging host Chrome and Helium start to read and write the
 # app's settings, built from the app's own settings code. It opens the
@@ -190,7 +194,7 @@ chrome_host:
 	swiftc -O -o build/chrome-host/hush-chrome-host macOS/ChromeHost/main.swift Shared/Models/ConsentSettings.swift -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist -Xlinker macOS/ChromeHost/Info.plist
 	codesign --force --options runtime --timestamp --sign "$(CHROME_HOST_IDENTITY)" --identifier ceo.nerd.hush.chrome-host --entitlements macOS/ChromeHost/ChromeHost.entitlements build/chrome-host/hush-chrome-host
 	ditto build/chrome-host/hush-chrome-host "$(CHROME_HOST_DIR)/hush-chrome-host"
-	deno run --allow-read --allow-write="$(HOME)/Library/Application Support" --allow-env=HOME scripts/chrome-host.js "$(CHROME_HOST_DIR)/hush-chrome-host"
+	node scripts/chrome-host.js "$(CHROME_HOST_DIR)/hush-chrome-host"
 
 xcode_extension:
 ifeq ("$(CONFIGURATION_BUILD_DIR)","")

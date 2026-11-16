@@ -1,4 +1,5 @@
-import { assertEquals, assertRejects } from "jsr:@std/assert@1";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import { fetchJson, fetchText } from "./fetch.js";
 
 const SOURCE = "https://cdn.example/rules.json";
@@ -36,44 +37,42 @@ const fakeServer = (replies) => {
   return { requests, pauses, options: { fetchImpl, sleep } };
 };
 
-Deno.test("A 503 or 429 is retried until the source answers", async () => {
+test("A 503 or 429 is retried until the source answers", async () => {
   const server = fakeServer([503, 429, 200]);
-  assertEquals(await fetchJson(SOURCE, server.options), { ok: true });
-  assertEquals(server.requests.length, 3);
-  assertEquals(server.pauses, [2000, 4000]);
+  assert.deepEqual(await fetchJson(SOURCE, server.options), { ok: true });
+  assert.deepEqual(server.requests.length, 3);
+  assert.deepEqual(server.pauses, [2000, 4000]);
 });
 
-Deno.test("A network error is retried like a 5xx", async () => {
+test("A network error is retried like a 5xx", async () => {
   const server = fakeServer([new TypeError("connection reset"), 200]);
-  assertEquals(await fetchText(SOURCE, server.options), '{"ok":true}');
-  assertEquals(server.requests.length, 2);
+  assert.deepEqual(await fetchText(SOURCE, server.options), '{"ok":true}');
+  assert.deepEqual(server.requests.length, 2);
 });
 
-Deno.test("A connection reset while the body downloads is retried", async () => {
+test("A connection reset while the body downloads is retried", async () => {
   for (const read of [fetchText, fetchJson]) {
     const server = fakeServer([BODY_RESET, 200]);
     await read(SOURCE, server.options);
-    assertEquals(server.requests.length, 2);
+    assert.deepEqual(server.requests.length, 2);
   }
 });
 
-Deno.test("A 404 fails at once", async () => {
+test("A 404 fails at once", async () => {
   const server = fakeServer([404]);
-  await assertRejects(
+  await assert.rejects(
     () => fetchText(SOURCE, server.options),
-    Error,
-    `Fetching ${SOURCE} failed with status 404`,
+    { message: `Fetching ${SOURCE} failed with status 404` },
   );
-  assertEquals(server.requests.length, 1);
+  assert.deepEqual(server.requests.length, 1);
 });
 
-Deno.test("A source that stays down fails after the last retry", async () => {
+test("A source that stays down fails after the last retry", async () => {
   const server = fakeServer([503, 503, 503, 503, 503]);
-  await assertRejects(
+  await assert.rejects(
     () => fetchText(SOURCE, server.options),
-    Error,
-    `Fetching ${SOURCE} failed with status 503`,
+    { message: `Fetching ${SOURCE} failed with status 503` },
   );
-  assertEquals(server.requests.length, 5);
-  assertEquals(server.pauses, [2000, 4000, 8000, 16000]);
+  assert.deepEqual(server.requests.length, 5);
+  assert.deepEqual(server.pauses, [2000, 4000, 8000, 16000]);
 });

@@ -1,4 +1,5 @@
-import { assertEquals } from "jsr:@std/assert@1";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import { applyOverrides, buildRules } from "./rules.js";
 import rules from "../../data/vendor/consent-o-matic-rules.json" with {
   type: "json",
@@ -31,58 +32,73 @@ const STATS = /statist|analytic|performance|measure|mesure|leistung|analys/i;
 const FUNCTIONAL =
   /functional|preference|komfort|fonctionn|funktion|präferenz/i;
 
-Deno.test("Overrides replace only the named method", () => {
-  const result = applyOverrides({
-    cmp: { detectors: [], methods: [{ name: "A", v: 1 }, { name: "B", v: 1 }] },
-    other: { detectors: [], methods: [{ name: "A", v: 1 }] },
-  }, { cmp: { methods: [{ name: "B", v: 2 }] } });
-  assertEquals(result.cmp.methods, [{ name: "A", v: 1 }, { name: "B", v: 2 }]);
-  assertEquals(result.other.methods, [{ name: "A", v: 1 }]);
+test("Overrides replace only the named method", () => {
+  const result = applyOverrides(
+    {
+      cmp: {
+        detectors: [],
+        methods: [{ name: "A", v: 1 }, { name: "B", v: 1 }],
+      },
+      other: { detectors: [], methods: [{ name: "A", v: 1 }] },
+    },
+    { cmp: { methods: [{ name: "B", v: 2 }] } },
+  );
+  assert.deepEqual(result.cmp.methods, [
+    { name: "A", v: 1 },
+    { name: "B", v: 2 },
+  ]);
+  assert.deepEqual(result.other.methods, [{ name: "A", v: 1 }]);
 });
 
-Deno.test("An override can replace a rule's detectors", () => {
-  const result = applyOverrides({
-    cmp: { detectors: [{ present: 1 }], methods: [] },
-    other: { detectors: [{ present: 1 }], methods: [] },
-  }, { cmp: { detectors: [{ present: 2 }] } });
-  assertEquals(result.cmp.detectors, [{ present: 2 }]);
-  assertEquals(result.other.detectors, [{ present: 1 }]);
+test("An override can replace a rule's detectors", () => {
+  const result = applyOverrides(
+    {
+      cmp: { detectors: [{ present: 1 }], methods: [] },
+      other: { detectors: [{ present: 1 }], methods: [] },
+    },
+    { cmp: { detectors: [{ present: 2 }] } },
+  );
+  assert.deepEqual(result.cmp.detectors, [{ present: 2 }]);
+  assert.deepEqual(result.other.detectors, [{ present: 1 }]);
 });
 
-Deno.test("Retype changes the category of matching consents only", () => {
+test("Retype changes the category of matching consents only", () => {
   const consent = (selector, type) => ({
     matcher: { type: "css", target: { selector } },
     type,
   });
-  const result = applyOverrides({
-    cmp: {
-      detectors: [],
-      methods: [{
-        name: "DO_CONSENT",
-        action: {
-          type: "consent",
-          consents: [consent("#ads", "A"), consent("#prefs", "A")],
-        },
-      }],
+  const result = applyOverrides(
+    {
+      cmp: {
+        detectors: [],
+        methods: [{
+          name: "DO_CONSENT",
+          action: {
+            type: "consent",
+            consents: [consent("#ads", "A"), consent("#prefs", "A")],
+          },
+        }],
+      },
     },
-  }, { cmp: { retype: { "#ads": "F" } } });
-  assertEquals(
+    { cmp: { retype: { "#ads": "F" } } },
+  );
+  assert.deepEqual(
     result.cmp.methods[0].action.consents.map((c) => c.type),
     ["F", "A"],
   );
 });
 
-Deno.test("Amazon's advertising control is not treated as functional", () => {
+test("Amazon's advertising control is not treated as functional", () => {
   const types = consentsOf(applyOverrides(rules, overrides).amazon.methods)
     .filter((c) => selectorsOf(c).includes("ADVERTISING"))
     .map((c) => c.type);
-  assertEquals(types, ["F"]);
+  assert.deepEqual(types, ["F"]);
 });
 
 // Vendored rules sometimes label advertising or analytics controls as
 // functional, which would switch them on at the "functional only" level.
 // Reviewed exceptions: flysas calls its functionality tab "Performance".
-Deno.test("No functional consent controls advertising or analytics", () => {
+test("No functional consent controls advertising or analytics", () => {
   const reviewed = ["flysas"];
   const mislabelled = Object.entries(buildRules(rules, overrides, hushRules))
     .filter(([name]) => !reviewed.includes(name))
@@ -99,14 +115,14 @@ Deno.test("No functional consent controls advertising or analytics", () => {
         })
         .map((c) => `${name}: ${c.type} ${selectorsOf(c).slice(0, 80)}`)
     );
-  assertEquals(mislabelled, []);
+  assert.deepEqual(mislabelled, []);
 });
 
-Deno.test("Every override targets an existing vendored method", () => {
+test("Every override targets an existing vendored method", () => {
   for (const [name, { methods = [] }] of Object.entries(overrides)) {
-    assertEquals(name in rules, true, name);
+    assert.deepEqual(name in rules, true, name);
     for (const { name: method } of methods) {
-      assertEquals(
+      assert.deepEqual(
         methodNames(rules[name]).includes(method),
         true,
         `${name}.${method}`,
@@ -115,99 +131,99 @@ Deno.test("Every override targets an existing vendored method", () => {
   }
 });
 
-Deno.test("Cookiebot saves the selection without clicking Deny after it", () => {
+test("Cookiebot saves the selection without clicking Deny after it", () => {
   const save = applyOverrides(rules, overrides).cookiebot.methods
     .find((method) => method.name === "SAVE_CONSENT").action;
   const allowSelection = save.actions[1];
-  assertEquals(
+  assert.deepEqual(
     allowSelection.trueAction.target.selector,
     "#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowallSelection",
   );
-  assertEquals(
+  assert.deepEqual(
     JSON.stringify(allowSelection.trueAction).includes("Decline"),
     false,
   );
 });
 
-Deno.test("Quantcast only saves from the options view, never Accept", () => {
+test("Quantcast only saves from the options view, never Accept", () => {
   const methods = applyOverrides(rules, overrides).quantcast2b.methods;
   const save = methods.find((method) => method.name === "SAVE_CONSENT").action;
-  assertEquals(save.type, "click");
-  assertEquals(save.target.displayFilter, true);
+  assert.deepEqual(save.type, "click");
+  assert.deepEqual(save.target.displayFilter, true);
   // The summary screen's primary button is Agree; it has no footer links.
-  assertEquals(
+  assert.deepEqual(
     save.target.selector.split(", "),
     [
       "#save-and-exit",
       '.qc-cmp2-footer:has(.qc-cmp2-footer-links) button[mode="primary"]',
     ],
   );
-  assertEquals(JSON.stringify(save).includes("accept"), false);
+  assert.deepEqual(JSON.stringify(save).includes("accept"), false);
 });
 
-Deno.test("Hush rules keep vendored names free and define every step", () => {
+test("Hush rules keep vendored names free and define every step", () => {
   const steps = ["HIDE_CMP", "OPEN_OPTIONS", "DO_CONSENT", "SAVE_CONSENT"];
   for (const [name, rule] of Object.entries(hushRules)) {
-    assertEquals(name in rules, false, `${name} shadows a vendored rule`);
-    assertEquals(methodNames(rule), steps, name);
-    assertEquals(rule.detectors.length > 0, true, name);
+    assert.deepEqual(name in rules, false, `${name} shadows a vendored rule`);
+    assert.deepEqual(methodNames(rule), steps, name);
+    assert.deepEqual(rule.detectors.length > 0, true, name);
   }
 });
 
-Deno.test("Didomi treats Functionality as functional, not device storage", () => {
+test("Didomi treats Functionality as functional, not device storage", () => {
   const branches = applyOverrides(rules, overrides)["didomi.io"].methods
     .find((method) => method.name === "DO_CONSENT").action.actions
     .find((action) => action.type === "foreach").action.actions;
   const typeFor = (text) =>
     branches.find((branch) => branch.target.textFilter?.includes(text))
       ?.trueAction.consents[0].type;
-  assertEquals(typeFor("Functionality"), "A");
-  assertEquals(typeFor("Store and/or access information on a device"), "D");
+  assert.deepEqual(typeFor("Functionality"), "A");
+  assert.deepEqual(typeFor("Store and/or access information on a device"), "D");
 });
 
-Deno.test("A disabled rule is left out", () => {
+test("A disabled rule is left out", () => {
   const result = applyOverrides(
     { kept: { methods: [] }, dropped: { methods: [] } },
     { dropped: { disable: true } },
   );
-  assertEquals(Object.keys(result), ["kept"]);
+  assert.deepEqual(Object.keys(result), ["kept"]);
 });
 
-Deno.test("Yahoo's consent page is left to the autoconsent fallback", () => {
+test("Yahoo's consent page is left to the autoconsent fallback", () => {
   const built = buildRules(rules, overrides, hushRules);
-  assertEquals("yahoo_consent" in built, false);
-  assertEquals("yahoo_popup" in built, false);
+  assert.deepEqual("yahoo_consent" in built, false);
+  assert.deepEqual("yahoo_popup" in built, false);
   const yahoo = autoconsentRules.autoconsent.find((rule) =>
     rule.name === "Yahoo"
   );
-  assertEquals(
+  assert.deepEqual(
     yahoo.optOut,
     [{ waitForThenClick: "#consent-page button[value=reject]" }],
   );
 });
 
-Deno.test("Bing rejects when Save stays disabled, otherwise saves", () => {
+test("Bing rejects when Save stays disabled, otherwise saves", () => {
   const save = applyOverrides(rules, overrides).bing.methods
     .find((method) => method.name === "SAVE_CONSENT").action;
-  assertEquals(save.target.selector, "#mcp_savesettings.disabledbtn");
-  assertEquals(save.trueAction.target.selector, "#bnp_btn_reject");
-  assertEquals(save.falseAction.target.selector, "#mcp_savesettings");
+  assert.deepEqual(save.target.selector, "#mcp_savesettings.disabledbtn");
+  assert.deepEqual(save.trueAction.target.selector, "#bnp_btn_reject");
+  assert.deepEqual(save.falseAction.target.selector, "#mcp_savesettings");
 });
 
-Deno.test("X refuses unless every category is allowed", () => {
+test("X refuses unless every category is allowed", () => {
   const consent = hushRules["x.com"].methods
     .find((method) => method.name === "DO_CONSENT").action;
-  assertEquals(consent.type, "ifallowall");
-  assertEquals(
+  assert.deepEqual(consent.type, "ifallowall");
+  assert.deepEqual(
     consent.falseAction.target.selector.endsWith(":last-of-type"),
     true,
   );
 });
 
-Deno.test("iubenda's classic rule waits for the preferences panel", () => {
+test("iubenda's classic rule waits for the preferences panel", () => {
   const open = applyOverrides(rules, overrides).iubuenda.methods
     .find((method) => method.name === "OPEN_OPTIONS").action;
-  assertEquals(open.actions[1], {
+  assert.deepEqual(open.actions[1], {
     type: "waitcss",
     target: { selector: "#iubFooterBtn" },
     retries: 20,
@@ -215,76 +231,76 @@ Deno.test("iubenda's classic rule waits for the preferences panel", () => {
   });
 });
 
-Deno.test("iubenda's tb-banner rejects unless every category is allowed", () => {
+test("iubenda's tb-banner rejects unless every category is allowed", () => {
   const consent = hushRules["iubenda-tb"].methods
     .find((method) => method.name === "DO_CONSENT").action;
-  assertEquals(consent.type, "ifallowall");
-  assertEquals(
+  assert.deepEqual(consent.type, "ifallowall");
+  assert.deepEqual(
     JSON.stringify(consent.falseAction).includes("button.reject-button"),
     true,
   );
 });
 
-Deno.test("Didomi saves with Save preferences, not the Reject all toggle", () => {
+test("Didomi saves with Save preferences, not the Reject all toggle", () => {
   const { methods } = applyOverrides(rules, overrides)["didomi.io"];
   const consent = methods.find((method) => method.name === "DO_CONSENT");
   const last = consent.action.actions.at(-1);
-  assertEquals(
+  assert.deepEqual(
     last.trueAction.target.selector.endsWith("#btn-toggle-save"),
     true,
   );
   const save = methods.find((method) => method.name === "SAVE_CONSENT");
-  assertEquals(
+  assert.deepEqual(
     save.action.trueAction.target.selector.endsWith("#btn-toggle-save"),
     true,
   );
 });
 
-Deno.test("TrustArc's popup hider leaves the shadow root dialog alone", () => {
+test("TrustArc's popup hider leaves the shadow root dialog alone", () => {
   const [detector] = applyOverrides(rules, overrides).trustarc_popup_hider
     .detectors;
   for (const matcher of [detector.presentMatcher, detector.showingMatcher]) {
-    assertEquals(
+    assert.deepEqual(
       matcher[0].target.selector,
       ".truste_box_overlay:not(:has(.trustarc_newcm_container))",
     );
   }
 });
 
-Deno.test("TrustArc's dialog sets each category and never accepts by itself", () => {
+test("TrustArc's dialog sets each category and never accepts by itself", () => {
   const rule = hushRules.trustarc_newcm;
   const step = (name) =>
     rule.methods.find((method) => method.name === name).action;
-  assertEquals(
+  assert.deepEqual(
     consentsOf(step("DO_CONSENT")).map((consent) => consent.type),
     ["A", "B", "F"],
   );
   // The rows go in with empty titles, which match no category.
   const [, titles] = step("OPEN_OPTIONS").action.actions;
-  assertEquals(titles.target.selector, ".cookiecat h3:empty");
-  assertEquals(titles.negated, true);
+  assert.deepEqual(titles.target.selector, ".cookiecat h3:empty");
+  assert.deepEqual(titles.negated, true);
   const save = step("SAVE_CONSENT").action;
   // Submitting swaps in a confirmation; only Close releases the page.
-  assertEquals(
+  assert.deepEqual(
     save.trueAction.actions.map((action) => action.target.selector),
     [".submit", ".close", ".close"],
   );
   const allow = save.falseAction;
-  assertEquals(allow.type, "ifallowall");
-  assertEquals(allow.trueAction.target.selector, ".call");
-  assertEquals(allow.falseAction.target.selector, ".required");
+  assert.deepEqual(allow.type, "ifallowall");
+  assert.deepEqual(allow.trueAction.target.selector, ".call");
+  assert.deepEqual(allow.falseAction.target.selector, ".required");
 });
 
-Deno.test("OneTrust's banner rule opens settings and never clicks Accept", () => {
+test("OneTrust's banner rule opens settings and never clicks Accept", () => {
   const utility = applyOverrides(rules, overrides).onetrust_banner.methods
     .find((method) => method.name === "UTILITY").action;
-  assertEquals(JSON.stringify(utility).includes("accept"), false);
+  assert.deepEqual(JSON.stringify(utility).includes("accept"), false);
   const open = utility.actions.find((action) => action.type === "ifcss");
-  assertEquals(
+  assert.deepEqual(
     open.trueAction.target.selector.includes(".optanon-show-settings"),
     true,
   );
-  assertEquals(
+  assert.deepEqual(
     open.falseAction.target.selector,
     "#onetrust-reject-all-handler",
   );

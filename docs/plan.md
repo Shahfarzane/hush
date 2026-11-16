@@ -114,9 +114,9 @@ Each phase ends in a commit that builds and passes its verification.
 
 **Phase 1: web extension with Consent-O-Matic**
 - New targets `WebExtension iOS` and `WebExtension macOS`, shared `Shared/WebExtension/SafariWebExtensionHandler.swift`, `WebExtension/` holding `manifest.json` (MV3, `content_scripts` at `document_start`, `all_frames`, `match_about_blank`), background script, content script.
-- `scripts/build-extension.js` (Deno) bundles the vendored engine (`vendor/consent-o-matic/`, with its MIT license) and rules into `content.js`. Xcode build phase calls it like `make xcode` does for the blocklist.
+- `scripts/build-extension.js` bundles the vendored engine (`vendor/consent-o-matic/`, with its MIT license) and rules into `content.js`. Xcode build phase calls it like `make xcode` does for the blocklist.
 - Settings model: `Shared/Models/ConsentSettings.swift` (categories, mode, hide-while-answering, paused sites) stored in the App Group, with a JSON shape shared with the extension.
-- Verify: Deno unit tests for category mapping and decision order (`scripts/src/*.test.js`); manual Cookiebot and OneTrust pages on both platforms with consent state read back from the CMP API.
+- Verify: unit tests for category mapping and decision order (`scripts/src/*.test.js`); manual Cookiebot and OneTrust pages on both platforms with consent state read back from the CMP API.
 
 **Phase 1 results (2026-10-31)**
 - `make test_corpus` loads the built `content.js` into headless WebKit on 17 live sites covering Cookiebot, OneTrust (three variants), Didomi, Sourcepoint, Quantcast, Usercentrics, Complianz, CookieYes, Cookie Information and TrustArc, then reads each platform's stored consent back (`scripts/src/consent-readers.js`). A run fails only on over-consent (a category stored as allowed that the level refuses); refusing an allowed category is reported as "stricter". Latest run: 14 pass, 0 wrong, 1 stricter, 2 not answered.
@@ -255,7 +255,7 @@ Each phase ends in a commit that builds and passes its verification.
 
 **Phase 7 results (2026-11-01)**
 - Super Agent's catalog, tried first, showed where Hush's own engine needed care:
-  - Running it after autoconsent gave up needed a handoff between the content script and the injected autoconsent script. In the iOS Simulator the handoff failed while the corpus passed: Safari runs content.js and the injected autoconsent.js as classic scripts in one global scope, and the two minified bundles' top-level `var`s overwrote each other, so content.js's `sendMessage` returned `true`. Every bundle is now an IIFE (`deno bundle --format iife`). This also ended autoconsent's injection silently breaking anything content.js still had running.
+  - Running it after autoconsent gave up needed a handoff between the content script and the injected autoconsent script. In the iOS Simulator the handoff failed while the corpus passed: Safari runs content.js and the injected autoconsent.js as classic scripts in one global scope, and the two minified bundles' top-level `var`s overwrote each other, so content.js's `sendMessage` returned `true`. Every bundle is now an IIFE (`--format=iife`). This also ended autoconsent's injection silently breaking anything content.js still had running.
   - Its rules for well-known platforms were worse than the engines Hush has: Bing's saves through a button that stays disabled, a Sourcepoint entry carried bbcgoodfood.com's button numbers to spiegel.de, Termly's files analytics under functional, and Axeptio's "save" is accept all.
 - MediaMarkt (mediamarkt.nl) is the first Hush rule. Its privacy layer shows its switches straight away and has no reject button, and autoconsent's MediaMarkt rule fails to opt out there. The rule first lost its switches: it started while the page loaded, gave up on them before the layer rendered and saved the defaults. Waiting for the rule's `banner` fixed it.
   - Corpus, desktop and iPhone: stricter at "functional only" (Comfortabel also covers statistics, so it stays off) and pass at "balanced". A reader decodes MediaMarkt's `pwaconsent` cookie.

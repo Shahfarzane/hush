@@ -1,4 +1,5 @@
-import { assertEquals } from "jsr:@std/assert@1";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import {
   autoActionFor,
   consentTypesFor,
@@ -10,8 +11,8 @@ import {
   siteKey,
 } from "./settings.js";
 
-Deno.test("Functional only consents to type A alone", () => {
-  assertEquals(consentTypesFor(DEFAULT_SETTINGS), {
+test("Functional only consents to type A alone", () => {
+  assert.deepEqual(consentTypesFor(DEFAULT_SETTINGS), {
     A: true,
     B: false,
     D: false,
@@ -21,17 +22,17 @@ Deno.test("Functional only consents to type A alone", () => {
   });
 });
 
-Deno.test("Advertising covers content selection and ads", () => {
+test("Advertising covers content selection and ads", () => {
   const settings = normalizeSettings({
     categories: { functional: false, advertising: true },
   });
   const types = consentTypesFor(settings);
-  assertEquals([types.A, types.E, types.F], [false, true, true]);
+  assert.deepEqual([types.A, types.E, types.F], [false, true, true]);
 });
 
-Deno.test("Missing fields fall back to defaults", () => {
-  assertEquals(normalizeSettings(undefined), DEFAULT_SETTINGS);
-  assertEquals(
+test("Missing fields fall back to defaults", () => {
+  assert.deepEqual(normalizeSettings(undefined), DEFAULT_SETTINGS);
+  assert.deepEqual(
     normalizeSettings({ categories: { performance: true } }).categories,
     {
       functional: true,
@@ -42,29 +43,29 @@ Deno.test("Missing fields fall back to defaults", () => {
   );
 });
 
-Deno.test("Paused sites cover subdomains only", () => {
+test("Paused sites cover subdomains only", () => {
   const settings = normalizeSettings({ pausedSites: ["example.com"] });
-  assertEquals(shouldAnswer(settings, "example.com"), false);
-  assertEquals(shouldAnswer(settings, "www.example.com"), false);
-  assertEquals(shouldAnswer(settings, "notexample.com"), true);
+  assert.deepEqual(shouldAnswer(settings, "example.com"), false);
+  assert.deepEqual(shouldAnswer(settings, "www.example.com"), false);
+  assert.deepEqual(shouldAnswer(settings, "notexample.com"), true);
 });
 
-Deno.test("Hide mode never answers", () => {
-  assertEquals(
+test("Hide mode never answers", () => {
+  assert.deepEqual(
     shouldAnswer(normalizeSettings({ mode: "hide" }), "example.com"),
     false,
   );
 });
 
-Deno.test("The autoconsent fallback refuses unless everything is allowed", () => {
-  assertEquals(autoActionFor(DEFAULT_SETTINGS), "optOut");
-  assertEquals(
+test("The autoconsent fallback refuses unless everything is allowed", () => {
+  assert.deepEqual(autoActionFor(DEFAULT_SETTINGS), "optOut");
+  assert.deepEqual(
     autoActionFor(normalizeSettings({
       categories: { functional: true, performance: true, advertising: true },
     })),
     "optOut",
   );
-  assertEquals(
+  assert.deepEqual(
     autoActionFor(normalizeSettings({
       categories: {
         functional: true,
@@ -77,29 +78,29 @@ Deno.test("The autoconsent fallback refuses unless everything is allowed", () =>
   );
 });
 
-Deno.test("Level titles match the app's presets", () => {
-  assertEquals(levelTitle(DEFAULT_SETTINGS), "Functional only");
-  assertEquals(
+test("Level titles match the app's presets", () => {
+  assert.deepEqual(levelTitle(DEFAULT_SETTINGS), "Functional only");
+  assert.deepEqual(
     levelTitle(normalizeSettings({ categories: { functional: false } })),
     "Maximum privacy",
   );
-  assertEquals(
+  assert.deepEqual(
     levelTitle(normalizeSettings({ categories: { performance: true } })),
     "Balanced",
   );
-  assertEquals(
+  assert.deepEqual(
     levelTitle(normalizeSettings({ categories: { advertising: true } })),
     "Custom",
   );
 });
 
-Deno.test("Pausing a page pauses its site without www", () => {
-  assertEquals(siteFor("www.Example.com"), "example.com");
-  assertEquals(siteFor("news.example.co.uk"), "news.example.co.uk");
+test("Pausing a page pauses its site without www", () => {
+  assert.deepEqual(siteFor("www.Example.com"), "example.com");
+  assert.deepEqual(siteFor("news.example.co.uk"), "news.example.co.uk");
 });
 
-Deno.test("Hosts on the same site share a key", () => {
-  assertEquals(siteKey("open.spotify.com"), siteKey("www.spotify.com"));
-  assertEquals(siteKey("news.bbc.co.uk"), "bbc.co.uk");
-  assertEquals(siteKey("example.com"), "example.com");
+test("Hosts on the same site share a key", () => {
+  assert.deepEqual(siteKey("open.spotify.com"), siteKey("www.spotify.com"));
+  assert.deepEqual(siteKey("news.bbc.co.uk"), "bbc.co.uk");
+  assert.deepEqual(siteKey("example.com"), "example.com");
 });

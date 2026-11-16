@@ -3,29 +3,34 @@
 // stored and compares it with the chosen level. Needs the network, so it is
 // not part of `make test_unit`; run it with `make test_corpus [SITES=...]`.
 // `make test_corpus_chrome` runs the real Chrome build instead (--browser).
-import { chromium, devices, webkit } from "npm:playwright";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { chromium, devices, webkit } from "playwright";
 import { mismatches, readers } from "./src/consent-readers.js";
 import { createMatcher } from "./src/dnr.js";
 import { extensionId, HOST_NAME, hostManifest } from "./src/chrome.js";
 import { siteCss } from "../WebExtension/src/hide-css.js";
 import { evalSnippets } from "../WebExtension/vendor/autoconsent/autoconsent.esm.js";
 
-const resolveRelative = (path) => new URL(path, import.meta.url).pathname;
+const resolveRelative = (path) => fileURLToPath(new URL(path, import.meta.url));
 
 // --corpus=<path> runs another site list in the same format, such as
 // candidates to try before adding them to data/corpus.json.
-const CORPUS = Deno.args.find((arg) => arg.startsWith("--corpus="))
+const ARGS = process.argv.slice(2);
+const CORPUS = ARGS.find((arg) => arg.startsWith("--corpus="))
   ?.split("=")[1];
 const SITES = JSON.parse(
-  await Deno.readTextFile(CORPUS ?? resolveRelative("../data/corpus.json")),
+  await readFile(CORPUS ?? resolveRelative("../data/corpus.json"), "utf8"),
 );
 
 // --blocker=answer (default) or --blocker=full applies the block and hide
 // rules the extension uses in answer or "Only hide it" mode; --blocker=none
 // runs without them. --mobile loads pages as an iPhone, which gets some
 // sites' mobile banners.
-const flags = Deno.args.filter((arg) => arg.startsWith("--"));
-const only = Deno.args.filter((arg) => !arg.startsWith("--"));
+const flags = ARGS.filter((arg) => arg.startsWith("--"));
+const only = ARGS.filter((arg) => !arg.startsWith("--"));
 const MOBILE = flags.includes("--mobile");
 const BLOCKER_MODE =
   flags.find((flag) => flag.startsWith("--blocker="))?.split("=")[1] ??
@@ -38,14 +43,15 @@ const BLOCKER_MODE =
 const CHROMIUM = flags.includes("--browser=chromium");
 if (CHROMIUM && (MOBILE || BLOCKER_MODE !== "answer")) {
   console.error("--browser=chromium takes no --mobile or --blocker");
-  Deno.exit(2);
+  process.exit(2);
 }
-const CHROMIUM_PATH = Deno.env.get("CHROMIUM_PATH");
+const CHROMIUM_PATH = process.env.CHROMIUM_PATH;
 const CHROME_EXTENSION = resolveRelative("../build/ChromeExtension");
 const CHROME_EXTENSION_ID = extensionId(
   JSON.parse(
-    await Deno.readTextFile(
+    await readFile(
       resolveRelative("../WebExtension/manifest.chrome.json"),
+      "utf8",
     ),
   ).key,
 );
@@ -56,14 +62,16 @@ const RESULTS = resolveRelative(
 const HIDE_MODE = CHROMIUM
   ? null
   : { answer: "answer", full: "hide" }[BLOCKER_MODE];
-const CONTENT_SCRIPT = CHROMIUM ? null : await Deno.readTextFile(
+const CONTENT_SCRIPT = CHROMIUM ? null : await readFile(
   resolveRelative("../build/WebExtension/content.js"),
+  "utf8",
 );
-const AUTOCONSENT_SCRIPT = CHROMIUM ? null : await Deno.readTextFile(
+const AUTOCONSENT_SCRIPT = CHROMIUM ? null : await readFile(
   resolveRelative("../build/WebExtension/autoconsent.js"),
+  "utf8",
 );
 const readBuilt = async (path) =>
-  JSON.parse(await Deno.readTextFile(resolveRelative(`../build/${path}`)));
+  JSON.parse(await readFile(resolveRelative(`../build/${path}`), "utf8"));
 const blocks = HIDE_MODE
   ? createMatcher([
     ...await readBuilt("WebExtension/rules/block-answer.json"),
@@ -73,7 +81,7 @@ const blocks = HIDE_MODE
   ])
   : null;
 const GENERIC_CSS = HIDE_MODE
-  ? await Deno.readTextFile(resolveRelative("../build/WebExtension/hide.css"))
+  ? await readFile(resolveRelative("../build/WebExtension/hide.css"), "utf8")
   : "";
 const PER_SITE = HIDE_MODE ? await readBuilt("web-lists/per-site.json") : null;
 
@@ -94,8 +102,7 @@ const resourceType = (request) =>
 
 // The manifest's hide.css applies from the first paint; the background
 // injects the rest per site. Here both are style elements.
-const styleScript = (css) =>
-  `(() => {
+const styleScript = (css) => `(() => {
   const css = ${JSON.stringify(css)};
   const add = () => {
     const style = document.createElement("style");
@@ -143,8 +150,7 @@ const SETTLE_MS = 3000;
 // up in a closure so the page never sees them. Messages the background
 // answers with page access (injecting the autoconsent fallback, running its
 // snippets) go to the __hushBackground binding below.
-const inScope = (script) =>
-  `(() => {
+const inScope = (script) => `(() => {
   const settings = ${JSON.stringify(SETTINGS)};
   const origins = location.ancestorOrigins;
   const topUrl = origins?.length ? origins[origins.length - 1] + "/" : location.href;
@@ -439,20 +445,20 @@ const visitWebkit = async (browser, site) => {
 // test. It reads the request's length first, so it never exits before
 // Chromium has written the request.
 const chromiumProfile = async () => {
-  const dir = await Deno.makeTempDir({ prefix: "hush-corpus-" });
+  const dir = await mkdtemp(join(tmpdir(), "hush-corpus-"));
   const body = new TextEncoder().encode(JSON.stringify({ settings: SETTINGS }));
   const reply = new Uint8Array(4 + body.length);
   new DataView(reply.buffer).setUint32(0, body.length, true);
   reply.set(body, 4);
-  await Deno.writeFile(`${dir}/reply.bin`, reply);
+  await writeFile(`${dir}/reply.bin`, reply);
   const host = `${dir}/host.sh`;
-  await Deno.writeTextFile(
+  await writeFile(
     host,
     `#!/bin/sh\nhead -c 4 >/dev/null\ncat "${dir}/reply.bin"\n`,
     { mode: 0o755 },
   );
-  await Deno.mkdir(`${dir}/profile/NativeMessagingHosts`, { recursive: true });
-  await Deno.writeTextFile(
+  await mkdir(`${dir}/profile/NativeMessagingHosts`, { recursive: true });
+  await writeFile(
     `${dir}/profile/NativeMessagingHosts/${HOST_NAME}.json`,
     JSON.stringify(hostManifest(host, [await CHROME_EXTENSION_ID])),
   );
@@ -507,7 +513,7 @@ const visitChromium = async (site) => {
     return failed(site, error);
   } finally {
     await context?.close();
-    await Deno.remove(dir, { recursive: true });
+    await rm(dir, { recursive: true });
   }
 };
 
@@ -535,8 +541,8 @@ for (const site of sites) {
 }
 await browser?.close();
 
-await Deno.mkdir(resolveRelative("../build"), { recursive: true });
-await Deno.writeTextFile(RESULTS, JSON.stringify(results, null, 2));
+await mkdir(resolveRelative("../build"), { recursive: true });
+await writeFile(RESULTS, JSON.stringify(results, null, 2));
 
 const count = (status) => results.filter((r) => r.status === status).length;
 console.log(
@@ -555,4 +561,4 @@ console.log(
 );
 // A stored consent that differs from the level is the one outcome that hurts
 // the user; coverage gaps fall back to hiding.
-if (count("wrong") || count("regressed")) Deno.exit(1);
+if (count("wrong") || count("regressed")) process.exit(1);

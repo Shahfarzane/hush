@@ -13,7 +13,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // share, so a GITHUB_TOKEN in the environment goes along when there is one.
 const headersFor = (url) => {
   const token = url.startsWith("https://api.github.com/") &&
-    Deno.env.get("GITHUB_TOKEN");
+    process.env.GITHUB_TOKEN;
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 

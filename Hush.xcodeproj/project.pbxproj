@@ -565,7 +565,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export PATH=\"$PATH:$HOME/.deno/bin:/opt/homebrew/bin\"\n\nmake xcode_extension\n";
+			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin\"\n\nmake xcode_extension\n";
 		};
 		CE0D00000000000000000020 /* Build web extension */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -608,7 +608,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export PATH=\"$PATH:$HOME/.deno/bin:/opt/homebrew/bin\"\n\nmake xcode_extension\n";
+			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin\"\n\nmake xcode_extension\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

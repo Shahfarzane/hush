@@ -1,4 +1,5 @@
-import { assertEquals, assertRejects } from "jsr:@std/assert@1";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import {
   fetchStatus,
   publish,
@@ -51,14 +52,14 @@ const fakeStore = (replies) => {
   return { calls, fetchImpl };
 };
 
-Deno.test("The assertion is a JWT the service account's key signs", async () => {
+test("The assertion is a JWT the service account's key signs", async () => {
   const [header, claims, signature] = (await signedAssertion(key, 1000)).split(
     ".",
   );
   const decode = (part) =>
     JSON.parse(new TextDecoder().decode(fromBase64url(part)));
-  assertEquals(decode(header), { alg: "RS256", typ: "JWT", kid: "kid-1" });
-  assertEquals(decode(claims), {
+  assert.deepEqual(decode(header), { alg: "RS256", typ: "JWT", kid: "kid-1" });
+  assert.deepEqual(decode(claims), {
     iss: key.client_email,
     scope: SCOPE,
     aud: key.token_uri,
@@ -71,28 +72,28 @@ Deno.test("The assertion is a JWT the service account's key signs", async () => 
     fromBase64url(signature),
     new TextEncoder().encode(`${header}.${claims}`),
   );
-  assertEquals(valid, true);
+  assert.deepEqual(valid, true);
 });
 
-Deno.test("Status trades the assertion for a token, then reads the item", async () => {
+test("Status trades the assertion for a token, then reads the item", async () => {
   const { calls, fetchImpl } = fakeStore([
     { access_token: "t1" },
     { itemId, lastAsyncUploadState: "SUCCEEDED" },
   ]);
   const status = await fetchStatus({ key, itemId, fetchImpl });
-  assertEquals(status.itemId, itemId);
-  assertEquals(
+  assert.deepEqual(status.itemId, itemId);
+  assert.deepEqual(
     calls[0].body.get("grant_type"),
     "urn:ietf:params:oauth:grant-type:jwt-bearer",
   );
-  assertEquals([calls[1].method, calls[1].url], [
-    "GET",
-    `${item}:fetchStatus`,
-  ]);
-  assertEquals(calls[1].headers.Authorization, "Bearer t1");
+  assert.deepEqual(
+    [calls[1].method, calls[1].url],
+    ["GET", `${item}:fetchStatus`],
+  );
+  assert.deepEqual(calls[1].headers.Authorization, "Bearer t1");
 });
 
-Deno.test("Publish uploads, waits out an async upload, then submits", async () => {
+test("Publish uploads, waits out an async upload, then submits", async () => {
   const zip = new Uint8Array([80, 75, 3, 4]);
   const { calls, fetchImpl } = fakeStore([
     { access_token: "t1" },
@@ -107,23 +108,23 @@ Deno.test("Publish uploads, waits out an async upload, then submits", async () =
     fetchImpl,
     wait: () => Promise.resolve(),
   });
-  assertEquals(result.state, "PENDING_REVIEW");
-  assertEquals(calls.slice(1).map((call) => `${call.method} ${call.url}`), [
+  assert.deepEqual(result.state, "PENDING_REVIEW");
+  assert.deepEqual(calls.slice(1).map((call) => `${call.method} ${call.url}`), [
     `POST https://chromewebstore.googleapis.com/upload/v2/publishers/${PUBLISHER_ID}/items/${itemId}:upload`,
     `GET ${item}:fetchStatus`,
     `POST ${item}:publish`,
   ]);
-  assertEquals(calls[1].body, zip);
-  assertEquals(calls[1].headers["Content-Type"], "application/zip");
-  assertEquals(calls[3].body, "{}");
+  assert.deepEqual(calls[1].body, zip);
+  assert.deepEqual(calls[1].headers["Content-Type"], "application/zip");
+  assert.deepEqual(calls[3].body, "{}");
 });
 
-Deno.test("Publish stops before submitting a rejected upload", async () => {
+test("Publish stops before submitting a rejected upload", async () => {
   const { calls, fetchImpl } = fakeStore([
     { access_token: "t1" },
     { uploadState: "FAILED" },
   ]);
-  await assertRejects(
+  await assert.rejects(
     () =>
       publish({
         key,
@@ -132,8 +133,7 @@ Deno.test("Publish stops before submitting a rejected upload", async () => {
         fetchImpl,
         wait: () => Promise.resolve(),
       }),
-    Error,
-    "upload ended FAILED",
+    { message: /upload ended FAILED/ },
   );
-  assertEquals(calls.length, 2);
+  assert.deepEqual(calls.length, 2);
 });
