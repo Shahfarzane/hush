@@ -222,10 +222,17 @@ const cookieyes = ({ cookies }) => {
 };
 
 // Complianz always allows cmplz_functional (necessary); preferences is the
-// optional functional category.
+// optional functional category. With Global Privacy Control (or Do Not
+// Track) on, it shows no banner and saves only a do_not_track marker, which
+// refuses every optional category.
 const complianz = ({ cookies }) => {
   const allowed = (name) => cookieValue(cookies, `cmplz_${name}`);
-  if (!allowed("marketing")) return null;
+  if (!allowed("marketing")) {
+    const saved = decode(cookieValue(cookies, "cmplz_saved_categories") ?? "");
+    return saved.includes('"do_not_track"')
+      ? { functional: false, performance: false, advertising: false }
+      : null;
+  }
   return {
     functional: allowed("preferences") === "allow",
     performance: allowed("statistics") === "allow",
@@ -295,10 +302,13 @@ const cookieinformation = ({ cookies }) => {
   );
 };
 
-const cookiefirst = ({ cookies }) => {
+// An answered banner writes cookiefirst-consent. With Global Privacy Control
+// on, CookieFirst shows no banner and keeps its refusal in
+// CookieFirst.consent only.
+const cookiefirst = ({ cookies, cookiefirst }) => {
   const value = cookieValue(cookies, "cookiefirst-consent");
-  if (!value) return null;
-  const consent = JSON.parse(decode(value));
+  const consent = value ? JSON.parse(decode(value)) : cookiefirst;
+  if (!consent) return null;
   return {
     functional: consent.functional === true,
     performance: consent.performance === true,

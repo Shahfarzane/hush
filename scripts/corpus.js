@@ -32,6 +32,21 @@ const SITES = JSON.parse(
 const flags = ARGS.filter((arg) => arg.startsWith("--"));
 const only = ARGS.filter((arg) => !arg.startsWith("--"));
 const MOBILE = flags.includes("--mobile");
+// --gpc sends Global Privacy Control, as Safari does with its setting on.
+// Some platforms then refuse without showing a banner (CookieFirst and
+// Complianz read navigator.globalPrivacyControl), so there is nothing for
+// Hush to answer.
+const GPC = flags.includes("--gpc");
+const gpcOptions = GPC ? { extraHTTPHeaders: { "Sec-GPC": "1" } } : {};
+const sendGpc = async (context) => {
+  if (!GPC) return;
+  await context.addInitScript(() =>
+    Object.defineProperty(Navigator.prototype, "globalPrivacyControl", {
+      get: () => true,
+      configurable: true,
+    })
+  );
+};
 const BLOCKER_MODE =
   flags.find((flag) => flag.startsWith("--blocker="))?.split("=")[1] ??
     "answer";
@@ -284,6 +299,7 @@ const collectPageData = () =>
     } catch {
       apis.termly = null;
     }
+    apis.cookiefirst = window.CookieFirst?.consent ?? null;
     apis.ketch = typeof window.ketch === "function"
       ? await settle(
         new Promise((resolve) =>
@@ -392,9 +408,11 @@ const visitWebkit = async (browser, site) => {
     ...(MOBILE
       ? devices["iPhone 15"]
       : { viewport: { width: 1280, height: 900 } }),
+    ...gpcOptions,
   });
   const collector = reportCollector();
   try {
+    await sendGpc(context);
     if (blocks) {
       await context.addInitScript(styleScript(GENERIC_CSS));
       await context.route("**/*", (route) => {
@@ -498,7 +516,9 @@ const visitChromium = async (site) => {
         `--disable-extensions-except=${CHROME_EXTENSION}`,
         `--load-extension=${CHROME_EXTENSION}`,
       ],
+      ...gpcOptions,
     });
+    await sendGpc(context);
     // Chrome stops an idle service worker and starts a new one later.
     const watch = (worker) => worker.on("console", collector.onConsole);
     context.serviceWorkers().forEach(watch);
@@ -546,9 +566,9 @@ await writeFile(RESULTS, JSON.stringify(results, null, 2));
 
 const count = (status) => results.filter((r) => r.status === status).length;
 console.log(
-  CHROMIUM
+  (CHROMIUM
     ? "browser: chromium, build/ChromeExtension"
-    : `blocker: ${BLOCKER_MODE}`,
+    : `blocker: ${BLOCKER_MODE}`) + (GPC ? ", Global Privacy Control" : ""),
 );
 console.log(
   `\n${count("pass")} pass, ${count("wrong")} wrong, ${

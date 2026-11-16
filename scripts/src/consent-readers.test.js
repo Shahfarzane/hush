@@ -170,6 +170,44 @@ test("Mismatches list only categories that differ from the level", () => {
   assert.deepEqual(mismatches({ other: false }, FUNCTIONAL_ONLY), []);
 });
 
+// With Global Privacy Control on (Safari's setting), these platforms refuse
+// without showing a banner and record it in their own way.
+test("Global Privacy Control refusals read back as refusals", () => {
+  const refused = { functional: false, performance: false, advertising: false };
+  const cases = [
+    // CookieFirst writes no cookie; the refusal is only in its API.
+    [
+      "cookiefirst",
+      {
+        cookies: [],
+        cookiefirst: {
+          necessary: true,
+          performance: false,
+          functional: false,
+          advertising: false,
+        },
+      },
+      refused,
+    ],
+    // Before any choice CookieFirst's API holds null, which is no refusal.
+    ["cookiefirst", { cookies: [], cookiefirst: null }, null],
+    // Complianz saves only a do_not_track marker.
+    [
+      "complianz",
+      {
+        cookies: jar({
+          cmplz_saved_categories: '["do_not_track"]',
+          cmplz_saved_services: "{}",
+        }),
+      },
+      refused,
+    ],
+  ];
+  for (const [reader, data, expected] of cases) {
+    assert.deepEqual(readers[reader](data), expected, reader);
+  }
+});
+
 test("Fallback platforms read their own consent records", () => {
   assert.deepEqual(
     readers.cookiefirst({
