@@ -141,24 +141,30 @@ extension: $(DEPS)
 	cp WebExtension/images/*.png "$(EXTENSION_OUT)/images/"
 
 CHROME_OUT ?= build/ChromeExtension
+CHROME_COPY ?= dev
 
 # Chrome and Helium run the same bundles as Safari, with the keys in
 # WebExtension/manifest.chrome.json laid over Safari's manifest. Load
-# $(CHROME_OUT) unpacked from chrome://extensions.
+# $(CHROME_OUT) unpacked from chrome://extensions. It is the dev copy, kept
+# apart from the Chrome Web Store item installed beside it: "Hush Extra (dev)",
+# a version_name with the commit it was built from, and a blue dot on its
+# icons (scripts/src/dev-icon.js). chrome_store builds with CHROME_COPY=store,
+# which leaves all three out.
 chrome:
 	$(MAKE) extension --silent EXTENSION_OUT="$(CHROME_OUT)"
-	node scripts/build-chrome.js "$(CHROME_OUT)"
+	node scripts/build-chrome.js "$(CHROME_OUT)" $(CHROME_COPY) "$$(git describe --always --dirty --exclude='*')"
 
 # The Chrome Web Store upload: the Chrome build without its `key`, zipped
 # into build/hush-extra-chrome-<version>.zip, versioned <Safari version>.<commits
 # on HEAD> so every commit uploads higher. The store item has an ID of its own,
 # which the host also lets in (STORE_EXTENSION_ID in scripts/src/chrome.js).
 # A shallow clone counts too few commits and would number the upload below
-# the live version, so it stops before building.
+# the live version, so it stops before building. chrome-store.js stops too if
+# the build carries any mark of the dev copy.
 chrome_store:
 	@test "$$(git rev-parse --is-shallow-repository)" = false || { echo "chrome_store numbers the version by commit count and needs the full history (fetch-depth: 0)" >&2; exit 1; }
 	rm -rf build/ChromeStore
-	$(MAKE) chrome --silent CHROME_OUT=build/ChromeStore
+	$(MAKE) chrome --silent CHROME_OUT=build/ChromeStore CHROME_COPY=store
 	version=$$(node scripts/chrome-store.js build/ChromeStore "$$(git rev-list --count HEAD)") && \
 	rm -f "build/hush-extra-chrome-$$version.zip" && \
 	(cd build/ChromeStore && zip -qrX "../hush-extra-chrome-$$version.zip" . -x '.*') && \

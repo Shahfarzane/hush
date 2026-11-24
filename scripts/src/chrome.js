@@ -21,6 +21,53 @@ export const storeManifest = ({ key: _key, ...manifest }, build) => {
   return { ...manifest, version: `${manifest.version}.${build}` };
 };
 
+// The unpacked dev copy, told apart from the store item installed beside it:
+// "(dev)" after its name and its toolbar button's tooltip, and a version_name
+// with the commit it was built from, which Chrome shows in place of the
+// version. Its icons get the mark in dev-icon.js. The key, and so the ID,
+// stay as they are.
+const DEV = " (dev)";
+
+export const devManifest = (manifest, commit) => {
+  if (!commit) {
+    throw new Error("the dev copy needs the commit it is built from");
+  }
+  return {
+    ...manifest,
+    name: `${manifest.name}${DEV}`,
+    version_name: `${manifest.version} dev ${commit}`,
+    action: {
+      ...manifest.action,
+      default_title: `${manifest.action.default_title}${DEV}`,
+    },
+  };
+};
+
+// Every icon file a manifest names: the extension's and the toolbar button's.
+export const iconPaths = (manifest) => [
+  ...new Set([
+    ...Object.values(manifest.icons ?? {}),
+    ...Object.values(manifest.action?.default_icon ?? {}),
+  ]),
+];
+
+// What marks a Chrome build as the dev copy, measured against the Safari
+// manifest it was built from: an empty list for a build fit for the store.
+// sameIcon(path) says whether the build's file at path is byte for byte the
+// repo's WebExtension/<path>.
+export const devMarks = (manifest, safari, sameIcon) => [
+  ...(manifest.name === safari.name ? [] : [`name "${manifest.name}"`]),
+  ...(manifest.action?.default_title === safari.action?.default_title
+    ? []
+    : [`toolbar title "${manifest.action?.default_title}"`]),
+  ...(manifest.version_name === safari.version_name
+    ? []
+    : [`version_name "${manifest.version_name}"`]),
+  ...iconPaths(manifest).filter((path) => !sameIcon(path)).map((path) =>
+    `icon ${path}`
+  ),
+];
+
 // Chrome derives an extension's ID from its public key: the first 16 bytes
 // of the key's SHA-256, each hex digit written as a letter from a to p.
 export const extensionId = async (key) => {
