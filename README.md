@@ -42,7 +42,7 @@ make dmg ASC_KEY_PATH=AuthKey.p8 ASC_KEY_ID=<key id> ASC_ISSUER_ID=<issuer id>
 Chrome and Helium on the Mac run the same extension and share the app's settings (level, mode, paused sites) through a small native messaging host, `hush-chrome-host`, built from the app's own settings code:
 
 ```sh
-make chrome        # builds build/ChromeExtension
+make chrome        # builds build/ChromeExtension, the dev copy
 make chrome_host   # builds and signs the host, installs it in ~/Library/Application Support/Hush Extra, registers it with Chrome and Helium
 make chrome_store  # builds build/hush-extra-chrome-<version>.zip, the Chrome Web Store upload
 make chrome_publish  # builds it, uploads it and submits it for review through the Chrome Web Store API
@@ -51,6 +51,8 @@ make chrome_publish  # builds it, uploads it and submits it for review through t
 The extension is moving to the Chrome Web Store as an Unlisted item; the listing and permission answers are in [docs/chrome-web-store.md](docs/chrome-web-store.md).
 
 Then in each browser open `chrome://extensions`, turn on Developer mode, choose Load unpacked and pick `build/ChromeExtension`. After the next `make chrome`, press the reload button on the extension's card. The key in `WebExtension/manifest.chrome.json` fixes the unpacked extension's ID (`peklpnngkdekjbeheogkeabpllgmnefj`); the host lets in that ID and the Chrome Web Store item's (`megbdpijbohdgindboffkkklekhhnamp`). The host has no iCloud, so a site paused in Chrome reaches your other devices the next time the app or Safari's extension runs. `make chrome_host` needs the Developer ID Application certificate, and needs running again when `Shared/Models/ConsentSettings.swift` changes. `make test_corpus_chrome` runs the corpus against the Chrome build in Chrome for Testing (`CHROMIUM_PATH=<binary>`, since branded Chrome ignores `--load-extension`). Notes in [docs/chrome-plan.md](docs/chrome-plan.md).
+
+Each browser can hold two copies side by side. Production is the Chrome Web Store item, which the browser updates by itself. The dev copy is `make chrome` loaded unpacked, and it shows that it is: it is called "Hush Extra (dev)", its card on `chrome://extensions` gives the commit it was built from as its version (`1.0 dev f67a04a`, with `-dirty` when the checkout had uncommitted changes), and its toolbar and extension icons carry a blue dot. Both copies answer every cookie banner, so while you test the dev copy, switch the store copy off on its card in `chrome://extensions`; switching it off keeps its data, and switching it back on brings it back as it was. Both read the same settings through the host. `make chrome_store` builds without the dev name, version and icons, and stops if any of them gets in.
 
 The download links below are for the original Hush by Joel Arvidsson.
 
