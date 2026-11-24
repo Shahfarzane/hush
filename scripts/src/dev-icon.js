@@ -1,7 +1,7 @@
-// The dev copy's mark on an icon: a blue dot on the bottom right corner of
-// what the icon draws, set apart from it by a clear ring, so the unpacked dev
-// copy's toolbar button and card are told apart from the store item's at a
-// glance. Everything else keeps the icon's own shapes and colors.
+// The dev copy's mark on an icon: a blue dot on the right corner of what the
+// icon draws, set apart from it by a clear ring, so the unpacked dev copy's
+// toolbar button and card are told apart from the store item's at a glance.
+// Everything else keeps the icon's own shapes and colors.
 
 // Apple's system blue: apart from the icons' yellow and black, and readable
 // on a light or a dark toolbar.
@@ -42,16 +42,23 @@ const coverage = (x, y, cx, cy, radius) => {
   return inside / (SAMPLES * SAMPLES);
 };
 
-// A copy of { width, height, pixels } (RGBA) with the mark drawn on it.
-export const markIcon = (image) => {
+// A copy of { width, height, pixels } (RGBA) with the mark drawn on its top
+// or bottom right corner.
+export const markIcon = (image, corner) => {
+  if (corner !== "top" && corner !== "bottom") {
+    throw new Error(`the mark goes top or bottom right, not "${corner}"`);
+  }
   const { width, height, pixels } = image;
   const box = drawnBox(image);
   const side = Math.max(box.right - box.left, box.bottom - box.top);
   const dot = side * DOT;
   const ring = dot + Math.max(side * RING, 1);
-  // Hanging a little past the drawing's corner where the canvas has room.
-  const cx = Math.min(box.right - dot * 0.7, width - dot);
-  const cy = Math.min(box.bottom - dot * 0.7, height - dot);
+  // Hanging past the drawing's corner into the canvas's margin, as far as
+  // the canvas has room, so the ring stays clear of the face.
+  const cx = Math.min(box.right - dot * 0.35, width - dot);
+  const cy = corner === "top"
+    ? Math.max(box.top + dot * 0.35, dot)
+    : Math.min(box.bottom - dot * 0.35, height - dot);
   const out = Uint8Array.from(pixels);
   for (let y = Math.floor(cy - ring); y < Math.ceil(cy + ring); y++) {
     for (let x = Math.floor(cx - ring); x < Math.ceil(cx + ring); x++) {

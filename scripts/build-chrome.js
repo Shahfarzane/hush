@@ -21,11 +21,22 @@ let manifest = chromeManifest(
 );
 if (copy === "dev") {
   manifest = devManifest(manifest, commit);
-  // `make extension` copied the repo's icons in just before, so each is
-  // marked once.
+  // The toolbar button's dot goes bottom right, where Chrome's toolbar draws
+  // nothing over it (hush sets no badge text). The extensions page draws its
+  // own badge on that corner of an unpacked extension's icon, so the
+  // extension's icons carry the dot top right. `make extension` copied the
+  // repo's icons in just before, so each file is marked once.
+  const corners = new Map([
+    ...Object.values(manifest.icons).map((path) => [path, "top"]),
+    ...Object.values(manifest.action.default_icon).map((path) => [
+      path,
+      "bottom",
+    ]),
+  ]);
   for (const path of iconPaths(manifest)) {
     const file = `${extensionDir}/${path}`;
-    writeFileSync(file, writePng(markIcon(readPng(readFileSync(file)))));
+    const icon = markIcon(readPng(readFileSync(file)), corners.get(path));
+    writeFileSync(file, writePng(icon));
   }
 }
 writeFileSync(
