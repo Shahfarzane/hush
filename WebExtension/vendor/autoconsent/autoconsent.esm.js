@@ -324,7 +324,6 @@ var snippets = {
     )
   ).consents.statistics,
   EVAL_CC_BANNER2_0: () => !!document.cookie.match(/sncc=[^;]+D%3Dtrue/),
-  EVAL_COINBASE_0: () => JSON.parse(decodeURIComponent(document.cookie.match(/cm_(eu|default)_preferences=([0-9a-zA-Z\\{\\}\\[\\]%:]*);?/)[2])).consent.length <= 1,
   // the close icon is an SVG, which has no click() method
   EVAL_COOKIE_POPUP_CLOSE: () => document.querySelector("#cookie-popup #close-cookies").dispatchEvent(new MouseEvent("click", { bubbles: true })) || true,
   EVAL_COOKIE_LAW_INFO_0: () => {
@@ -334,12 +333,6 @@ var snippets = {
     return true;
   },
   EVAL_COOKIE_LAW_INFO_DETECT: () => !!window.CLI,
-  EVAL_COOKIE_MANAGER_POPUP_0: () => JSON.parse(
-    document.cookie.split(";").find((c) => c.trim().startsWith("CookieLevel")).split("=")[1]
-  ).social === false,
-  EVAL_COOKIEALERT_0: () => document.querySelector("body").removeAttribute("style") || true,
-  EVAL_COOKIEALERT_1: () => document.querySelector("body").removeAttribute("style") || true,
-  EVAL_COOKIEALERT_2: () => window.CookieConsent.declined === true,
   EVAL_COOKIEFIRST_0: () => ((o) => o.performance === false && o.functional === false && o.advertising === false)(
     JSON.parse(
       decodeURIComponent(
@@ -379,13 +372,15 @@ var snippets = {
   EVAL_ETSY_1: () => document.querySelector(".gdpr-overlay-view button[data-wt-overlay-close]").click() || true,
   EVAL_EZOIC_0: () => ezCMP.handleAcceptAllClick(),
   EVAL_FIDES_DETECT_POPUP: () => window.Fides?.initialized,
-  EVAL_GDPR_LEGAL_COOKIE_DETECT_CMP: () => !!window.GDPR_LC,
-  EVAL_GDPR_LEGAL_COOKIE_TEST: () => !!window.GDPR_LC?.userConsentSetting,
+  // Zero while the embedding page still keeps the consent iframe collapsed.
+  EVAL_IFRAME_SHOWN: () => window.innerHeight > 0,
   EVAL_IUBENDA_0: () => document.querySelectorAll(".purposes-item input[type=checkbox]:not([disabled])").forEach((x) => {
     if (x.checked) x.click();
   }) || true,
   EVAL_IUBENDA_1: () => !!document.cookie.match(/_iub_cs-\d+=/),
   EVAL_KROWN_COOKIE_BANNER_TEST: () => localStorage.getItem("krown-cookie-banner") === "true",
+  // the decline handler listens for mouseup/touchend, which element.click() does not dispatch
+  EVAL_LETHPOLYTECH_DECLINE: () => document.querySelector(".consent-banner .cookie-decline").dispatchEvent(new MouseEvent("mouseup", { bubbles: true, cancelable: true, view: window })) || true,
   EVAL_MICROSOFT_0: () => Array.from(document.querySelectorAll("div > button")).filter((el) => el.innerText.match("Reject|Ablehnen"))[0].click() || true,
   EVAL_MICROSOFT_1: () => Array.from(document.querySelectorAll("div > button")).filter((el) => el.innerText.match("Accept|Annehmen"))[0].click() || true,
   EVAL_MICROSOFT_2: () => !!document.cookie.match("MSCC|GHCC"),
@@ -399,6 +394,7 @@ var snippets = {
       document.cookie.split(";").find((s) => s.trim().startsWith("_pandectes_gdpr")).split("=")[1]
     )
   ).status === "deny",
+  EVAL_POSTHOG_TEST: () => localStorage.getItem("cookie_consent") === "acknowledged",
   EVAL_POVR_GOBACK: () => window.history.back() || true,
   EVAL_PUBTECH_0: () => document.cookie.includes("euconsent-v2") && (document.cookie.match(/.YAAAAAAAAAAA/) || document.cookie.match(/.aAAAAAAAAAAA/) || document.cookie.match(/.YAAACFgAAAAA/)),
   EVAL_SHOPIFY_TEST: () => document.cookie.includes("gdpr_cookie_consent=0") || document.cookie.includes("_tracking_consent=") && JSON.parse(
@@ -406,7 +402,6 @@ var snippets = {
       document.cookie.split(";").find((s) => s.trim().startsWith("_tracking_consent")).split("=")[1]
     )
   ).purposes.a === false,
-  EVAL_SKYSCANNER_TEST: () => document.cookie.match(/gdpr=[^;]*adverts:::false/) && !document.cookie.match(/gdpr=[^;]*init:::true/),
   EVAL_SIRDATA_UNBLOCK_SCROLL: () => {
     document.documentElement.classList.forEach((cls) => {
       if (cls.startsWith("sd-cmp-")) document.documentElement.classList.remove(cls);
@@ -436,7 +431,6 @@ var snippets = {
       document.cookie.split(";").find((s) => s.trim().startsWith("cookieSettings")).split("=")[1]
     )
   ).preference_state === 2,
-  EVAL_TAKEALOT_0: () => document.body.classList.remove("freeze") || (document.body.style = "") || true,
   EVAL_TARTEAUCITRON_0: () => tarteaucitron.userInterface.respondAll(false) || true,
   EVAL_TARTEAUCITRON_1: () => tarteaucitron.userInterface.respondAll(true) || true,
   EVAL_TARTEAUCITRON_2: () => document.cookie.match(/tarteaucitron=[^;]*/)?.[0].includes("false"),
@@ -451,8 +445,21 @@ var snippets = {
   EVAL_TESTCMP_STEP: () => !!document.querySelector("#reject-all"),
   EVAL_TESTCMP_0: () => window.results.results[0] === "button_clicked",
   EVAL_TESTCMP_COSMETIC_0: () => window.results.results[0] === "banner_hidden",
-  EVAL_THEFREEDICTIONARY_0: () => cmpUi.showPurposes() || cmpUi.rejectAll() || true,
-  EVAL_THEFREEDICTIONARY_1: () => cmpUi.allowAll() || true,
+  // Same handler the banner buttons call; which button refuses differs per template.
+  EVAL_TRUSTCOMMANDER_BANNER_SHOWN: () => {
+    const wrapper = document.getElementById("tc-privacy-wrapper");
+    return !!wrapper && getComputedStyle(wrapper).visibility !== "hidden";
+  },
+  EVAL_TRUSTCOMMANDER_OPTIN: () => {
+    if (typeof window.tC?.privacy?.clickBanner !== "function") return false;
+    window.tC.privacy.clickBanner("optin");
+    return true;
+  },
+  EVAL_TRUSTCOMMANDER_OPTOUT: () => {
+    if (typeof window.tC?.privacy?.clickBanner !== "function") return false;
+    window.tC.privacy.clickBanner("optout");
+    return true;
+  },
   EVAL_USERCENTRICS_API_0: () => typeof UC_UI === "object",
   EVAL_USERCENTRICS_API_1: () => !!UC_UI.closeCMP(),
   EVAL_USERCENTRICS_API_2: () => !!UC_UI.denyAllConsents(),
@@ -460,8 +467,6 @@ var snippets = {
   EVAL_USERCENTRICS_API_4: () => !!UC_UI.closeCMP(),
   EVAL_USERCENTRICS_API_5: () => UC_UI.areAllConsentsAccepted() === true,
   EVAL_USERCENTRICS_API_6: () => UC_UI.areAllConsentsAccepted() === false,
-  EVAL_USERCENTRICS_BUTTON_0: () => JSON.parse(localStorage.getItem("usercentrics")).consents.every((c) => c.isEssential || !c.consentStatus),
-  EVAL_WAITROSE_0: () => Array.from(document.querySelectorAll("label[id$=cookies-deny-label]")).forEach((e) => e.click()) || true,
   EVAL_WBD_LTP_CLOSE: () => document.querySelector("dialog#ltp-dialog").close() || true,
   EVAL_ZOHO_TEST: () => localStorage.getItem("zglobal_Acookie_optOut") === "3"
 };
@@ -605,6 +610,7 @@ var DETECT_PATTERNS = [
   VERWENDUNG_VON_COOKIES,
   /wir.{0,100}nutzen.{0,100}cookies/gi,
   /verwendet.{0,100}cookies/gi,
+  /nutzt.{0,100}cookies/gi,
   /sie.{0,100}können.{0,100}ihre.{0,100}auswahl/gi,
   /und.{0,100}ähnliche.{0,100}technologien/gi,
   /cookies.{0,100}wir.{0,100}verwenden/gi,
@@ -898,6 +904,8 @@ var REJECT_PATTERNS_GERMAN = [
   /verweiger/is,
   // essential/necessary/functional-only variants (accepting only necessary → reject)
   /^\s*(nur|ausschließlich|lediglich|weiter\s+mit|mit|akzeptiere?n?|unbedingt|es\s+werden\s+nur)?\s*(technisch\s+)?(notwendige?[nrs]?|essenzielle?[nrs]?|essentielle?[nrs]?|erforderliche?[nrs]?|funktionale?[nrs]?|funktionelle?[nrs]?|wesentliche?[nrs]?)\s*(cookies?|technologien|funktionscookies|dienste)?\s*(akzeptieren|erlauben|zulassen|verwenden|annehmen|setzen|speichern|zustimmen|auswählen)?\.?\s*$/is,
+  // continue with only necessary/functional cookies
+  /^(weiter\s+|nur\s+)?mit\s+(nur\s+|ausschließlich\s+|lediglich\s+)?(den\s+)?(technisch\s+)?(notwendigen|essenziellen|essentiellen|erforderlichen|funktionalen|funktionellen)\s+(cookies\s+)?fortfahren\.?$/is,
   // continue without consent
   /(^|\s)(ohne\s+(zu\s+)?(einwilligung|zustimmung|einverständnis|annahme|annehmen|akzeptanz|akzeptieren)|(weiter|fortfahren)\s+ohne)/is,
   // negations / refusals not covered by the regexes above
@@ -907,9 +915,7 @@ var REJECT_PATTERNS_GERMAN = [
   "nicht zustimmen",
   "nicht einverstanden",
   "ich lehne ab",
-  "mit erforderlichen einstellungen fortfahren",
-  "mit erforderlichen cookies fortfahren",
-  "mit notwendigen fortfahren"
+  "mit erforderlichen einstellungen fortfahren"
 ];
 var REJECT_PATTERNS_ITALIAN = [
   // rifiuta / rifiutare / rifiuto / nega / negare / blocca (reject verbs)
@@ -939,7 +945,7 @@ var REJECT_PATTERNS_SPANISH = [
   // "rechazar y pagar" / "rechazar y suscribirse" are excluded via BUTTON_NEVER_MATCH_PATTERNS
   /(^|\s)(rechaz|recház|deneg|negar|declin)/is,
   // accept/allow/use (only) necessary / essential / technical / functional / own
-  /^\s*(aceptar?|acepta|permitir|permite|usar|utilizar)?\s*(solo|sólo|només|únicamente)?\s*(las?\s+|los\s+)?(cookies?\s+)?(estrictamente\s+)?(necesari\w*|esencial\w*|técnic\w*|obligatori\w*|funcional\w*|propias)\s*$/is,
+  /^\s*(aceptar?|acepta|permitir|permite|usar|utilizar)?\s*(solo|sólo|només|únicamente)?\s*(las?\s+|los\s+)?(cookies?\s+)?(estrictamente\s+)?(necesari\w*|esencial\w*|imprescindibl\w*|técnic\w*|obligatori\w*|funcional\w*|propias)\s*$/is,
   // "solo/sólo/no, sólo ... necessary/essential"
   /^(no,?\s+)?(solo|sólo|només)\s+(usar\s+|las?\s+|los\s+|lo\s+)?.{0,20}(necesari|esencial|estrictamente)/is,
   // refusals / opt-outs
@@ -1067,7 +1073,7 @@ var BUTTON_NEVER_MATCH_PATTERNS = [
   /suscríbete/,
   /sin cookies .{0,10}euro/s,
   // Polish (PL)
-  /subskrybuj/,
+  /subskrybuj|subskrypcj/,
   // Russian (RU): paywall/subscription wording, e.g. "отказаться от подписки", "оплатить"
   /подписатьс|подписк|оплатит|оплачива/is
 ];
@@ -1382,7 +1388,7 @@ var ACKNOWLEDGE_PATTERNS = [
   // "ok" / "okay" / "oké" (optionally followed by a short acknowledgement)
   /^(ok|okay|oké|okey|k)([ .!,]*)(got it|verstanden|compris|rozumiem|thanks|gracias|ik begrijp( dat| het)?|continue to website|pour moi|fermer)?[ .!]*$/is,
   // "understood" / "got it" / "that's ok" (multilingual)
-  /^(i understand|understood|got it|thats (ok|fine|okay)|alright|alles klar|in ordnung|verstanden|begrepen|jai compris|je comprends|compris|ik begrijp het|ik snap het|entendido|c(e)?st ok pour moi)[ !.,]*(merci|bedankt|dismiss this banner)?[ !.]*$/is,
+  /^(i understand|understood|got it|thats (ok|fine|okay)|alright|alles klar|in ordnung|verstanden|ich verstehe|ho capito|jag förstår|begrepen|jai compris|je comprends|compris|ik begrijp het|ik snap het|entendido|c(e)?st ok pour moi)[ !.,]*(merci|bedankt|dismiss this banner)?[ !.]*$/is,
   // confirm
   /^(confirm|bestätigen|bevestigen|confirmar|potwierdź)[ !.]*$/is,
   // neutral "continue" without accept/reject wording
@@ -1661,6 +1667,7 @@ var DETECT_PATTERN_LITERALS = [
   ["verwendung"],
   ["cookies"],
   ["verwendet"],
+  ["cookies"],
   ["auswahl"],
   ["technologien"],
   ["verwenden"],
@@ -2874,7 +2881,10 @@ var shortcutOptIn = "#truste-consent-button";
 var popupContent = "#truste-consent-content";
 var bannerOverlay = "#trustarc-banner-overlay";
 var bannerContainer = "#truste-consent-track";
-var prefCenterDeclineAll = [".truste_popframe.trustarc_newcm_container", 'button[data-button-key="decline_all"]'];
+var prefCenterDeclineAll = [
+  ".truste_popframe.trustarc_newcm_container",
+  'button[data-button-key="decline_all"], .trustarc-declineall-btn'
+];
 var TrustArcTop = class extends AutoConsentCMPBase {
   constructor(autoconsentInstance) {
     super(autoconsentInstance);
@@ -2912,8 +2922,12 @@ var TrustArcTop = class extends AutoConsentCMPBase {
   }
   async optOut() {
     if (this.elementExists(shortcutOptOut)) {
-      this.click(shortcutOptOut);
-      return true;
+      const shortcutVisible = this.elementVisible(shortcutOptOut, "any");
+      await this.click(shortcutOptOut);
+      if (shortcutVisible || !this.elementExists(`${bannerContainer}.ta-show`)) {
+        return true;
+      }
+      this._shortcutButton = null;
     }
     hideElements(getStyleElement(), `.truste_popframe, .truste_overlay, .truste_box_overlay, ${bannerContainer}`);
     await this.click(cookieSettingsButton);
@@ -3377,13 +3391,15 @@ var Klaro = class extends AutoConsentCMPBase {
 };
 
 // lib/cmps/uniconsent.ts
+var POPUP_SELECTOR = ".unic .unic-box,.unic .unic-bar,.unic .unic-modal";
+var SHADOW_HOST = "#uniccmp";
 var Uniconsent = class extends AutoConsentCMPBase {
   constructor() {
     super(...arguments);
     this.name = "Uniconsent";
   }
   get prehideSelectors() {
-    return [".unic", ".modal:has(.unic)"];
+    return [".unic", ".modal:has(.unic)", SHADOW_HOST];
   }
   get hasSelfTest() {
     return true;
@@ -3394,99 +3410,82 @@ var Uniconsent = class extends AutoConsentCMPBase {
   get isCosmetic() {
     return false;
   }
+  // Newer versions render the popup inside an open shadow root on #uniccmp
+  sel(selector) {
+    return document.querySelector(SHADOW_HOST)?.shadowRoot ? [SHADOW_HOST, selector] : selector;
+  }
+  get root() {
+    return document.querySelector(SHADOW_HOST)?.shadowRoot || document;
+  }
   async detectCmp() {
-    return this.elementExists(".unic .unic-box,.unic .unic-bar,.unic .unic-modal");
+    return this.elementExists(this.sel(POPUP_SELECTOR));
   }
   async detectPopup() {
-    return this.elementVisible(".unic .unic-box,.unic .unic-bar,.unic .unic-modal", "any");
+    return this.elementVisible(this.sel(POPUP_SELECTOR), "any");
   }
   async optOut() {
-    await this.waitForElement(".unic button", 1e3);
-    document.querySelectorAll(".unic button").forEach((button) => {
-      const text = button.textContent || "";
-      if (text.includes("Manage Options") || text.includes("Optionen verwalten")) {
-        button.click();
-      }
-    });
-    if (await this.waitForElement(".unic input[type=checkbox]", 1e3)) {
-      await this.waitForElement(".unic button", 1e3);
-      document.querySelectorAll(".unic input[type=checkbox]").forEach((c) => {
+    await this.waitForElement(this.sel(".unic button"), 1e3);
+    if (this.elementVisible(this.sel(".unic .unic-reject-all-button"), "any")) {
+      return this.rejectAll();
+    }
+    if (this.elementExists(this.sel(".unic .unic-manage-options-button"))) {
+      await this.click(this.sel(".unic .unic-manage-options-button"));
+    } else {
+      this.root.querySelectorAll(".unic button").forEach((button) => {
+        const text = button.textContent || "";
+        if (text.includes("Manage Options") || text.includes("Optionen verwalten")) {
+          button.click();
+        }
+      });
+    }
+    if (await this.waitForElement(this.sel(".unic .unic-reject-all-button"), 1e3)) {
+      return this.rejectAll();
+    }
+    if (await this.waitForElement(this.sel(".unic input[type=checkbox]"), 1e3)) {
+      await this.waitForElement(this.sel(".unic button"), 1e3);
+      this.root.querySelectorAll(".unic input[type=checkbox]").forEach((c) => {
         if (c.checked) {
           c.click();
         }
       });
-      for (const b of document.querySelectorAll(".unic button")) {
-        const text = b.textContent || "";
-        for (const pattern of ["Confirm Choices", "Save Choices", "Auswahl speichern"]) {
-          if (text.includes(pattern)) {
-            b.click();
-            await this.wait(500);
-            return true;
-          }
+      if (this.elementExists(this.sel(".unic .unic-confirm-button"))) {
+        await this.click(this.sel(".unic .unic-confirm-button"));
+        await this.wait(500);
+        return true;
+      }
+      const buttons = [...this.root.querySelectorAll(".unic button")];
+      for (const pattern of [
+        "Reject All",
+        "Alle ablehnen",
+        "Confirm Choices",
+        "Save Choices",
+        "Auswahl speichern",
+        "Auswahl best\xE4tigen"
+      ]) {
+        const b = buttons.find((button) => (button.textContent || "").includes(pattern));
+        if (b) {
+          b.click();
+          await this.wait(500);
+          return true;
         }
       }
     }
     return false;
   }
+  async rejectAll() {
+    await this.click(this.sel(".unic .unic-reject-all-button"));
+    await this.wait(500);
+    return true;
+  }
   async optIn() {
-    return this.waitForThenClick(".unic #unic-agree");
+    if (this.elementExists(this.sel(".unic .unic-agree-all-button"))) {
+      return this.click(this.sel(".unic .unic-agree-all-button"));
+    }
+    return this.waitForThenClick(this.sel(".unic #unic-agree"));
   }
   async test() {
     await this.wait(1e3);
-    const res = this.elementExists(".unic .unic-box,.unic .unic-bar");
-    return !res;
-  }
-};
-
-// lib/cmps/conversant.ts
-var Conversant = class extends AutoConsentCMPBase {
-  constructor() {
-    super(...arguments);
-    this.prehideSelectors = [".cmp-root"];
-    this.name = "Conversant";
-  }
-  get hasSelfTest() {
-    return true;
-  }
-  get isIntermediate() {
-    return false;
-  }
-  get isCosmetic() {
-    return false;
-  }
-  async detectCmp() {
-    return this.elementExists(".cmp-root .cmp-receptacle");
-  }
-  async detectPopup() {
-    return this.elementVisible(".cmp-root .cmp-receptacle", "any");
-  }
-  async optOut() {
-    if (!await this.waitForThenClick(".cmp-main-button:not(.cmp-main-button--primary)")) {
-      return false;
-    }
-    if (!await this.waitForElement(".cmp-view-tab-tabs")) {
-      return false;
-    }
-    await this.waitForThenClick(".cmp-view-tab-tabs > :first-child");
-    await this.waitForThenClick(".cmp-view-tab-tabs > .cmp-view-tab--active:first-child");
-    for (const item of Array.from(document.querySelectorAll(".cmp-accordion-item"))) {
-      item.querySelector(".cmp-accordion-item-title").click();
-      await waitFor(() => !!item.querySelector(".cmp-accordion-item-content.cmp-active"), 10, 50);
-      const content = item.querySelector(".cmp-accordion-item-content.cmp-active");
-      if (!content) {
-        return false;
-      }
-      content.querySelectorAll(".cmp-toggle-actions .cmp-toggle-deny:not(.cmp-toggle-deny--active)").forEach((e) => e.click());
-      content.querySelectorAll(".cmp-toggle-actions .cmp-toggle-checkbox:not(.cmp-toggle-checkbox--active)").forEach((e) => e.click());
-    }
-    await this.click(".cmp-main-button:not(.cmp-main-button--primary)");
-    return true;
-  }
-  async optIn() {
-    return this.waitForThenClick(".cmp-main-button.cmp-main-button--primary");
-  }
-  async test() {
-    return document.cookie.includes("cmp-data=0");
+    return this.elementVisible(this.sel(POPUP_SELECTOR), "none");
   }
 };
 
@@ -3628,19 +3627,7 @@ var Admiral = class extends AutoConsentCMPBase {
 };
 
 // lib/cmps/all.ts
-var dynamicCMPs = [
-  TrustArcTop,
-  Cookiebot,
-  SourcePoint,
-  ConsentManager,
-  Evidon,
-  Onetrust,
-  Klaro,
-  Uniconsent,
-  Conversant,
-  Tiktok,
-  Admiral
-];
+var dynamicCMPs = [TrustArcTop, Cookiebot, SourcePoint, ConsentManager, Evidon, Onetrust, Klaro, Uniconsent, Tiktok, Admiral];
 
 // lib/dom-actions.ts
 var DEFAULT_CLICK_RETRY_INTERVAL = 300;
